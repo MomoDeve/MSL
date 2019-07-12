@@ -1,0 +1,45 @@
+namespace Program
+{
+	internal class AnotherClass
+	{	
+		public static function Main(args) 
+		{
+			var arraySize = 10;
+			var A = new Array[arraySize];
+			A.Fill(Random(0, 10));
+			Console.Print(stdout, A);
+			BubbleSort(A, A.predicate);
+			Console.Print(stdout, A);
+			return 0;
+		}
+
+		public static function BubbleSort(A, predicate)
+		{
+			for(var i = 0; i < A.size(); i += 1)
+			{
+				for(var j = i; j < A.size(); j += 1)
+				{
+					if(predicate(A[j], A[i]))
+					{
+						Swap(A[i], A[j]); 
+					}
+				}
+			}
+		}
+
+		public static function Swap(left, right)
+		{
+			var tmp = left;
+			left = right;
+			right = tmp;
+		}
+
+		public function TestStrings()
+		{
+			var str1 = "hello world";
+			var str2 = "hello\nworld\t";
+			var str3 = "hello " + "world";
+			return;
+		}
+	}
+}

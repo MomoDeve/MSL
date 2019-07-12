@@ -86,7 +86,7 @@ void CodeGenerator::GenerateMethod(const Function& method)
 	if (method.hasBody())
 	{
 		write(OPCODE::METHOD_BODY_BEGIN_DECL);
-		// generate method body
+		method.GenerateBytecode(*this);
 		write(OPCODE::METHOD_BODY_END_DECL);
 	}
 }
@@ -108,8 +108,9 @@ void CodeGenerator::GenerateMethodPool(const Class& _class)
 void CodeGenerator::writeString(const std::string& data)
 {
 	write(OPCODE::STRING_DECL);
-	write(data.size());
-	out.Write(data.c_str(), data.size());
+	uint8_t stringSize = static_cast<uint8_t>(data.size()); // size cannot be more than 0xFF !
+	write(stringSize);
+	out.Write(data.c_str(), stringSize);
 }
 
 CodeGenerator::CodeGenerator(Assembly&& assembly)

@@ -43,6 +43,7 @@ void BufferedFile::Close()
 		if (currentBufferPos > 0)
 		{
 			std::fstream::write(buffer, currentBufferPos);
+			currentBufferPos = 0;
 		}
 		std::fstream::close();
 	}
@@ -55,9 +56,6 @@ bool BufferedFile::IsOpen() const
 
 BufferedFile::~BufferedFile()
 {
-	if (is_open())
-	{
-		close();
-	}
+	Close();
 	delete[] buffer;
 }

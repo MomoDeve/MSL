@@ -14,11 +14,19 @@ bool Parser::Parse()
 	success = true;
 	while (!lexer->End())
 	{
-		if (lexer->Peek().type == Token::Type::ERROR)
+		Token::Type tokenType = lexer->Peek().type;
+		if (tokenType == Token::Type::ERROR)
 		{
 			Error("unresolved symbol, aborting");
 			success = false;
 			return success;
+		}
+		else if (tokenType & Token::Type::VALUE_TYPE)
+		{
+			if (lexer->Peek().value.size() > constantMaxSize)
+			{
+				Error("constants cannot be more than " + std::to_string(constantMaxSize) + " characters long");
+			}
 		}
 		lexer->Next();
 	}

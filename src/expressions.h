@@ -1,6 +1,6 @@
 #pragma once
 
-#include "baseExpression.h"
+#include "codeGenerator.h"
 #include "token.h"
 #include "function.h"
 
@@ -19,14 +19,8 @@ struct BinaryExpression : BaseExpression
 	unique_ptr<BaseExpression> right;
 	void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
-};
-
-struct NullExpression : public BaseExpression
-{
-	void Print(std::ostream& out, int depth = 0) const override;
-
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
 };
 
 struct UnaryExpression : public BaseExpression
@@ -34,8 +28,8 @@ struct UnaryExpression : public BaseExpression
 	Token::Type type;
 	unique_ptr<BaseExpression> expression;
 	void Print(std::ostream& out, int depth = 0) const override;
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct ForExpression : public BaseExpression
@@ -46,10 +40,10 @@ struct ForExpression : public BaseExpression
 	unique_ptr<BaseExpression> iteration;
 
 	void Print(std::ostream& out, int depth = 0) const override;
-
 	bool hasIterationStatement() const;
 
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct WhileExpression : public BaseExpression
@@ -58,8 +52,9 @@ struct WhileExpression : public BaseExpression
 	unique_ptr<BaseExpression> predicate;
 
 	void Print(std::ostream& out, int depth = 0) const override;
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct IfExpression : public BaseExpression
@@ -71,8 +66,8 @@ struct IfExpression : public BaseExpression
 	void Print(std::ostream& out, int depth = 0) const override;
 	ExpressionList& getElseBlock();
 
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct CallExpression : public BaseExpression
@@ -81,7 +76,8 @@ struct CallExpression : public BaseExpression
 	ExpressionList parameters;
 	void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct IndexExpression : public BaseExpression
@@ -89,16 +85,16 @@ struct IndexExpression : public BaseExpression
 	std::string objectName;
 	ExpressionList parameters;
 	void Print(std::ostream& out, int depth = 0) const override;
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct ObjectExpression : public BaseExpression
 {
 	Token object = Token(Token::Type::ERROR, "unnamed");
 	void Print(std::ostream& out, int depth = 0) const override;
-
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct ObjectDeclareExpression : public BaseExpression
@@ -109,8 +105,8 @@ struct ObjectDeclareExpression : public BaseExpression
 
 	bool hasAssignment() const;
 	void Print(std::ostream& out, int depth = 0) const override;
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct LambdaExpression : public BaseExpression
@@ -120,7 +116,8 @@ struct LambdaExpression : public BaseExpression
 
 	void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct ForeachExpression : public BaseExpression
@@ -131,7 +128,8 @@ struct ForeachExpression : public BaseExpression
 
 	void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+	// Унаследовано через BaseExpression
+	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
 };
 
 struct ReturnExpression : public BaseExpression
@@ -139,6 +137,6 @@ struct ReturnExpression : public BaseExpression
 	unique_ptr<BaseExpression> returnValue;
 	void Print(std::ostream& out, int depth = 0) const override;
 	bool Empty() const;
-	
-	virtual void GenerateBytecode(InstructionVector& bytecode) const override;
+
+	virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
 };

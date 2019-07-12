@@ -87,6 +87,31 @@ bool Function::ContainsDependency(const std::string& dependenctyName) const
 	return dependencies.find(dependenctyName) != dependencies.end();
 }
 
+size_t Function::GetHash(const std::string& variableName) const
+{
+	auto localIter = locals.find(variableName);
+	if (localIter != locals.end())
+	{
+		return localIter->second;
+	}
+	else
+	{
+		return dependencies.find(variableName)->second;
+	}
+
+}
+
+void Function::GenerateBytecode(CodeGenerator& generator) const
+{
+	if (hasBody())
+	{
+		for (const auto& expr : *body)
+		{
+			expr->GenerateBytecode(generator, *this);
+		}
+	}
+}
+
 std::string Function::GenerateUniqueName(const std::string& name, size_t paramSize)
 {
 	return name + '_' + std::to_string(paramSize);

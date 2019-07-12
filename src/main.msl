@@ -15,7 +15,9 @@ namespace Program
 
 		public static function BubbleSort(A, predicate)
 		{
-			for(var i = 0; i < A.size(); i += 1)
+			var i = 3;
+			i += 4;
+			for( i = 0; i < A.size(); i += 1)
 			{
 				for(var j = i; j < A.size(); j += 1)
 				{

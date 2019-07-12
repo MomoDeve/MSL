@@ -13,6 +13,7 @@
 
 class Parser
 {
+	static const size_t constantMaxSize = UINT8_MAX;
 	using ModifierList = std::vector<Token::Type>;
 	template<typename T> using unique_ptr = std::unique_ptr<T>;
 

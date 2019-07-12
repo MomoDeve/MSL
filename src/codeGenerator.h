@@ -14,11 +14,11 @@ class CodeGenerator
 	void GenetateAttributePool(const Class& _class);
 	void GenerateMethod(const Function & method);
 	void GenerateMethodPool(const Class& _class);
-
+public:
 	template<typename T>
 	void write(T data);
 	void writeString(const std::string& data);
-public:
+
 	CodeGenerator(Assembly&& assembly);
 
 	void GenerateBytecode(const std::string& outFileName);

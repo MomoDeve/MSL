@@ -48,8 +48,11 @@ public:
 
 	void InsertLocal(const std::string& localName);
 	void InsertDependency(const std::string& dependencyName);
+
 	bool ContainsLocal(const std::string& localName) const;
 	bool ContainsDependency(const std::string& dependenctyName) const;
+	size_t GetHash(const std::string& variableName) const;
+	void GenerateBytecode(CodeGenerator& generator) const;
 
 	static std::string GenerateUniqueName(const std::string& name, size_t paramSize);
 };

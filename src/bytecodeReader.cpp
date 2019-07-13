@@ -47,7 +47,11 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		OPCODE_CASE(PUSH_FALSE)
 			break;
+		OPCODE_CASE(PUSH_THIS)
+			break;
 		OPCODE_CASE(POP_TO_RETURN)
+			break;
+		OPCODE_CASE(POP_STACK_TOP)
 			break;
 		OPCODE_CASE(ASSEMBLY_BEGIN_DECL)
 			break;
@@ -81,6 +85,26 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		OPCODE_CASE(SET_ALU_INCR)
 			break;
+		OPCODE_CASE(GET_MEMBER)
+			break;
+		OPCODE_CASE(GET_INDEX)
+			break;
+		OPCODE_CASE(CMP_EQ)
+			break;
+		OPCODE_CASE(CMP_NEQ)
+			break;
+		OPCODE_CASE(CMP_L)
+			break;
+		OPCODE_CASE(CMP_G)
+			break;
+		OPCODE_CASE(CMP_LE)
+			break;
+		OPCODE_CASE(CMP_GE)
+			break;
+		OPCODE_CASE(CMP_AND)
+			break;
+		OPCODE_CASE(CMP_OR)
+			break;
 		READ_HASH_CASE(PUSH_STRING)
 			break;
 		READ_HASH_CASE(PUSH_INTEGER)
@@ -88,6 +112,8 @@ void BytecodeReader::Read(std::ostream& out)
 		READ_HASH_CASE(PUSH_FLOAT)
 			break;
 		READ_HASH_CASE(PUSH_OBJECT)
+			break;
+		READ_HASH_CASE(PUSH_FUNCTION)
 			break;
 		READ_HASH_CASE(SET_CONST_VAR)
 			break;

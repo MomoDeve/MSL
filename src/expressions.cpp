@@ -118,6 +118,9 @@ void ObjectExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 	case Token::Type::FALSE_CONSTANT:
 		code.write(OPCODE::PUSH_FALSE);
 		break;
+	case Token::Type::THIS:
+		code.write(OPCODE::PUSH_THIS);
+		break;
 	default:
 		code.write(OPCODE::ERROR_SYMBOL);
 		break;
@@ -128,6 +131,8 @@ void ObjectExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 void CallExpression::Print(std::ostream& out, int depth) const
 {
 	out << std::string(depth, '\t');
+	out << ">> PARENT: " << BOOL(hasParent) << '\n';
+	out << std::string(depth, '\t');
 	out << functionName << '\n';
 	out << std::string(depth, '\t') << "(\n";
 	for (const auto& param : parameters)
@@ -137,8 +142,18 @@ void CallExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << ")\n";
 }
 
-void CallExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+void CallExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	if (!hasParent)
+	{
+		code.write(OPCODE::PUSH_THIS);
+	}
+	for (const auto& param : parameters)
+	{
+		param->GenerateBytecode(code, function);
+	}
+	code.write(OPCODE::PUSH_FUNCTION);
+	code.write(function.GetHash(functionName));
 }
 
 
@@ -261,20 +276,37 @@ void BinaryExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 		code.write(OPCODE::SET_ALU_INCR);
 		code.write(OPCODE::MOD_OP);
 		break;
+	case Token::Type::DOT:
+		code.write(OPCODE::GET_MEMBER);
+		break;
+	case Token::Type::LOGIC_EQUALS:
+		code.write(OPCODE::CMP_EQ);
+		break;
+	case Token::Type::LOGIC_NOT_EQUALS:
+		code.write(OPCODE::CMP_NEQ);
+		break;
+	case Token::Type::LOGIC_LESS:
+		code.write(OPCODE::CMP_L);
+		break;
+	case Token::Type::LOGIC_GREATER:
+		code.write(OPCODE::CMP_G);
+		break;
+	case Token::Type::LOGIC_LESS_EQUALS:
+		code.write(OPCODE::CMP_LE);
+		break;
+	case Token::Type::LOGIC_GREATER_EQUALS:
+		code.write(OPCODE::CMP_GE);
+		break;
+	case Token::Type::LOGIC_OR:
+		code.write(OPCODE::CMP_OR);
+		break;
+	case Token::Type::LOGIC_AND:
+		code.write(OPCODE::CMP_AND);
+		break;
 	default:
 		code.write(OPCODE::ERROR_SYMBOL);
 		break;
 	}
-
-			/*DOT = (BINARY_OPERAND + 1) | 0x00F00000 | ONE_OPCODE_OPERAND,
-			LOGIC_EQUALS = (BINARY_OPERAND + 8) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_NOT_EQUALS = (BINARY_OPERAND + 9) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_LESS = (BINARY_OPERAND + 10) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_GREATER = (BINARY_OPERAND + 11) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_LESS_EQUALS = (BINARY_OPERAND + 12) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_GREATER_EQUALS = (BINARY_OPERAND + 13) | 0x00100000 | ONE_OPCODE_OPERAND,
-			LOGIC_OR = (BINARY_OPERAND + 14) | 0x00200000 | ONE_OPCODE_OPERAND,
-			LOGIC_AND = (BINARY_OPERAND + 15) | 0x00300000 | ONE_OPCODE_OPERAND,*/
 }
 
 void IndexExpression::Print(std::ostream& out, int depth) const
@@ -282,15 +314,16 @@ void IndexExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t');
 	out << objectName << '\n';
 	out << std::string(depth, '\t') << "[\n";
-	for (const auto& param : parameters)
-	{
-		param->Print(out, depth + 1);
-	}
+	parameter->Print(out, depth + 1);
 	out << std::string(depth, '\t') << "]\n";
 }
 
-void IndexExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+void IndexExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	code.write(OPCODE::PUSH_OBJECT);
+	code.write(function.GetHash(objectName));
+	parameter->GenerateBytecode(code, function);
+	code.write(OPCODE::GET_INDEX);
 }
 
 

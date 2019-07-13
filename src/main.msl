@@ -2,14 +2,20 @@ namespace Program
 {
 	internal class AnotherClass
 	{	
+		public function Test()
+		{
+			var A = new Array[arraySize];
+		}
+	
 		public static function Main(args) 
 		{
+			Program.AnotherClass.Main.GetParameters(); // call of `.` example
 			var arraySize = 10;
 			var A = new Array[arraySize];
-			A.Fill(Random(0, 10));
-			Console.Print(stdout, A);
+			A.Fill(Utilities.Random(0, 10));
+			Console.Print(A);
 			BubbleSort(A, A.predicate);
-			Console.Print(stdout, A);
+			Console.Print(A, stdout);
 			return 0;
 		}
 

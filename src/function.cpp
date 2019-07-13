@@ -98,7 +98,6 @@ size_t Function::GetHash(const std::string& variableName) const
 	{
 		return dependencies.find(variableName)->second;
 	}
-
 }
 
 void Function::GenerateBytecode(CodeGenerator& generator) const

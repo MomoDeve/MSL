@@ -38,7 +38,7 @@ class Parser
 
 	ExpressionList ParseExpressionBlock(Function& function);
 	ExpressionList ParseFunctionArguments(Function& function);
-	ExpressionList ParseIndexArguments(Function& function);
+	unique_ptr<BaseExpression> ParseIndexArgument(Function& function);
 	unique_ptr<BaseExpression> ParseExpression(Function& function);
 	unique_ptr<BaseExpression> ParseVariableDecl(Function& function);
 	unique_ptr<BaseExpression> ParseLambdaExpression(Function& function);

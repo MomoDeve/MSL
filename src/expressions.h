@@ -29,7 +29,7 @@ struct UnaryExpression : public BaseExpression
 	unique_ptr<BaseExpression> expression;
 	void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
+	virtual void GenerateBytecode( CodeGenerator& code, const Function& function) const override;
 };
 
 struct ForExpression : public BaseExpression
@@ -72,6 +72,7 @@ struct IfExpression : public BaseExpression
 
 struct CallExpression : public BaseExpression
 {
+	bool hasParent = false;
 	std::string functionName;
 	ExpressionList parameters;
 	void Print(std::ostream& out, int depth = 0) const override;
@@ -83,7 +84,7 @@ struct CallExpression : public BaseExpression
 struct IndexExpression : public BaseExpression
 {
 	std::string objectName;
-	ExpressionList parameters;
+	unique_ptr<BaseExpression> parameter;
 	void Print(std::ostream& out, int depth = 0) const override;
 
 	// Унаследовано через BaseExpression

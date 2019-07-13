@@ -682,34 +682,26 @@ ExpressionList Parser::ParseFunctionArguments(Function& function)
 	return ExpressionList(); // EOF reached
 }
 
-ExpressionList Parser::ParseIndexArguments(Function& function)
+unique_ptr<BaseExpression> Parser::ParseIndexArgument(Function& function)
 {
 	ExpressionList args;
 	if (lexer->Peek().type != Token::Type::SQUARE_BRACKET_O)
 	{
 		Error("`[` expected in index expression");
-		return ExpressionList();
+		return nullptr;
 	}
-	lexer->Next();
+	lexer->Next(); // skipping `[` -> [object]
 	if (lexer->Peek().type == Token::Type::SQUARE_BRACKET_C)
 	{
-		return args; // 0 parameterss
+		Error("index expression cannot be empty");
+		return nullptr;
 	}
-	while (!lexer->End())
+	unique_ptr<BaseExpression> expr = ParseNextVariable(function);
+	if (lexer->Peek().type != Token::Type::SQUARE_BRACKET_C)
 	{
-		args.push_back(ParseRawExpression(function));
-		if (lexer->Peek().type == Token::Type::SQUARE_BRACKET_C)
-		{
-			return args;
-		}
-		if (lexer->Peek().type != Token::Type::COMMA)
-		{
-			Error("`,` expected in index expression");
-		}
-		lexer->Next();
+		Error("`]` exprected in index expression");
 	}
-	Error("parser reached EOF");
-	return ExpressionList(); // EOF reached
+	return expr;
 }
 
 unique_ptr<BaseExpression> Parser::ParseExpression(Function& function)
@@ -1008,9 +1000,9 @@ unique_ptr<BaseExpression> Parser::ParseNextVariable(Function& function)
 		if (nextToken.type == Token::Type::ROUND_BRACKET_O)
 		{
 			unique_ptr<CallExpression> callExpr(new CallExpression());
-			callExpr->functionName = object.value;
-			function.InsertDependency(object.value);
 			callExpr->parameters = ParseFunctionArguments(function);
+			callExpr->functionName = Function::GenerateUniqueName(object.value, callExpr->parameters.size());
+			function.InsertDependency(callExpr->functionName);
 			lexer->Next(); // skipping `)`
 			return TO_BASE(callExpr);
 		}
@@ -1019,7 +1011,7 @@ unique_ptr<BaseExpression> Parser::ParseNextVariable(Function& function)
 			unique_ptr<IndexExpression> indexExpr(new IndexExpression());
 			indexExpr->objectName = object.value;
 			function.InsertDependency(object.value);
-			indexExpr->parameters = ParseIndexArguments(function);
+			indexExpr->parameter = ParseIndexArgument(function);
 			lexer->Next(); // skipping `]`
 			return TO_BASE(indexExpr);
 		}
@@ -1061,7 +1053,7 @@ unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique
 		}
 		binExpr->left = std::move(leftBranch);
 		binExpr->type = firstToken.type;
-		uint32_t currentPriority = lexer->Peek().type & Token::PRIORITY;
+		uint32_t currentPriority = firstToken.type & Token::PRIORITY;
 		lexer->Next(); // skipping `BINARY_OP`
 		unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function);
 		uint32_t nextPriority = lexer->Peek().type & Token::PRIORITY;
@@ -1072,6 +1064,12 @@ unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique
 		}
 		else
 		{
+			CallExpression* call = dynamic_cast<CallExpression*>(rightExpr.get());
+			if (call != nullptr)
+			{
+				if (firstToken.type == Token::Type::DOT)
+					call->hasParent = true;
+			}
 			binExpr->right = std::move(rightExpr);
 			return ParseRawExpression(function, TO_BASE(binExpr));
 		}

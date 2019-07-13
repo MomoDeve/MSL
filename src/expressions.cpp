@@ -46,8 +46,19 @@ ExpressionList& IfExpression::getElseBlock()
 	return bodies.back();
 }
 
-void IfExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+IfExpression::IfExpression()
 {
+	BaseExpression::type = ExpressionType::IF;
+}
+
+void IfExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
+{
+
+}
+
+ObjectDeclareExpression::ObjectDeclareExpression()
+{
+	BaseExpression::type = ExpressionType::DECLARE;
 }
 
 bool ObjectDeclareExpression::hasAssignment() const
@@ -69,6 +80,15 @@ void ObjectDeclareExpression::Print(std::ostream& out, int depth) const
 
 void ObjectDeclareExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	if (isConst)
+	{
+		code.write(OPCODE::ALLOC_CONST_VAR);
+	}
+	else
+	{
+		code.write(OPCODE::ALLOC_VAR);
+	}
+	code.write(function.GetHash(objectName));
 	if (hasAssignment())
 	{
 		assignment->GenerateBytecode(code, function);
@@ -77,15 +97,7 @@ void ObjectDeclareExpression::GenerateBytecode(CodeGenerator& code, const Functi
 	{
 		code.write(OPCODE::PUSH_NULL);
 	}
-	if (isConst)
-	{
-		code.write(OPCODE::SET_CONST_VAR);
-	}
-	else
-	{
-		code.write(OPCODE::SET_VAR);
-	}
-	code.write(function.GetHash(objectName));
+	code.write(OPCODE::ASSIGN_OP);
 }
 
 #undef TO_BASE
@@ -102,15 +114,19 @@ void ObjectExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 	{
 	case Token::Type::STRING_CONSTANT:
 		code.write(OPCODE::PUSH_STRING);
+		code.write(function.GetHash(object.value));
 		break;
 	case Token::Type::INTEGER_CONSTANT:
 		code.write(OPCODE::PUSH_INTEGER);
+		code.write(function.GetHash(object.value));
 		break;
 	case Token::Type::FLOAT_CONSTANT:
 		code.write(OPCODE::PUSH_FLOAT);
+		code.write(function.GetHash(object.value));
 		break;
 	case Token::Type::OBJECT:
 		code.write(OPCODE::PUSH_OBJECT);
+		code.write(function.GetHash(object.value));
 		break;
 	case Token::Type::TRUE_CONSTANT:
 		code.write(OPCODE::PUSH_TRUE);
@@ -125,7 +141,6 @@ void ObjectExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 		code.write(OPCODE::ERROR_SYMBOL);
 		break;
 	}
-	code.write(function.GetHash(object.value));
 }
 
 void CallExpression::Print(std::ostream& out, int depth) const
@@ -142,6 +157,11 @@ void CallExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << ")\n";
 }
 
+CallExpression::CallExpression()
+{
+	BaseExpression::type = ExpressionType::CALL;
+}
+
 void CallExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
 	if (!hasParent)
@@ -152,8 +172,9 @@ void CallExpression::GenerateBytecode(CodeGenerator& code, const Function& funct
 	{
 		param->GenerateBytecode(code, function);
 	}
-	code.write(OPCODE::PUSH_FUNCTION);
+	code.write(OPCODE::PUSH_OBJECT);
 	code.write(function.GetHash(functionName));
+	code.write(OPCODE::CALL_FUNCTION);
 }
 
 
@@ -184,8 +205,39 @@ bool ForExpression::hasIterationStatement() const
 	return iteration != nullptr;
 }
 
+ForExpression::ForExpression()
+{
+	BaseExpression::type = ExpressionType::FOR;
+}
+
 void ForExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	init->GenerateBytecode(code, function);
+	code.write(OPCODE::POP_STACK_TOP);
+	uint16_t labelId = ControlAttribute::id;
+	ControlAttribute::id += 2; // predicate and end-for label
+
+	code.write(OPCODE::SET_LABEL); // predicate
+	code.write(labelId);
+
+	predicate->GenerateBytecode(code, function);
+	code.write(OPCODE::JUMP_IF_FALSE);
+	code.write<uint16_t>(labelId + 1); // to end-for
+
+	for (const auto& expr : body)
+	{
+		expr->GenerateBytecode(code, function);
+	}
+	if (hasIterationStatement())
+	{
+		iteration->GenerateBytecode(code, function);
+		code.write(OPCODE::POP_STACK_TOP);
+	}
+
+	code.write(OPCODE::JUMP);
+	code.write(labelId); // to predicate
+	code.write(OPCODE::SET_LABEL);
+	code.write<uint16_t>(labelId + 1); // end-for
 }
 
 
@@ -194,6 +246,11 @@ void UnaryExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << Token::ToString(type) << '\n';
 	out << std::string(depth, '\t') << ">> EXPR:\n";
 	expression->Print(out, depth + 1);
+}
+
+UnaryExpression::UnaryExpression()
+{
+	BaseExpression::type = ExpressionType::UNARY;
 }
 
 void UnaryExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
@@ -210,9 +267,6 @@ void UnaryExpression::GenerateBytecode(CodeGenerator& code, const Function& func
 	case Token::Type::POSITIVE_OP:
 		code.write(OPCODE::POSITIVE_OP);
 		break;
-	case Token::Type::NEW:
-		code.write(OPCODE::ALLOC_PUSH);
-		break;
 	default:
 		code.write(OPCODE::ERROR_SYMBOL);
 		break;
@@ -227,6 +281,11 @@ void BinaryExpression::Print(std::ostream& out, int depth) const
 	left->Print(out, depth + 1);
 	out << std::string(depth, '\t') << ">> RIGHT_EXPR:\n";
 	right->Print(out, depth + 1);
+}
+
+BinaryExpression::BinaryExpression()
+{
+	BaseExpression::type = ExpressionType::BINARY;
 }
 
 void BinaryExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
@@ -277,7 +336,11 @@ void BinaryExpression::GenerateBytecode(CodeGenerator& code, const Function& fun
 		code.write(OPCODE::MOD_OP);
 		break;
 	case Token::Type::DOT:
-		code.write(OPCODE::GET_MEMBER);
+		if (dynamic_cast<CallExpression*>(right.get()) == nullptr &&
+			dynamic_cast<IndexExpression*>(right.get()) == nullptr)
+		{
+			code.write(OPCODE::GET_MEMBER);
+		}
 		break;
 	case Token::Type::LOGIC_EQUALS:
 		code.write(OPCODE::CMP_EQ);
@@ -318,11 +381,16 @@ void IndexExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << "]\n";
 }
 
+IndexExpression::IndexExpression()
+{
+	BaseExpression::type = ExpressionType::INDEX;
+}
+
 void IndexExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	parameter->GenerateBytecode(code, function);
 	code.write(OPCODE::PUSH_OBJECT);
 	code.write(function.GetHash(objectName));
-	parameter->GenerateBytecode(code, function);
 	code.write(OPCODE::GET_INDEX);
 }
 
@@ -342,8 +410,31 @@ void WhileExpression::Print(std::ostream & out, int depth) const
 	out << std::string(depth, '\t') << "}\n";
 }
 
-void WhileExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+WhileExpression::WhileExpression()
 {
+	BaseExpression::type = ExpressionType::WHILE;
+}
+
+void WhileExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
+{
+	uint16_t labelId = ControlAttribute::id;
+	ControlAttribute::id += 2; // for init check and end-while jump
+	code.write(OPCODE::SET_LABEL); // predicate
+	code.write(labelId);
+
+	predicate->GenerateBytecode(code, function);
+	code.write(OPCODE::JUMP_IF_FALSE);
+	code.write<uint16_t>(labelId + 1); // to end-while
+
+	for (const auto& expr : body)
+	{
+		expr->GenerateBytecode(code, function);
+	}
+
+	code.write(OPCODE::JUMP);
+	code.write(labelId); // to predicate
+	code.write(OPCODE::SET_LABEL);
+	code.write<uint16_t>(labelId + 1); // end-while
 }
 
 void LambdaExpression::Print(std::ostream& out, int depth) const
@@ -366,6 +457,11 @@ void LambdaExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << "}\n";
 }
 
+LambdaExpression::LambdaExpression()
+{
+	BaseExpression::type = ExpressionType::LAMBDA;
+}
+
 void LambdaExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
 {
 }
@@ -386,8 +482,72 @@ void ForeachExpression::Print(std::ostream& out, int depth) const
 	out << std::string(depth, '\t') << "}\n";
 }
 
-void ForeachExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+ForeachExpression::ForeachExpression()
 {
+	BaseExpression::type = ExpressionType::FOREACH;
+}
+
+void ForeachExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
+{
+	const char* begin = "Begin_0";
+	const char* end = "End_0";
+	const char* next = "Next_0";
+
+	code.write(OPCODE::ALLOC_VAR);
+	code.write(function.GetHash(iterator));
+
+	auto containerDeclare = reinterpret_cast<ObjectDeclareExpression*>(container.get());
+	containerDeclare->GenerateBytecode(code, function);
+	code.write(OPCODE::PUSH_OBJECT);
+	code.write(function.GetHash(containerDeclare->objectName));
+
+	CallExpression beginCall;
+	beginCall.hasParent = true;
+	beginCall.functionName = begin;
+	beginCall.GenerateBytecode(code, function);
+
+	code.write(OPCODE::ASSIGN_OP); // init iterator with begin of container
+	code.write(OPCODE::POP_STACK_TOP);
+
+	uint16_t labelId = ControlAttribute::id;
+	ControlAttribute::id += 2; // predicate and end-foreach label
+
+	code.write(OPCODE::SET_LABEL); // predicate
+	code.write(labelId);
+
+	code.write(OPCODE::PUSH_OBJECT);
+	code.write(function.GetHash(iterator));
+
+	code.write(OPCODE::PUSH_OBJECT);
+	code.write(function.GetHash(containerDeclare->objectName));
+
+	CallExpression endCall;
+	endCall.hasParent = true;
+	endCall.functionName = end;
+	endCall.GenerateBytecode(code, function);
+
+	code.write(OPCODE::CMP_EQ);
+	code.write(OPCODE::JUMP_IF_TRUE);
+	code.write<uint16_t>(labelId + 1); // to end-foreach
+
+	for (const auto& expr : body)
+	{
+		expr->GenerateBytecode(code, function);
+	}
+	code.write(OPCODE::PUSH_OBJECT);
+	code.write(function.GetHash(iterator));
+
+	CallExpression nextCall;
+	nextCall.hasParent = true;
+	nextCall.functionName = next;
+	nextCall.GenerateBytecode(code, function);
+
+	code.write(OPCODE::POP_STACK_TOP);
+
+	code.write(OPCODE::JUMP);
+	code.write(labelId); // to predicate
+	code.write(OPCODE::SET_LABEL);
+	code.write<uint16_t>(labelId + 1); // end-foreach
 }
 
 
@@ -403,15 +563,39 @@ bool ReturnExpression::Empty() const
 	return returnValue == nullptr;
 }
 
+ReturnExpression::ReturnExpression()
+{
+	BaseExpression::type = ExpressionType::RETURN;
+}
+
 void ReturnExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
 	if (Empty())
 	{
-		code.write(OPCODE::PUSH_NULL); // if function has no return => return null
+		code.write(OPCODE::RETURN);
 	}
 	else
 	{
 		returnValue->GenerateBytecode(code, function);
+		code.write(OPCODE::POP_TO_RETURN);
 	}
-	code.write(OPCODE::POP_TO_RETURN);
+}
+
+void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function)
+{
+	for (const auto& expr : list)
+	{
+		expr->GenerateBytecode(code, function);
+		switch (expr->type)
+		{
+		case ExpressionType::BINARY:
+		case ExpressionType::UNARY:
+		case ExpressionType::CALL:
+		case ExpressionType::INDEX:
+			code.write(OPCODE::POP_STACK_TOP);
+			break;
+		default:
+			break;
+		}
+	}
 }

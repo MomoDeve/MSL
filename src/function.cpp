@@ -104,10 +104,7 @@ void Function::GenerateBytecode(CodeGenerator& generator) const
 {
 	if (hasBody())
 	{
-		for (const auto& expr : *body)
-		{
-			expr->GenerateBytecode(generator, *this);
-		}
+		GenerateExpressionListBytecode(*body, generator, *this);
 	}
 }
 

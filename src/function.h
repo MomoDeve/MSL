@@ -56,3 +56,5 @@ public:
 
 	static std::string GenerateUniqueName(const std::string& name, size_t paramSize);
 };
+
+void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function);

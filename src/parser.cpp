@@ -32,6 +32,7 @@ bool Parser::Parse()
 	}
 	lexer->toBegin();
 	GenerateAssembly();
+	ControlAttribute::Reset(); // unique number generator reset
 	if (!hasEntryPoint)
 	{
 		success = false;
@@ -502,6 +503,10 @@ bool Parser::ProcessFunction(Namespace& _namespace, Class& classObject, const Mo
 			THROW("interface method cannot contain body: " + memberName);
 		}
 		unique_ptr<ExpressionList> body(new ExpressionList(ParseExpressionBlock(functionObject)));
+		if (body->empty() || dynamic_cast<ReturnExpression*>(body->back().get()) == nullptr) // if no return, return void
+		{
+			body->push_back(unique_ptr<BaseExpression>(new ReturnExpression()));
+		}
 		functionObject.body = std::move(body);
 		lexer->Next(); // skipping `}`
 	}
@@ -848,6 +853,10 @@ unique_ptr<BaseExpression> Parser::ParseForExpression(Function& function)
 unique_ptr<BaseExpression> Parser::ParseForeachExpression(Function& function)
 {
 	unique_ptr<ForeachExpression> foreachExpr(new ForeachExpression());
+	function.InsertDependency("Begin_0");
+	function.InsertDependency("Next_0");
+	function.InsertDependency("End_0");
+
 	if (lexer->Peek().type != Token::Type::FOREACH)
 	{
 		Error("`foreach` expected");
@@ -883,8 +892,14 @@ unique_ptr<BaseExpression> Parser::ParseForeachExpression(Function& function)
 	{
 		Error("`in` expected in foreach statement after iterator declaration");
 	}
+
 	lexer->Next(); // skipping `in` -> [container]
-	foreachExpr->container = ParseRawExpression(function);
+	unique_ptr<ObjectDeclareExpression> container(new ObjectDeclareExpression());
+	container->objectName = "__CONTAINER_COMPILE_" + std::to_string(ControlAttribute::id++);
+	function.InsertDependency(container->objectName);
+	container->assignment = ParseRawExpression(function);
+	foreachExpr->container = TO_BASE(container);
+
 	if (lexer->Peek().type != Token::Type::ROUND_BRACKET_C)
 	{
 		Error("`)` expected in foreach statement");

@@ -53,7 +53,6 @@ Token::Type Token::GetType(const std::string& value)
 	if (value == "namespace") return Type::NAMESPACE;
 	if (value == "interface") return Type::INTERFACE;
 	if (value == "return") return Type::RETURN;
-	if (value == "new") return Type::NEW;
 	if (value == "lambda") return Type::LAMBDA;
 	if (value == "this") return Type::THIS;
 	if (value == "in") return Type::IN;
@@ -144,8 +143,6 @@ std::string Token::ToString(Type type)
 		return STRING(Token::Type::NEGATIVE_OP);
 	case Token::Type::POSITIVE_OP:
 		return STRING(Token::Type::POSITIVE_OP);
-	case Token::Type::NEW:
-		return STRING(Token::Type::NEW);
 	case Token::Type::RETURN:
 		return STRING(Token::Type::RETURN);
 	case Token::Type::DOT:

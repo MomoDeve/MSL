@@ -4,14 +4,17 @@ namespace Program
 	{	
 		public function Test()
 		{
-			var A = new Array[arraySize];
+			foreach(var i in Array)
+			{
+				
+			}
 		}
 	
 		public static function Main(args) 
 		{
-			Program.AnotherClass.Main.GetParameters(); // call of `.` example
+			Program.AnotherClass.Main.GetParameters(); 
 			var arraySize = 10;
-			var A = new Array[arraySize];
+			var A = Array[arraySize];
 			A.Fill(Utilities.Random(0, 10));
 			Console.Print(A);
 			BubbleSort(A, A.predicate);
@@ -21,8 +24,6 @@ namespace Program
 
 		public static function BubbleSort(A, predicate)
 		{
-			var i = 3;
-			i += 4;
 			for( i = 0; i < A.size(); i += 1)
 			{
 				for(var j = i; j < A.size(); j += 1)

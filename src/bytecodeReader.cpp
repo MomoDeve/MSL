@@ -36,6 +36,7 @@ void BytecodeReader::Read(std::ostream& out)
 		#define OPCODE_CASE(OP) case OP: out << STRING(OP) << ' ';
 		#define READ_SIZE_OPCODE(OP) OPCODE_CASE(OP) out << ReadSize();
 		#define READ_HASH_CASE(OP) OPCODE_CASE(OP) out << '#' << ReadSize();
+		#define READ_LABEL_CASE(OP) OPCODE_CASE(OP) out << 'L' << GenericRead<uint16_t>();
 		#define BINARY(object, size) std::bitset<8 * size>(object)
 		switch (op)
 		{
@@ -51,7 +52,9 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		OPCODE_CASE(POP_TO_RETURN)
 			break;
-		OPCODE_CASE(POP_STACK_TOP)
+		OPCODE_CASE(RETURN)
+			break;
+		OPCODE_CASE(PUSH_STACKFRAME)
 			break;
 		OPCODE_CASE(ASSEMBLY_BEGIN_DECL)
 			break;
@@ -66,8 +69,6 @@ void BytecodeReader::Read(std::ostream& out)
 		OPCODE_CASE(NEGATIVE_OP)
 			break;
 		OPCODE_CASE(POSITIVE_OP)
-			break;
-		OPCODE_CASE(ALLOC_PUSH)
 			break;
 		OPCODE_CASE(SUM_OP)
 			break;
@@ -89,6 +90,8 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		OPCODE_CASE(GET_INDEX)
 			break;
+		OPCODE_CASE(CALL_FUNCTION)
+			break;
 		OPCODE_CASE(CMP_EQ)
 			break;
 		OPCODE_CASE(CMP_NEQ)
@@ -105,6 +108,8 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		OPCODE_CASE(CMP_OR)
 			break;
+		OPCODE_CASE(POP_STACK_TOP)
+			break;
 		READ_HASH_CASE(PUSH_STRING)
 			break;
 		READ_HASH_CASE(PUSH_INTEGER)
@@ -113,11 +118,17 @@ void BytecodeReader::Read(std::ostream& out)
 			break;
 		READ_HASH_CASE(PUSH_OBJECT)
 			break;
-		READ_HASH_CASE(PUSH_FUNCTION)
+		READ_HASH_CASE(ALLOC_VAR)
 			break;
-		READ_HASH_CASE(SET_CONST_VAR)
+		READ_HASH_CASE(ALLOC_CONST_VAR)
 			break;
-		READ_HASH_CASE(SET_VAR)
+		READ_LABEL_CASE(SET_LABEL)
+			break;
+		READ_LABEL_CASE(JUMP_IF_TRUE)
+			break;
+		READ_LABEL_CASE(JUMP_IF_FALSE)
+			break;
+		READ_LABEL_CASE(JUMP)
 			break;
 		READ_SIZE_OPCODE(NAMESPACE_POOL_DECL_SIZE)
 			break;

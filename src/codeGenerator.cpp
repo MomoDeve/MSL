@@ -86,9 +86,11 @@ void CodeGenerator::GenerateMethod(const Function& method)
 	if (method.hasBody())
 	{
 		write(OPCODE::METHOD_BODY_BEGIN_DECL);
+		write(OPCODE::PUSH_STACKFRAME);
 		method.GenerateBytecode(*this);
 		write(OPCODE::METHOD_BODY_END_DECL);
 	}
+	ControlAttribute::Reset();
 }
 
 void CodeGenerator::GenerateMethodPool(const Class& _class)

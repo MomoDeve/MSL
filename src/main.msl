@@ -4,10 +4,23 @@ namespace Program
 	{	
 		public function Test()
 		{
-			foreach(var i in Array)
+			if(true)
 			{
-				
+			
 			}
+			elif (true)
+			{
+			
+			}
+			elif (true)
+			{
+			
+			}
+			elif (true)
+			{
+			
+			}
+			else { }
 		}
 	
 		public static function Main(args) 

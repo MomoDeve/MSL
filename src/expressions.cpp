@@ -53,7 +53,38 @@ IfExpression::IfExpression()
 
 void IfExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 {
+	uint16_t labelId = ControlAttribute::id;
+	ControlAttribute::id += (uint16_t)ifStatements.size();
 
+	uint16_t endIf = 0;
+	if (hasElseBlock())
+	{
+		endIf = ControlAttribute::id;
+		ControlAttribute::id++;
+	}
+	else
+	{
+		endIf = ControlAttribute::id - 1;
+	}
+
+	for (size_t i = 0; i < ifStatements.size(); i++, labelId++)
+	{
+		ifStatements[i]->GenerateBytecode(code, function);
+		code.write(OPCODE::JUMP_IF_FALSE);
+		code.write(labelId);
+		GenerateExpressionListBytecode(bodies[i], code, function);
+		code.write(OPCODE::JUMP);
+		code.write(endIf);
+		code.write(OPCODE::SET_LABEL);
+		code.write(labelId);
+	}
+
+	if (hasElseBlock())
+	{
+		GenerateExpressionListBytecode(bodies.back(), code, function);
+		code.write(OPCODE::SET_LABEL);
+		code.write(endIf);
+	}
 }
 
 ObjectDeclareExpression::ObjectDeclareExpression()
@@ -592,6 +623,7 @@ void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& c
 		case ExpressionType::UNARY:
 		case ExpressionType::CALL:
 		case ExpressionType::INDEX:
+		case ExpressionType::DECLARE:
 			code.write(OPCODE::POP_STACK_TOP);
 			break;
 		default:

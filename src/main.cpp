@@ -1,9 +1,8 @@
 #include "streamReader.h"
 #include "lexer.h"
-#include "parser.h"
-#include "VM.h"
 #include "codeGenerator.h"
 #include "bytecodeReader.h"
+#include "parser.h"
 
 #include <iostream>
 #include <sstream>
@@ -14,15 +13,15 @@ using namespace std;
 void createAssembly(string filePath)
 {
 	ifstream file(filePath + ".msl");
-	StreamReader reader;
+	MSL::compiler::StreamReader reader;
 
 	reader << file;
 	file.close();
 
-	Lexer lexer(reader.GetBuffer());
+	MSL::compiler::Lexer lexer(reader.GetBuffer());
 	lexer.ReplaceStrings(reader.GetReplacedStrings());
 
-	Parser parser(&lexer, &cout, Parser::Mode::NO_DEBUG);
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::NO_DEBUG);
 	parser.Parse();
 
 	cout << endl;
@@ -30,21 +29,21 @@ void createAssembly(string filePath)
 	{
 		return;
 	}
-	Assembly assembly = parser.PullAssembly();
-	for (const Namespace& _namespace : assembly.GetNamespaces())
+	MSL::compiler::Assembly assembly = parser.PullAssembly();
+	for (const auto& _namespace : assembly.GetNamespaces())
 	{
 		cout << _namespace.toString() << "\n\n";
 		for (const auto& member : _namespace.getMembers())
 		{
-			cout << member.toString() << endl;
+			cout << member.ToString() << endl;
 		}
 	}
-
-	CodeGenerator generator(std::move(assembly));
+	MSL::compiler::CodeGenerator generator(std::move(assembly));
 	generator.GenerateBytecode(filePath + ".emsl");
 
 	cout << endl;
 }
+
 
 int main()
 {
@@ -52,7 +51,7 @@ int main()
 
 	string filePath = "main";
 	createAssembly(filePath);
-	BytecodeReader reader(filePath + ".emsl");
+	MSL::BytecodeReader reader(filePath + ".emsl");
 	std::ofstream binary("main_binary.bmsl");
 	reader.Read(binary);
 	binary.close();

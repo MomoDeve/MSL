@@ -4,23 +4,7 @@ namespace Program
 	{	
 		public function Test()
 		{
-			if(true)
-			{
-			
-			}
-			elif (true)
-			{
-			
-			}
-			elif (true)
-			{
-			
-			}
-			elif (true)
-			{
-			
-			}
-			else { }
+		
 		}
 	
 		public static function Main(args) 
@@ -61,6 +45,11 @@ namespace Program
 			var str1 = "hello world";
 			var str2 = "hello\nworld\t";
 			var str3 = "hello " + "world";
+			return;
+		}
+		
+		public function AnotherClass()
+		{
 			return;
 		}
 	}

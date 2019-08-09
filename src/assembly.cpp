@@ -1,25 +1,31 @@
 #include "assembly.h"
 
-Assembly::Assembly() { }
-
-Assembly::Assembly(Assembly&& assembly)
-	: table(std::move(assembly.table)), namespaces(std::move(assembly.namespaces))
+namespace MSL
 {
-}
+	namespace compiler
+	{
+		Assembly::Assembly() { }
 
-void Assembly::InsertNamespace(const std::string& name, Namespace&& _namespace)
-{
-	size_t index = namespaces.size();
-	namespaces.push_back(std::move(_namespace));
-	table.insert({ name, index });
-}
+		Assembly::Assembly(Assembly&& assembly)
+			: table(std::move(assembly.table)), namespaces(std::move(assembly.namespaces))
+		{
+		}
 
-const Assembly::NamespaceArray& Assembly::GetNamespaces() const
-{
-	return namespaces;
-}
+		void Assembly::InsertNamespace(const std::string& name, Namespace&& _namespace)
+		{
+			size_t index = namespaces.size();
+			namespaces.push_back(std::move(_namespace));
+			table.insert({ name, index });
+		}
 
-bool Assembly::ContainsNamespace(const std::string& namespaceName) const
-{
-	return table.find(namespaceName) != table.end();
+		const Assembly::NamespaceArray& Assembly::GetNamespaces() const
+		{
+			return namespaces;
+		}
+
+		bool Assembly::ContainsNamespace(const std::string& namespaceName) const
+		{
+			return table.find(namespaceName) != table.end();
+		}
+	}
 }

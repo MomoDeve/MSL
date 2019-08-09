@@ -1,41 +1,45 @@
 #include "namespace.h"
 
-Namespace::Namespace()
-	: Namespace("unknown")
+namespace MSL
 {
-}
+	namespace compiler
+	{
+		Namespace::Namespace()
+			: Namespace("unnamed") { }
 
-Namespace::Namespace(std::string name)
-	: name(std::move(name)) { }
+		Namespace::Namespace(std::string name)
+			: name(std::move(name)) { }
 
-Namespace::Namespace(Namespace&& other)
-	: table(std::move(other.table)), classes(std::move(other.classes)), name(std::move(other.name))
-{
-}
+		Namespace::Namespace(Namespace&& other)
+			: table(std::move(other.table)), classes(std::move(other.classes)), name(std::move(other.name))
+		{
+		}
 
-std::string Namespace::getName() const
-{
-	return name;
-}
+		std::string Namespace::getName() const
+		{
+			return name;
+		}
 
-std::string Namespace::toString() const
-{
-	return std::string("namespace " + getName());
-}
+		std::string Namespace::toString() const
+		{
+			return std::string("namespace " + getName());
+		}
 
-const Namespace::ClassArray& Namespace::getMembers() const
-{
-	return classes;
-}
+		const Namespace::ClassArray& Namespace::getMembers() const
+		{
+			return classes;
+		}
 
-bool Namespace::ContainsClass(const std::string& className) const
-{
-	return table.find(className) != table.end();
-}
+		bool Namespace::ContainsClass(const std::string& className) const
+		{
+			return table.find(className) != table.end();
+		}
 
-void Namespace::addClass(const std::string& name, Class&& _class)
-{
-	size_t index = classes.size();
-	classes.push_back(std::move(_class));
-	table.insert({ name, index });
+		void Namespace::InsertClass(const std::string& name, Class&& _class)
+		{
+			size_t index = classes.size();
+			classes.push_back(std::move(_class));
+			table.insert({ name, index });
+		}
+	}
 }

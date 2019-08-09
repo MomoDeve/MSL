@@ -1,10 +1,9 @@
 #include "baseExpression.h"
 
-BaseExpression::~BaseExpression() { }
-
-uint16_t ControlAttribute::id = 0;
-
-void ControlAttribute::Reset()
+namespace MSL
 {
-	id = 0;
+	namespace compiler
+	{
+		BaseExpression::~BaseExpression() { }
+	}
 }

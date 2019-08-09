@@ -1,193 +1,169 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Исходные файлы">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="MSL">
+      <UniqueIdentifier>{8bb20ab1-45a2-4510-aa50-887dbeccadbf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Файлы ресурсов">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="MSL\compiler">
+      <UniqueIdentifier>{5bb03609-ba54-40e0-8ac8-63274bbfa7e5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="streamReader">
-      <UniqueIdentifier>{faf5b355-75ad-4641-8b99-462d0ffee063}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="stringExtensions">
-      <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="token">
-      <UniqueIdentifier>{61761eb2-5ea1-400f-ba93-1d8a9c13cf44}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="parser">
-      <UniqueIdentifier>{a24e5b37-bd73-4ffd-ad91-4dffbcc7c6c5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="lexer">
-      <UniqueIdentifier>{70db86a8-d164-49e6-81ae-77fe9e602af7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="expression">
-      <UniqueIdentifier>{6219caf4-e7fd-4d22-bfdf-4402ac15c924}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="expression\baseExpression">
-      <UniqueIdentifier>{85325bd8-8f6a-4647-a45d-5cf43989f789}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="expression\expressions">
-      <UniqueIdentifier>{9886b8b7-bc37-41de-99c2-1710dfd058ac}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="bytecode">
-      <UniqueIdentifier>{92722475-aa15-48b2-9d61-c53b57e06901}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="bytecode\instruction">
-      <UniqueIdentifier>{5eed7b3b-b701-40af-a183-56ac67f663ae}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="stack">
-      <UniqueIdentifier>{8c8c38a8-c572-4746-8116-c17c4c50a178}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="codeGenerator">
-      <UniqueIdentifier>{17d856af-e33c-4c7d-8711-38d0968ab745}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="bufferedFile">
+    <Filter Include="MSL\bufferedFile">
       <UniqueIdentifier>{58830eb2-3b18-4035-93bd-7389f64aca26}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy">
+    <Filter Include="MSL\VM">
+      <UniqueIdentifier>{a032d2b9-87a3-4b52-926b-23fbe03cfc20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\opcode">
+      <UniqueIdentifier>{5eed7b3b-b701-40af-a183-56ac67f663ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\lexer">
+      <UniqueIdentifier>{70db86a8-d164-49e6-81ae-77fe9e602af7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\expression">
+      <UniqueIdentifier>{6219caf4-e7fd-4d22-bfdf-4402ac15c924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\expression\baseExpression">
+      <UniqueIdentifier>{85325bd8-8f6a-4647-a45d-5cf43989f789}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\expression\expressions">
+      <UniqueIdentifier>{9886b8b7-bc37-41de-99c2-1710dfd058ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\codeGenerator">
+      <UniqueIdentifier>{17d856af-e33c-4c7d-8711-38d0968ab745}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\bytecodeReader">
+      <UniqueIdentifier>{86336589-605f-493a-9e97-60c8395a257d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\objectHierarchy">
       <UniqueIdentifier>{c3dd7e86-0227-419a-ae4a-ec090352a781}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy\function">
+    <Filter Include="MSL\compiler\objectHierarchy\function">
       <UniqueIdentifier>{e447c5d2-64be-4ec1-8b66-8c7957e89841}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy\namespace">
+    <Filter Include="MSL\compiler\objectHierarchy\namespace">
       <UniqueIdentifier>{d39ed203-0e2c-4295-9d28-6ca9a24613df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy\VM">
-      <UniqueIdentifier>{1d68dd3d-c9bd-468f-9b9f-a9ea8177af05}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ObjectHierarchy\class">
+    <Filter Include="MSL\compiler\objectHierarchy\class">
       <UniqueIdentifier>{cff1c905-0f6b-4161-b6fd-146a30ee05c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy\assembly">
+    <Filter Include="MSL\compiler\objectHierarchy\assembly">
       <UniqueIdentifier>{63858f91-83e4-4f94-b0c6-346848c629c6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ObjectHierarchy\attribute">
+    <Filter Include="MSL\compiler\objectHierarchy\attribute">
       <UniqueIdentifier>{dd39eb97-c1fe-4331-a48a-9a6e5dd68428}</UniqueIdentifier>
     </Filter>
-    <Filter Include="bytecodeReader">
-      <UniqueIdentifier>{86336589-605f-493a-9e97-60c8395a257d}</UniqueIdentifier>
+    <Filter Include="MSL\compiler\parser">
+      <UniqueIdentifier>{a24e5b37-bd73-4ffd-ad91-4dffbcc7c6c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\streamReader">
+      <UniqueIdentifier>{faf5b355-75ad-4641-8b99-462d0ffee063}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\compiler\token">
+      <UniqueIdentifier>{61761eb2-5ea1-400f-ba93-1d8a9c13cf44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\stringExtensions">
+      <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
-      <Filter>lexer</Filter>
+      <Filter>MSL\compiler\lexer</Filter>
     </ClInclude>
     <ClInclude Include="streamReader.h">
-      <Filter>streamReader</Filter>
+      <Filter>MSL\compiler\streamReader</Filter>
     </ClInclude>
     <ClInclude Include="stringExtensions.h">
-      <Filter>stringExtensions</Filter>
+      <Filter>MSL\stringExtensions</Filter>
     </ClInclude>
     <ClInclude Include="function.h">
-      <Filter>ObjectHierarchy\function</Filter>
+      <Filter>MSL\compiler\objectHierarchy\function</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
-      <Filter>parser</Filter>
+      <Filter>MSL\compiler\parser</Filter>
     </ClInclude>
     <ClInclude Include="namespace.h">
-      <Filter>ObjectHierarchy\namespace</Filter>
+      <Filter>MSL\compiler\objectHierarchy\namespace</Filter>
     </ClInclude>
     <ClInclude Include="token.h">
-      <Filter>token</Filter>
+      <Filter>MSL\compiler\token</Filter>
     </ClInclude>
     <ClInclude Include="baseExpression.h">
-      <Filter>expression\baseExpression</Filter>
+      <Filter>MSL\compiler\expression\baseExpression</Filter>
     </ClInclude>
     <ClInclude Include="expressions.h">
-      <Filter>expression\expressions</Filter>
-    </ClInclude>
-    <ClInclude Include="instruction.h">
-      <Filter>bytecode\instruction</Filter>
-    </ClInclude>
-    <ClInclude Include="VM.h">
-      <Filter>ObjectHierarchy\VM</Filter>
-    </ClInclude>
-    <ClInclude Include="stack.h">
-      <Filter>stack</Filter>
+      <Filter>MSL\compiler\expression\expressions</Filter>
     </ClInclude>
     <ClInclude Include="class.h">
-      <Filter>ObjectHierarchy\class</Filter>
+      <Filter>MSL\compiler\objectHierarchy\class</Filter>
     </ClInclude>
     <ClInclude Include="assembly.h">
-      <Filter>ObjectHierarchy\assembly</Filter>
+      <Filter>MSL\compiler\objectHierarchy\assembly</Filter>
     </ClInclude>
     <ClInclude Include="codeGenerator.h">
-      <Filter>codeGenerator</Filter>
+      <Filter>MSL\compiler\codeGenerator</Filter>
     </ClInclude>
     <ClInclude Include="bufferedFile.h">
-      <Filter>bufferedFile</Filter>
+      <Filter>MSL\bufferedFile</Filter>
     </ClInclude>
     <ClInclude Include="attribute.h">
-      <Filter>ObjectHierarchy\attribute</Filter>
+      <Filter>MSL\compiler\objectHierarchy\attribute</Filter>
     </ClInclude>
     <ClInclude Include="bytecodeReader.h">
-      <Filter>bytecodeReader</Filter>
+      <Filter>MSL\bytecodeReader</Filter>
+    </ClInclude>
+    <ClInclude Include="opcode.h">
+      <Filter>MSL\VM\opcode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="lexer.cpp">
-      <Filter>lexer</Filter>
+      <Filter>MSL\compiler\lexer</Filter>
     </ClCompile>
     <ClCompile Include="streamReader.cpp">
-      <Filter>streamReader</Filter>
+      <Filter>MSL\compiler\streamReader</Filter>
     </ClCompile>
     <ClCompile Include="stringExtensions.cpp">
-      <Filter>stringExtensions</Filter>
+      <Filter>MSL\stringExtensions</Filter>
     </ClCompile>
     <ClCompile Include="token.cpp">
-      <Filter>token</Filter>
+      <Filter>MSL\compiler\token</Filter>
     </ClCompile>
     <ClCompile Include="function.cpp">
-      <Filter>ObjectHierarchy\function</Filter>
+      <Filter>MSL\compiler\objectHierarchy\function</Filter>
     </ClCompile>
     <ClCompile Include="parser.cpp">
-      <Filter>parser</Filter>
+      <Filter>MSL\compiler\parser</Filter>
     </ClCompile>
     <ClCompile Include="namespace.cpp">
-      <Filter>ObjectHierarchy\namespace</Filter>
+      <Filter>MSL\compiler\objectHierarchy\namespace</Filter>
     </ClCompile>
     <ClCompile Include="baseExpression.cpp">
-      <Filter>expression\baseExpression</Filter>
+      <Filter>MSL\compiler\expression\baseExpression</Filter>
     </ClCompile>
     <ClCompile Include="expressions.cpp">
-      <Filter>expression\expressions</Filter>
-    </ClCompile>
-    <ClCompile Include="VM.cpp">
-      <Filter>ObjectHierarchy\VM</Filter>
+      <Filter>MSL\compiler\expression\expressions</Filter>
     </ClCompile>
     <ClCompile Include="class.cpp">
-      <Filter>ObjectHierarchy\class</Filter>
+      <Filter>MSL\compiler\objectHierarchy\class</Filter>
     </ClCompile>
     <ClCompile Include="assembly.cpp">
-      <Filter>ObjectHierarchy\assembly</Filter>
-    </ClCompile>
-    <ClCompile Include="instruction.cpp">
-      <Filter>bytecode\instruction</Filter>
+      <Filter>MSL\compiler\objectHierarchy\assembly</Filter>
     </ClCompile>
     <ClCompile Include="bufferedFile.cpp">
-      <Filter>bufferedFile</Filter>
+      <Filter>MSL\bufferedFile</Filter>
     </ClCompile>
     <ClCompile Include="codeGenerator.cpp">
-      <Filter>codeGenerator</Filter>
+      <Filter>MSL\compiler\codeGenerator</Filter>
     </ClCompile>
     <ClCompile Include="attribute.cpp">
-      <Filter>ObjectHierarchy\attribute</Filter>
+      <Filter>MSL\compiler\objectHierarchy\attribute</Filter>
     </ClCompile>
     <ClCompile Include="bytecodeReader.cpp">
-      <Filter>bytecodeReader</Filter>
+      <Filter>MSL\bytecodeReader</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="main.msl">
-      <Filter>Файлы ресурсов</Filter>
-    </None>
+    <None Include="main.msl" />
   </ItemGroup>
 </Project>

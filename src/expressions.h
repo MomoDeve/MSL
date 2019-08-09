@@ -9,154 +9,200 @@
 #include <stack>
 #include <ostream>
 
-template<typename T>
-using unique_ptr = std::unique_ptr<T>;
-
-void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function);
-
-struct BinaryExpression : public BaseExpression
+namespace MSL
 {
-	Token::Type type;
-	unique_ptr<BaseExpression> left;
-	unique_ptr<BaseExpression> right;
-	void Print(std::ostream& out, int depth = 0) const override;
+	namespace compiler
+	{
+		template<typename T>
+		using unique_ptr = std::unique_ptr<T>;
 
-	BinaryExpression();
+		/*
+		generates bytecode for each of expressionList expressions
+		*/
+		void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function);
 
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+		/*
+		binary expression (such as +, -, *, etc)
+		*/
+		struct BinaryExpression : public BaseExpression
+		{
+			Token::Type type;
+			unique_ptr<BaseExpression> left;
+			unique_ptr<BaseExpression> right;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-struct UnaryExpression : public BaseExpression
-{
-	Token::Type type;
-	unique_ptr<BaseExpression> expression;
-	void Print(std::ostream& out, int depth = 0) const override;
+			BinaryExpression();
 
-	UnaryExpression();
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+		/*
+		unary expression (such as -, +)
+		*/
+		struct UnaryExpression : public BaseExpression
+		{
+			Token::Type type;
+			unique_ptr<BaseExpression> expression;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-struct ForExpression : public BaseExpression, public ControlAttribute
-{
-	ExpressionList body;
-	unique_ptr<BaseExpression> init;
-	unique_ptr<BaseExpression> predicate;
-	unique_ptr<BaseExpression> iteration;
+			UnaryExpression();
 
-	void Print(std::ostream& out, int depth = 0) const override;
-	bool hasIterationStatement() const;
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-	ForExpression();
+		/*
+		for expression (with iterator and predicate)
+		*/
+		struct ForExpression : public BaseExpression
+		{
+			ExpressionList body;
+			unique_ptr<BaseExpression> init;
+			unique_ptr<BaseExpression> predicate;
+			unique_ptr<BaseExpression> iteration;
 
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+			void Print(std::ostream& out, int depth = 0) const override;
+			bool hasIterationStatement() const;
 
-struct WhileExpression : public BaseExpression, public ControlAttribute
-{
-	ExpressionList body;
-	unique_ptr<BaseExpression> predicate;
+			ForExpression();
 
-	void Print(std::ostream& out, int depth = 0) const override;
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-	WhileExpression();
+		/*
+		while expression (with predicate)
+		*/
+		struct WhileExpression : public BaseExpression
+		{
+			ExpressionList body;
+			unique_ptr<BaseExpression> predicate;
 
-	virtual void GenerateBytecode(CodeGenerator & code, const Function& function) const override;
-};
+			void Print(std::ostream& out, int depth = 0) const override;
 
-struct IfExpression : public BaseExpression, public ControlAttribute
-{
-	ExpressionList ifStatements;
-	std::vector<ExpressionList> bodies;
+			WhileExpression();
 
-	bool hasElseBlock() const;
-	void Print(std::ostream& out, int depth = 0) const override;
-	ExpressionList& getElseBlock();
+			virtual void GenerateBytecode(CodeGenerator & code, const Function& function) const override;
+		};
 
-	IfExpression();
+		/*
+		if expression (with elif and else statements)
+		*/
+		struct IfExpression : public BaseExpression
+		{
+			ExpressionList ifStatements;
+			std::vector<ExpressionList> bodies;
 
-	// Унаследовано через BaseExpression
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+			bool hasElseBlock() const;
+			void Print(std::ostream& out, int depth = 0) const override;
+			ExpressionList& getElseBlock();
 
-struct CallExpression : public BaseExpression
-{
-	bool hasParent = false;
-	std::string functionName;
-	ExpressionList parameters;
-	void Print(std::ostream& out, int depth = 0) const override;
+			IfExpression();
 
-	CallExpression();
 
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-struct IndexExpression : public BaseExpression
-{
-	std::string objectName;
-	unique_ptr<BaseExpression> parameter;
-	void Print(std::ostream& out, int depth = 0) const override;
+		/*
+		call expression (used for function, 'hasParent' indicates existance of caller)
+		*/
+		struct CallExpression : public BaseExpression
+		{
+			bool hasParent = false;
+			std::string functionName;
+			ExpressionList parameters;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-	IndexExpression();
+			CallExpression();
 
-	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
-};
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-struct ObjectExpression : public BaseExpression
-{
-	Token object = Token(Token::Type::ERROR, "unnamed");
-	void Print(std::ostream& out, int depth = 0) const override;
-	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
-};
+		/*
+		index expression (operator [] with only one parameter)
+		*/
+		struct IndexExpression : public BaseExpression
+		{
+			std::string objectName;
+			unique_ptr<BaseExpression> parameter;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-struct ObjectDeclareExpression : public BaseExpression
-{
-	std::string objectName;
-	unique_ptr<BaseExpression> assignment;
-	bool isConst;
+			IndexExpression();
 
-	ObjectDeclareExpression();
+			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
+		};
 
-	bool hasAssignment() const;
-	void Print(std::ostream& out, int depth = 0) const override;
+		/*
+		object expression (just its name and type in case of constant)
+		*/
+		struct ObjectExpression : public BaseExpression
+		{
+			Token object = Token(Token::Type::ERROR, "unnamed");
+			void Print(std::ostream& out, int depth = 0) const override;
+			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
+		};
 
-	virtual void GenerateBytecode( CodeGenerator& code, const Function& function) const override;
-};
+		/*
+		object declare (object name and assignment pointer)
+		*/
+		struct ObjectDeclareExpression : public BaseExpression
+		{
+			std::string objectName;
+			unique_ptr<BaseExpression> assignment;
+			bool isConst;
 
-struct LambdaExpression : public BaseExpression
-{
-	std::vector<std::string> params;
-	ExpressionList body;
+			ObjectDeclareExpression();
 
-	void Print(std::ostream& out, int depth = 0) const override;
+			bool hasAssignment() const;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-	LambdaExpression();
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
 
-	// Унаследовано через BaseExpression
-	virtual void GenerateBytecode( CodeGenerator & code, const Function & function) const override;
-};
+		/*
+		Currently unused in compiler code
+		*/
+		struct LambdaExpression : public BaseExpression
+		{
+			std::vector<std::string> params;
+			ExpressionList body;
 
-struct ForeachExpression : public BaseExpression, public ControlAttribute
-{
-	std::string iterator;
-	unique_ptr<BaseExpression> container;
-	ExpressionList body;
+			void Print(std::ostream& out, int depth = 0) const override;
 
-	void Print(std::ostream& out, int depth = 0) const override;
+			LambdaExpression();
 
-	ForeachExpression();
 
-	// Унаследовано через BaseExpression
-	virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-};
+			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
+		};
 
-struct ReturnExpression : public BaseExpression
-{
-	unique_ptr<BaseExpression> returnValue;
-	void Print(std::ostream& out, int depth = 0) const override;
-	bool Empty() const;
+		/*
+		foreach exptression (with iterator over container)
+		object should have begin(), next() and end() methods
+		*/
+		struct ForeachExpression : public BaseExpression
+		{
+			std::string iterator;
+			unique_ptr<BaseExpression> container;
+			ExpressionList body;
 
-	ReturnExpression();
+			void Print(std::ostream& out, int depth = 0) const override;
 
-	virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
-};
+			ForeachExpression();
+
+
+			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
+		};
+
+		/*
+		return expression (with pointer to return value)
+		*/
+		struct ReturnExpression : public BaseExpression
+		{
+			unique_ptr<BaseExpression> returnValue;
+			void Print(std::ostream& out, int depth = 0) const override;
+			bool Empty() const;
+
+			ReturnExpression();
+
+			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
+		};
+	}
+}

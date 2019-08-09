@@ -123,9 +123,7 @@
     <ClInclude Include="codeGenerator.h" />
     <ClInclude Include="expressions.h" />
     <ClInclude Include="function.h" />
-    <ClInclude Include="instruction.h" />
-    <ClInclude Include="stack.h" />
-    <ClInclude Include="VM.h" />
+    <ClInclude Include="opcode.h" />
     <ClInclude Include="lexer.h" />
     <ClInclude Include="namespace.h" />
     <ClInclude Include="class.h" />
@@ -143,8 +141,6 @@
     <ClCompile Include="codeGenerator.cpp" />
     <ClCompile Include="expressions.cpp" />
     <ClCompile Include="function.cpp" />
-    <ClCompile Include="instruction.cpp" />
-    <ClCompile Include="VM.cpp" />
     <ClCompile Include="lexer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="namespace.cpp" />

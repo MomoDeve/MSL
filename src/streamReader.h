@@ -50,11 +50,6 @@ namespace MSL
 			token separator is used by lexer to indicate next token
 			*/
 			const char tokenSeparator = TOKEN_SEPARATOR;
-			
-			/*
-			creates an empty StreamReader object
-			*/
-			StreamReader();
 			/*
 			reads all contents of std::istream object. Edited content is inserted into StreamReader::buffer
 			can be used more than once to read multiple files or input from console

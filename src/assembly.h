@@ -28,7 +28,7 @@ namespace MSL
 			/*
 			creates empty assembly
 			*/
-			Assembly();
+			Assembly() = default;
 			/*
 			assembly cannot be copied, consider using move instead
 			*/

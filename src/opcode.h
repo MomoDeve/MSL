@@ -67,6 +67,8 @@ namespace MSL
 			POP_STACK_TOP,
 		};
 
+		std::string ToString(OPCODE op);
+
 		typedef std::vector<OPCODE> InstructionVector;
 	}
 }

@@ -4,8 +4,6 @@ namespace MSL
 {
 	namespace compiler
 	{
-		StreamReader::StreamReader() { }
-
 		std::string StreamReader::GetBuffer() const
 		{
 			return buffer.str();

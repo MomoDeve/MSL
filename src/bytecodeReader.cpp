@@ -28,7 +28,7 @@ namespace MSL
 		}
 	}
 
-	void BytecodeReader::Read(std::ostream& out)
+	void BytecodeReader::ReadToEnd(std::ostream& out)
 	{
 		using namespace VM;
 		OPCODE op;
@@ -191,8 +191,7 @@ namespace MSL
 
 	std::ostream& operator<<(std::ostream& out, BytecodeReader& reader)
 	{
-		reader.Read(out);
+		reader.ReadToEnd(out);
 		return out;
 	}
-
 }

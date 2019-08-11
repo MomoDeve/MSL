@@ -54,7 +54,7 @@ namespace MSL
 		/*
 		reads binary file. Readable content is passed to ostream provided
 		*/
-		void Read(std::ostream& out);
+		void ReadToEnd(std::ostream& out);
 		/*
 		reads binary file. Readable content is passed to ostream provided
 		*/

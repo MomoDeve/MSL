@@ -3,10 +3,12 @@
 #include "codeGenerator.h"
 #include "bytecodeReader.h"
 #include "parser.h"
+#include "virtualMachine.h"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -44,16 +46,22 @@ void createAssembly(string filePath)
 	cout << endl;
 }
 
-
 int main()
 {
 	#define SIZE(T) cout << #T << ": " << sizeof(T) << endl
-
 	string filePath = "main";
 	createAssembly(filePath);
 	MSL::BytecodeReader reader(filePath + ".emsl");
 	std::ofstream binary("main_binary.bmsl");
-	reader.Read(binary);
+	reader.ReadToEnd(binary);
 	binary.close();
+
+	MSL::VM::Configuration config;
+	config.streams = { &std::cin, &std::cout, &std::cout };
+	MSL::VM::VirtualMachine VM(move(config));
+	std::ifstream executable(filePath + ".emsl", std::ios::binary);
+	VM.AddBytecodeFile(&executable);
+	VM.Run();
+	cout << VM.GetErrors() << endl;
 	system("pause");
 }

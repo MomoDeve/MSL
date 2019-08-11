@@ -2,6 +2,10 @@ namespace Program
 {
 	internal class AnotherClass
 	{	
+		var attr1;
+		const var attr2;
+		public static const var attr3;
+		
 		public function Test()
 		{
 		
@@ -45,11 +49,6 @@ namespace Program
 			var str1 = "hello world";
 			var str2 = "hello\nworld\t";
 			var str3 = "hello " + "world";
-			return;
-		}
-		
-		public function AnotherClass()
-		{
 			return;
 		}
 	}

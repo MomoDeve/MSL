@@ -20,6 +20,6 @@ namespace MSL
 		}
 
 		Attribute::Attribute(const std::string& name)
-			: name(name) { }
+			: name(name), modifiers(0) { }
 	}
 }

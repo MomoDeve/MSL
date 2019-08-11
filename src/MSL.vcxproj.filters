@@ -64,6 +64,30 @@
     <Filter Include="MSL\stringExtensions">
       <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MSL\VM\objects">
+      <UniqueIdentifier>{82161cbb-f624-486b-a240-18449fea591e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="momo">
+      <UniqueIdentifier>{d3c09221-7b2d-4946-953a-c3780e3e5ae1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="momo\bigInteger">
+      <UniqueIdentifier>{eb076d96-a9f7-4405-82ac-d502bbeceaa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\virtualMachine">
+      <UniqueIdentifier>{15a62816-dd9b-4006-85cd-b602fa7b56ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\configuration">
+      <UniqueIdentifier>{eb4dc456-879b-465a-bb83-6d3e64050f56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\types">
+      <UniqueIdentifier>{500c0069-1aca-4e7f-a455-a2f2bf98db28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\assemblyEditor">
+      <UniqueIdentifier>{c5226d52-3535-46f3-b30e-d07bd65d9c16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\callPath">
+      <UniqueIdentifier>{d36d46d4-5823-40a8-a5ec-324a819e34d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -114,6 +138,39 @@
     <ClInclude Include="opcode.h">
       <Filter>MSL\VM\opcode</Filter>
     </ClInclude>
+    <ClInclude Include="objects.h">
+      <Filter>MSL\VM\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="bigInteger.h">
+      <Filter>momo\bigInteger</Filter>
+    </ClInclude>
+    <ClInclude Include="classType.h">
+      <Filter>MSL\VM\types</Filter>
+    </ClInclude>
+    <ClInclude Include="virtualMachine.h">
+      <Filter>MSL\VM\virtualMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="configuration.h">
+      <Filter>MSL\VM\configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="assemblyType.h">
+      <Filter>MSL\VM\types</Filter>
+    </ClInclude>
+    <ClInclude Include="namespaceType.h">
+      <Filter>MSL\VM\types</Filter>
+    </ClInclude>
+    <ClInclude Include="assemblyEditor.h">
+      <Filter>MSL\VM\assemblyEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="attributeType.h">
+      <Filter>MSL\VM\types</Filter>
+    </ClInclude>
+    <ClInclude Include="methodType.h">
+      <Filter>MSL\VM\types</Filter>
+    </ClInclude>
+    <ClInclude Include="callPath.h">
+      <Filter>MSL\VM\callPath</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lexer.cpp">
@@ -137,9 +194,6 @@
     <ClCompile Include="namespace.cpp">
       <Filter>MSL\compiler\objectHierarchy\namespace</Filter>
     </ClCompile>
-    <ClCompile Include="baseExpression.cpp">
-      <Filter>MSL\compiler\expression\baseExpression</Filter>
-    </ClCompile>
     <ClCompile Include="expressions.cpp">
       <Filter>MSL\compiler\expression\expressions</Filter>
     </ClCompile>
@@ -162,6 +216,21 @@
       <Filter>MSL\bytecodeReader</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="bigInteger.cpp">
+      <Filter>momo\bigInteger</Filter>
+    </ClCompile>
+    <ClCompile Include="objects.cpp">
+      <Filter>MSL\VM\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="virtualMachine.cpp">
+      <Filter>MSL\VM\virtualMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="assemblyEditor.cpp">
+      <Filter>MSL\VM\assemblyEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="opcode.cpp">
+      <Filter>MSL\VM\opcode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />

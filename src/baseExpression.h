@@ -54,7 +54,7 @@ namespace MSL
 			/*
 			virtual destructor of BaseExpression class
 			*/
-			virtual ~BaseExpression();
+			virtual ~BaseExpression() = default;
 		};
 
 		/*

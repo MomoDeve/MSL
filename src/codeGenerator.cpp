@@ -88,13 +88,10 @@ namespace MSL
 			{
 				writeString(variable);
 			}
-			if (method.hasBody())
-			{
-				write(OPCODE::METHOD_BODY_BEGIN_DECL);
-				write(OPCODE::PUSH_STACKFRAME);
-				method.GenerateBytecode(*this);
-				write(OPCODE::METHOD_BODY_END_DECL);
-			}
+			write(OPCODE::METHOD_BODY_BEGIN_DECL);
+			write(OPCODE::PUSH_STACKFRAME);
+			method.GenerateBytecode(*this);
+			write(OPCODE::METHOD_BODY_END_DECL);
 		}
 
 		void CodeGenerator::GenerateMethodPool(const Class& _class)

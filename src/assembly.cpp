@@ -4,8 +4,6 @@ namespace MSL
 {
 	namespace compiler
 	{
-		Assembly::Assembly() { }
-
 		Assembly::Assembly(Assembly&& assembly)
 			: table(std::move(assembly.table)), namespaces(std::move(assembly.namespaces))
 		{

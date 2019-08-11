@@ -111,10 +111,7 @@ namespace MSL
 
 		void Function::GenerateBytecode(CodeGenerator& generator) const
 		{
-			if (hasBody())
-			{
-				GenerateExpressionListBytecode(*body, generator, *this);
-			}
+			GenerateExpressionListBytecode(*body, generator, *this);
 		}
 
 		std::string Function::GenerateUniqueName(const std::string& name, size_t paramSize)

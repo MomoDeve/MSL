@@ -244,6 +244,7 @@ namespace MSL
 				Function constructor(classObject.name);
 				constructor.modifiers = Function::Modifiers::_PUBLIC | Function::Modifiers::_CONSTRUCTOR;
 				constructor.body = unique_ptr<ExpressionList>(new ExpressionList());
+				constructor.body->push_back(std::unique_ptr<BaseExpression>(new ReturnExpression()));
 				classObject.InsertMethod(classObject.name, std::move(constructor));
 			}
 

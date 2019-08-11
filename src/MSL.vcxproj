@@ -116,13 +116,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="assembly.h" />
+    <ClInclude Include="assemblyEditor.h" />
+    <ClInclude Include="assemblyType.h" />
     <ClInclude Include="attribute.h" />
+    <ClInclude Include="attributeType.h" />
     <ClInclude Include="baseExpression.h" />
+    <ClInclude Include="bigInteger.h" />
     <ClInclude Include="bufferedFile.h" />
     <ClInclude Include="bytecodeReader.h" />
+    <ClInclude Include="callPath.h" />
     <ClInclude Include="codeGenerator.h" />
+    <ClInclude Include="configuration.h" />
     <ClInclude Include="expressions.h" />
     <ClInclude Include="function.h" />
+    <ClInclude Include="methodType.h" />
+    <ClInclude Include="namespaceType.h" />
+    <ClInclude Include="objects.h" />
     <ClInclude Include="opcode.h" />
     <ClInclude Include="lexer.h" />
     <ClInclude Include="namespace.h" />
@@ -131,11 +140,14 @@
     <ClInclude Include="streamReader.h" />
     <ClInclude Include="stringExtensions.h" />
     <ClInclude Include="token.h" />
+    <ClInclude Include="classType.h" />
+    <ClInclude Include="virtualMachine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="assembly.cpp" />
+    <ClCompile Include="assemblyEditor.cpp" />
     <ClCompile Include="attribute.cpp" />
-    <ClCompile Include="baseExpression.cpp" />
+    <ClCompile Include="bigInteger.cpp" />
     <ClCompile Include="bufferedFile.cpp" />
     <ClCompile Include="bytecodeReader.cpp" />
     <ClCompile Include="codeGenerator.cpp" />
@@ -145,10 +157,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="namespace.cpp" />
     <ClCompile Include="class.cpp" />
+    <ClCompile Include="objects.cpp" />
+    <ClCompile Include="opcode.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="streamReader.cpp" />
     <ClCompile Include="stringExtensions.cpp" />
     <ClCompile Include="token.cpp" />
+    <ClCompile Include="virtualMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />

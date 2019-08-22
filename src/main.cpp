@@ -12,7 +12,39 @@
 
 using namespace std;
 
-void createAssembly(string filePath)
+void PrintErrors(uint32_t errors)
+{
+	cout << "[[ VM ERRORS ]]:" << endl;
+	using ERROR = MSL::VM::VirtualMachine::ERROR;
+	if (errors & ERROR::CALLSTACK_EMPTY)
+		cout << STRING(ERROR::CALLSTACK_EMPTY) << endl; 
+	if (errors & ERROR::INVALID_CALL_ARGUMENT)
+		cout << STRING(ERROR::INVALID_CALL_ARGUMENT) << endl;
+	if (errors & ERROR::INVALID_METHOD_SIGNATURE)
+		cout << STRING(ERROR::INVALID_METHOD_SIGNATURE) << endl;
+	if (errors & ERROR::INVALID_OPCODE)
+		cout << STRING(ERROR::INVALID_OPCODE) << endl;
+	if (errors & ERROR::INVALID_STACKFRAME_OFFSET)
+		cout << STRING(ERROR::INVALID_STACKFRAME_OFFSET) << endl;
+	if (errors & ERROR::OBJECTSTACK_EMPTY)
+		cout << STRING(ERROR::OBJECTSTACK_EMPTY) << endl;
+	if (errors & ERROR::OPERANDSTACK_CORRUPTION)
+		cout << STRING(ERROR::OPERANDSTACK_CORRUPTION) << endl;
+	if (errors & ERROR::TERMINATE_ON_LAUNCH)
+		cout << STRING(ERROR::TERMINATE_ON_LAUNCH) << endl;
+	if (errors & ERROR::OBJECT_NOT_FOUND)
+		cout << STRING(ERROR::OBJECT_NOT_FOUND) << endl;
+	if (errors & ERROR::INVALID_METHOD_SIGNATURE)
+		cout << STRING(ERROR::INVALID_METHOD_SIGNATURE) << endl;
+	if (errors & ERROR::MEMBER_NOT_FOUND)
+		cout << STRING(ERROR::MEMBER_NOT_FOUND) << endl;
+	if (errors & ERROR::INVALID_STACKOBJECT)
+		cout << STRING(ERROR::INVALID_STACKOBJECT) << endl;
+	if (errors & ERROR::STACKOVERFLOW)
+		cout << STRING(ERROR::STACKOVERFLOW) << endl;
+}
+
+bool createAssembly(string filePath)
 {
 	ifstream file(filePath + ".msl");
 	MSL::compiler::StreamReader reader;
@@ -29,7 +61,7 @@ void createAssembly(string filePath)
 	cout << endl;
 	if (!parser.ParsingSuccess())
 	{
-		return;
+		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
 	for (const auto& _namespace : assembly.GetNamespaces())
@@ -44,24 +76,27 @@ void createAssembly(string filePath)
 	generator.GenerateBytecode(filePath + ".emsl");
 
 	cout << endl;
+	return true;
 }
 
 int main()
 {
 	#define SIZE(T) cout << #T << ": " << sizeof(T) << endl
 	string filePath = "main";
-	createAssembly(filePath);
-	MSL::BytecodeReader reader(filePath + ".emsl");
-	std::ofstream binary("main_binary.bmsl");
-	reader.ReadToEnd(binary);
-	binary.close();
+	if (createAssembly(filePath))
+	{
+		MSL::BytecodeReader reader(filePath + ".emsl");
+		std::ofstream binary("main_binary.bmsl");
+		reader.ReadToEnd(binary);
+		binary.close();
 
-	MSL::VM::Configuration config;
-	config.streams = { &std::cin, &std::cout, &std::cout };
-	MSL::VM::VirtualMachine VM(move(config));
-	std::ifstream executable(filePath + ".emsl", std::ios::binary);
-	VM.AddBytecodeFile(&executable);
-	VM.Run();
-	cout << VM.GetErrors() << endl;
+		MSL::VM::Configuration config;
+		config.streams = { &std::cin, &std::cout, &std::cout };
+		MSL::VM::VirtualMachine VM(move(config));
+		std::ifstream executable(filePath + ".emsl", std::ios::binary);
+		VM.AddBytecodeFile(&executable);
+		VM.Run();
+		PrintErrors(VM.GetErrors());
+	}
 	system("pause");
 }

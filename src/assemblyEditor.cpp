@@ -83,9 +83,9 @@ namespace MSL
 				}
 				std::string namespaceName = ns.name;
 				assembly.namespaces.insert({ namespaceName, std::move(ns) });
-				if (CanEditEntryPoint(CallPath::NAMESPACE))
+				if (entryPoint != nullptr && entryPoint->GetNamespace().empty() && !entryPoint->GetClass().empty())
 				{
-					entryPoint->path[CallPath::NAMESPACE] = namespaceName;
+					entryPoint->SetNamespace(namespaceName);
 				}
 			}
 			if (!ExpectOpcode(OPCODE::ASSEMBLY_END_DECL, ReadOPCode())) return assembly;
@@ -113,10 +113,11 @@ namespace MSL
 					return ns;
 				}
 				std::string className = c.name;
+				c.namespaceName = ns.name;
 				ns.classes.insert({ className, std::move(c) });
-				if (CanEditEntryPoint(CallPath::CLASS))
+				if (entryPoint != nullptr && entryPoint->GetClass().empty() && !entryPoint->GetMethod().empty())
 				{
-					entryPoint->path[CallPath::CLASS] = className;
+					entryPoint->SetClass(className);
 				}
 			}
 			return ns;
@@ -145,6 +146,7 @@ namespace MSL
 					return c;
 				}
 				std::string attributeName = attr.name;
+				attr.offset = static_cast<uint16_t>(c.attributes.size());
 				c.attributes.insert({ attributeName, std::move(attr) });
 			}
 
@@ -177,18 +179,18 @@ namespace MSL
 					errors |= ERROR::DECLARATION_DUBLICATE;
 					return c;
 				}
-				std::string methodName = method.name;
+				std::string methodName = method.name + '_' + std::to_string(method.parameters.size()); // unique name for overloading
 				c.methods.insert({ methodName, std::move(method) });
 				if (entryPoint != nullptr && (method.modifiers & MethodType::Modifiers::ENTRY_POINT))
 				{
-					if (!entryPoint->path[CallPath::METHOD].empty())
+					if (!entryPoint->GetMethod().empty())
 					{
 						DisplayError("Trying to add second entry-point to assembly: " + method.name);
 						errors |= ERROR::ENTRY_POINT_DUBLICATE;
 					}
 					else
 					{
-						entryPoint->path[CallPath::METHOD] = methodName;
+						entryPoint->SetMethod(methodName);
 					}
 				}
 			}
@@ -348,12 +350,13 @@ namespace MSL
 					break;
 				case (OPCODE::CALL_FUNCTION):
 					WRITE_OPCODE(OPCODE::CALL_FUNCTION);
+					WRITE_OPCODE(GenericRead<uint8_t>());
 					break;
 				case (OPCODE::RETURN):
 					WRITE_OPCODE(OPCODE::RETURN);
 					break;
 				case (OPCODE::SET_LABEL):
-					WRITE_OPCODE(OPCODE::SET_LABEL);
+					// as labels are stored in OffsetArray, opcode is useless and ignored
 					RegisterLabelInMethod(method, ReadLabel());
 					break;
 				case (OPCODE::JUMP):
@@ -381,9 +384,9 @@ namespace MSL
 					return method; // error occured
 				}
 			}
-			#undef ADD_HASH
-			#undef ADD_LABEL
-			#undef ADD_OPCODE
+			#undef WRITE_OPCODE
+			#undef WRITE_LABEL
+			#undef WRITE_HASH
 			ExpectOpcode(OPCODE::METHOD_BODY_END_DECL, op); // reaches only if error occured
 			return method;
 		}
@@ -396,14 +399,6 @@ namespace MSL
 				method.labels.resize(label + 1);
 			}
 			method.labels[label] = method.body.size(); // current offset of the method body
-		}
-
-		bool AssemblyEditor::CanEditEntryPoint(CallPath::ArrayIndex index)
-		{
-			if (entryPoint == nullptr) return false;
-			if (!entryPoint->path[index].empty()) return false;
-			if (entryPoint->path[index + 1].empty()) return false;
-			return true;
 		}
 
 		OPCODE AssemblyEditor::ReadOPCode()

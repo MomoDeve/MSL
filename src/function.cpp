@@ -62,13 +62,6 @@ namespace MSL
 		Function::Function(std::string name)
 			: name(std::move(name)), modifiers(0), labelInnerId(0) { }
 
-		Function::Function(Function&& function)
-			: params(std::move(function.params)), body(std::move(function.body)), modifiers(function.modifiers),
-			name(std::move(function.name)), locals(std::move(function.locals)), labelInnerId(function.labelInnerId),
-			variables(std::move(function.variables)), dependencies(std::move(function.dependencies))
-		{
-		}
-
 		void Function::InsertLocal(const std::string& localName)
 		{
 			size_t index = variables.size();

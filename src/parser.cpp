@@ -500,10 +500,31 @@ namespace MSL
 			{
 				THROW("function must be declared with parameters: " + memberName);
 			}
+			if (!isStatic)
+			{
+				functionObject.params.push_back("this");
+			}
 			functionObject.name = memberName;
 			if (!ParseFunctionParamsDecl(functionObject.params))
 			{
 				THROW("Error while parsing function parameter list: " + functionObject.name);
+			}
+
+			if (isAbstract)
+			{
+				functionObject.modifiers |= Function::Modifiers::_ABSTRACT;
+			}
+			if (isStatic)
+			{
+				functionObject.modifiers |= Function::Modifiers::_STATIC;
+			}
+			if (isPublic)
+			{
+				functionObject.modifiers |= Function::Modifiers::_PUBLIC;
+			}
+			if (memberName == classObject.name)
+			{
+				functionObject.modifiers |= Function::Modifiers::_CONSTRUCTOR;
 			}
 
 			lexer->Next(); // skipping `)` -> `{` 
@@ -534,23 +555,6 @@ namespace MSL
 			else
 			{
 				lexer->Next();
-			}
-
-			if (isAbstract)
-			{
-				functionObject.modifiers |= Function::Modifiers::_ABSTRACT;
-			}
-			if (isStatic)
-			{
-				functionObject.modifiers |= Function::Modifiers::_STATIC;
-			}
-			if (isPublic)
-			{
-				functionObject.modifiers |= Function::Modifiers::_PUBLIC;
-			}
-			if (memberName == classObject.name)
-			{
-				functionObject.modifiers |= Function::Modifiers::_CONSTRUCTOR;
 			}
 
 			Debug(classObject.name + ": method added: " + memberName);
@@ -1051,6 +1055,10 @@ namespace MSL
 				else
 				{
 					unique_ptr<ObjectExpression> expr(new ObjectExpression());
+					if (object.type == Token::Type::THIS && (function.isStatic()))
+					{
+						Error("`this` reference inside a static function: " + function.name);
+					}
 					expr->object = object;
 					function.InsertDependency(object.value);
 					return TO_BASE(expr);

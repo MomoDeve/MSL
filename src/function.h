@@ -111,7 +111,7 @@ namespace MSL
 			/*
 			moves function contents
 			*/
-			Function(Function&& function);
+			Function(Function&& function) = default;
 
 			/*
 			moves local variable name to VariableArray and adds its name to hash-table

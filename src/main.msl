@@ -8,12 +8,12 @@ namespace Program
 		
 		public function Test()
 		{
-		
+			var attr1 = 3;
 		}
 	
-		public static function Main(args) 
+		public static function Main() 
 		{
-			Program.AnotherClass.Main.GetParameters(); 
+			Program.AnotherClass.Main();
 			var arraySize = 10;
 			var A = Array[arraySize];
 			A.Fill(Utilities.Random(0, 10));

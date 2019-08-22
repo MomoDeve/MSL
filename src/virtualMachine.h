@@ -4,6 +4,7 @@
 #include <istream>
 #include <stack>
 
+#include "objects.h"
 #include "configuration.h"
 #include "callPath.h"
 #include "assemblyEditor.h"
@@ -15,24 +16,80 @@ namespace MSL
 	{
 		class VirtualMachine
 		{
-			std::stack<CallPath> callStack;
+			struct Local
+			{
+				BaseObject* object = nullptr;
+				bool isConst = false;
+			};
+			using CallStack = std::stack<CallPath>;
+			using ObjectStack = std::vector<BaseObject*>;
+			using LocalsTable = std::unordered_map<std::string, Local>;
+			CallStack callStack;
+			ObjectStack objectStack;
+
 			AssemblyType assembly;
 			Configuration config;
 			uint32_t errors;
+			bool ALUinIncrMode;
 
-			NamespaceType* GetNamespace(AssemblyType* _assembly, const std::string& namespaceName);
-			ClassType* GetClass(NamespaceType* _namespace, const std::string& className);
-			MethodType* GetMethod(ClassType* _class, const std::string& methodName);
+			NullObject nullObject;
+			TrueObject trueObject;
+			FalseObject falseObject;
+
+			OPCODE ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset);
+			uint16_t ReadLabel(const std::vector<uint8_t>& bytes, size_t& offset);
+			size_t ReadHash(const std::vector<uint8_t>& bytes, size_t& offset);
+			template<typename T> T GenericRead(const std::vector<uint8_t>& bytes, size_t& offset);
+
+			const MethodType* GetMethodOrNull(const std::string& _namespace, const std::string& _class, const std::string& _method) const;
+			const MethodType* GetMethodOrNull(const ClassType* _class, const std::string& _method) const;
+			const ClassType* GetClassOrNull(const std::string& _namespace, const std::string& _class) const;
+			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
+			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
+			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace);
+			void StartNewStackFrame();
+			void InitializeStaticMembers();
+			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
+
+			BaseObject* AllocUnknown(const std::string& value);
+			BaseObject* AllocNull();
+			BaseObject* AllocTrue();
+			BaseObject* AllocFalse();
+			BaseObject* AllocString(const std::string& value);
+			BaseObject* AllocInteger(const std::string& value);
+			BaseObject* AllocFloat(const std::string& value);
+			BaseObject* AllocClassWrapper(const ClassType* _class);
+			BaseObject* AllocClassObject(const ClassType* _class);
+			BaseObject* AllocNamespaceWrapper(const NamespaceType* _namespace);
 		public:
-			enum ERRORS
+			enum ERROR
 			{
-				EMPTY_CALL_STACK = 1,
+				CALLSTACK_EMPTY = 1,
 				INVALID_CALL_ARGUMENT = 2,
+				TERMINATE_ON_LAUNCH = 4,
+				OPERANDSTACK_CORRUPTION = 8,
+				INVALID_OPCODE = 16,
+				INVALID_STACKFRAME_OFFSET = 32,
+				INVALID_METHOD_SIGNATURE = 64,
+				OBJECTSTACK_EMPTY = 128,
+				INVALID_HASH_VALUE = 256,
+				OBJECT_NOT_FOUND = 512,
+				MEMBER_NOT_FOUND = 1024,
+				INVALID_STACKOBJECT = 2048,
+				STACKOVERFLOW = 4096,
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);
 			void Run();
 			uint32_t GetErrors() const;
 		};
+
+		template<typename T>
+		T VirtualMachine::GenericRead(const std::vector<uint8_t>& bytes, size_t& offset)
+		{
+			const T* result = reinterpret_cast<const T*>(&(bytes[offset]));
+			offset += sizeof(T);
+			return *result;
+		}
 	}
 }

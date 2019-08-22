@@ -11,24 +11,28 @@ namespace MSL
 
 		struct Configuration
 		{
-			struct Streams
+			struct
 			{
 				std::istream* in = nullptr;
 				std::ostream* out = nullptr;
 				std::ostream* error = nullptr;
 			} streams;
-			struct GC
+			struct
 			{
 				size_t initAllocBytes = 4 * KB;
 				size_t maxAllocBytes = 1 * GB;
 				size_t allocMultiplier = 2;
 			} GC;
-			struct Compilation
+			struct
 			{
 				bool varifyBytecode = true;
 				bool allowAssemblyMerge = true;
 				bool allowMemoryPreallocation = true;
 			} compilation;
+			struct
+			{
+				size_t recursionLimit = 1000;
+			} execution;
 		};
 	}
 }

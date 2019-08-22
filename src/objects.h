@@ -3,8 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include "classType.h"
-#include "methodType.h"
+#include "namespaceType.h"
 #include "bigInteger.h"
 
 namespace MSL
@@ -13,57 +12,125 @@ namespace MSL
 	{
 		enum class Type : uint8_t
 		{
-			CLASS,
+			CLASS_OBJECT,
 			INTEGER,
 			FLOAT,
 			STRING,
-			FUNCTION,
+			NULLPTR,
+			TRUE,
+			FALSE,
+			NAMESPACE,
+			CLASS,
+			UNKNOWN
 		};
+
+		static const std::string emptyString;
 
 		struct BaseObject
 		{
 			Type type;
 
 			BaseObject(Type type);
+			virtual BaseObject* GetMember(const std::string& memberName) const = 0;
+			virtual const std::string& GetName() const = 0;
 			virtual ~BaseObject() = default;
 		};
 
-		struct Function : BaseObject
+		struct NullObject : BaseObject
 		{
-			size_t offset;
-			const MethodType& type;
+			NullObject();
 
-			Function(const MethodType& type);
+			virtual BaseObject* GetMember(const std::string& memberName) const override;
+			virtual const std::string & GetName() const override;
 		};
 
-		struct Class : BaseObject
+		struct TrueObject : BaseObject
 		{
-			using MemberArray = std::vector<std::unique_ptr<BaseObject>>;
-			const ClassType& type;
-			MemberArray members;
+			TrueObject();
 
-			Class(const ClassType& type);
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
 		};
 
-		struct Integer : BaseObject
+		struct FalseObject : BaseObject
+		{
+			FalseObject();
+
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
+		};
+
+		struct ClassWrapper : BaseObject
+		{
+			const ClassType* type;
+
+			ClassWrapper(const ClassType* type);
+
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
+		};
+
+		struct NamespaceWrapper : BaseObject
+		{
+			const NamespaceType* type;
+
+			NamespaceWrapper(const NamespaceType* type);
+
+			virtual BaseObject* GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
+		};
+
+		struct ClassObject : BaseObject
+		{
+			using AttributeArray = std::vector<BaseObject*>;
+			AttributeArray attributes;
+			const ClassType* type;
+
+			ClassObject(const ClassType* type);
+
+			virtual BaseObject * GetMember(const std::string& memberName) const override;
+			virtual const std::string & GetName() const override;
+		};
+
+		struct IntegerObject : BaseObject
 		{
 			momo::BigInteger value;
 
-			Integer(const std::string& value);
+			IntegerObject(const std::string& value);
+
+			virtual BaseObject* GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
 		};
 
-		struct Float : BaseObject
+		struct FloatObject : BaseObject
 		{
 			double value;
 			
-			Float(const std::string& value);
+			FloatObject(const std::string& value);
+
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
 		};
 
-		struct String : BaseObject
+		struct StringObject : BaseObject
 		{
 			std::string value;
 
-			String(const std::string& value);
+			StringObject(const std::string& value);
+
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
+		};
+
+		struct UnknownObject : BaseObject
+		{
+			const std::string& ref;
+
+			UnknownObject(const std::string& ref);
+
+			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string & GetName() const override;
+
 		};
 	}
 }

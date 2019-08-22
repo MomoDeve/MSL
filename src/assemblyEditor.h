@@ -34,7 +34,6 @@ namespace MSL
 			AttributeType ReadAttribute();
 			MethodType ReadMethod();
 			void RegisterLabelInMethod(MethodType& method, uint16_t label);
-			bool CanEditEntryPoint(CallPath::ArrayIndex index);
 			template<typename T> T GenericRead();
 			template<typename T> void AddIntegerToByteArray(std::vector<uint8_t>& bytes, T integer);
 			template<typename T> void ReserveExtraSpace(T& container, size_t additionalSpace);

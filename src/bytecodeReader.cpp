@@ -95,6 +95,7 @@ namespace MSL
 				OPCODE_CASE(GET_INDEX)
 					break;
 				OPCODE_CASE(CALL_FUNCTION)
+					out << (size_t)GenericRead<uint8_t>();
 					break;
 				OPCODE_CASE(CMP_EQ)
 					break;

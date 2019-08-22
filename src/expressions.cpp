@@ -210,7 +210,9 @@ namespace MSL
 			}
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(functionName));
+
 			code.write(OPCODE::CALL_FUNCTION);
+			code.write(static_cast<uint8_t>(parameters.size()));
 		}
 
 

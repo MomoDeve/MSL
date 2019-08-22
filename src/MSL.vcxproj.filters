@@ -73,9 +73,6 @@
     <Filter Include="momo\bigInteger">
       <UniqueIdentifier>{eb076d96-a9f7-4405-82ac-d502bbeceaa4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MSL\VM\virtualMachine">
-      <UniqueIdentifier>{15a62816-dd9b-4006-85cd-b602fa7b56ea}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MSL\VM\configuration">
       <UniqueIdentifier>{eb4dc456-879b-465a-bb83-6d3e64050f56}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,9 @@
     </Filter>
     <Filter Include="MSL\VM\callPath">
       <UniqueIdentifier>{d36d46d4-5823-40a8-a5ec-324a819e34d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\virtualMachine">
+      <UniqueIdentifier>{15a62816-dd9b-4006-85cd-b602fa7b56ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -230,6 +230,9 @@
     </ClCompile>
     <ClCompile Include="opcode.cpp">
       <Filter>MSL\VM\opcode</Filter>
+    </ClCompile>
+    <ClCompile Include="callPath.cpp">
+      <Filter>MSL\VM\callPath</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

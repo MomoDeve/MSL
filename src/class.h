@@ -105,7 +105,7 @@ namespace MSL
 			/*
 			moves class contents
 			*/
-			Class(Class&& other);
+			Class(Class&& other) = default;
 			/*
 			moves attribute to MethodArray and adds its name to hash-table
 			if method name already existed in table, it will be overwriten in hash-table, but not deleted from ClassArray

@@ -15,9 +15,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& StringObject::GetName() const
+		const std::string* StringObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		FloatObject::FloatObject(const std::string& value)
@@ -28,9 +28,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& FloatObject::GetName() const
+		const std::string* FloatObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		IntegerObject::IntegerObject(const std::string& value)
@@ -41,9 +41,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& IntegerObject::GetName() const
+		const std::string* IntegerObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		ClassObject::ClassObject(const ClassType* type)
@@ -77,9 +77,9 @@ namespace MSL
 			}
 		}
 
-		const std::string& ClassObject::GetName() const
+		const std::string* ClassObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 			
 		NullObject::NullObject()
@@ -90,9 +90,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& NullObject::GetName() const
+		const std::string* NullObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		TrueObject::TrueObject()
@@ -103,9 +103,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& TrueObject::GetName() const
+		const std::string* TrueObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		FalseObject::FalseObject()
@@ -116,9 +116,9 @@ namespace MSL
 			return nullptr;
 		}
 
-		const std::string& FalseObject::GetName() const
+		const std::string* FalseObject::GetName() const
 		{
-			return emptyString;
+			return nullptr;
 		}
 
 		NamespaceWrapper::NamespaceWrapper(const NamespaceType* type)
@@ -131,9 +131,9 @@ namespace MSL
 			else return it->second.wrapper;
 		}
 
-		const std::string& NamespaceWrapper::GetName() const
+		const std::string* NamespaceWrapper::GetName() const
 		{
-			return type->name;
+			return &type->name;
 		}
 
 		ClassWrapper::ClassWrapper(const ClassType* type)
@@ -143,19 +143,20 @@ namespace MSL
 		{
 			return type->staticInstance->GetMember(memberName);
 		}
-		const std::string& ClassWrapper::GetName() const
+		const std::string* ClassWrapper::GetName() const
 		{
-			return type->name;
+			return &type->name;
 		}
 
-		UnknownObject::UnknownObject(const std::string& ref)
+		UnknownObject::UnknownObject(const std::string* ref)
 			: BaseObject(Type::UNKNOWN), ref(ref) { }
 
-		BaseObject* UnknownObject::GetMember(const std::string & memberName) const
+		BaseObject* UnknownObject::GetMember(const std::string& memberName) const
 		{
 			return nullptr;
 		}
-		const std::string& UnknownObject::GetName() const
+
+		const std::string* UnknownObject::GetName() const
 		{
 			return ref;
 		}

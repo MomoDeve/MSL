@@ -32,13 +32,6 @@ namespace MSL
 		Class::Class(std::string name)
 			: name(std::move(name)), modifiers(0) { }
 
-		Class::Class(Class&& other)
-			: modifiers(other.modifiers), name(std::move(other.name)),
-			table(std::move(other.table)), attributes(std::move(other.attributes)), methods(std::move(other.methods))
-		{
-
-		}
-
 		void Class::InsertMethod(const std::string& name, Function&& function)
 		{
 			size_t index = methods.size();

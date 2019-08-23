@@ -100,7 +100,7 @@ namespace MSL
 				}
 			}
 			auto namespaceIt = _namespace->classes.find(objectName);
-			if (namespaceIt != _namespace->classes.end()) return AllocClassWrapper(&namespaceIt->second);
+			if (namespaceIt != _namespace->classes.end()) return namespaceIt->second.wrapper;
 			auto assemblyIt = assembly.namespaces.find(objectName);
 			if (assemblyIt != assembly.namespaces.end()) return AllocNamespaceWrapper(&assemblyIt->second);
 
@@ -110,67 +110,80 @@ namespace MSL
 
 		void VirtualMachine::StartNewStackFrame()
 		{
+			struct Frame
+			{
+				LocalsTable locals;
+				const NamespaceType* _namespace = nullptr;
+				const ClassType* _class = nullptr;
+				const MethodType* _method = nullptr;
+				BaseObject* classObject = nullptr;
+				size_t offset = 0;
+			};
+
 			if (callStack.size() > config.execution.recursionLimit)
 			{
 				errors |= ERROR::STACKOVERFLOW;
 				return;
 			}
-			CallPath& frame = callStack.top();
-			const NamespaceType* currentNamespace = GetNamespaceOrNull(frame.GetNamespace());
-			const ClassType* currentClass = GetClassOrNull(currentNamespace, frame.GetClass());
-			const MethodType* currentMethod = GetMethodOrNull(currentClass, frame.GetMethod());
-			LocalsTable locals;
-			if (currentMethod == nullptr)
+			auto frame = std::make_unique<Frame>();
+			frame->_namespace = GetNamespaceOrNull(*callStack.top().GetNamespace());
+			frame->_class = GetClassOrNull(frame->_namespace, *callStack.top().GetClass());
+			frame->_method = GetMethodOrNull(frame->_class, *callStack.top().GetMethod());
+			if (frame->_method == nullptr)
 			{
 				errors |= ERROR::MEMBER_NOT_FOUND;
 				return;
 			}
-			if (currentMethod->body[frame.offset++] != OPCODE::PUSH_STACKFRAME)
+			if (frame->_class->modifiers & ClassType::Modifiers::SYSTEM)
+			{
+				PerformSystemCall(frame->_class, frame->_method);
+				return;
+			}
+			if (frame->_method->body[frame->offset++] != OPCODE::PUSH_STACKFRAME)
 			{
 				errors |= ERROR::OPERANDSTACK_CORRUPTION;
 				return;
 			}
-			for (auto it = currentMethod->parameters.rbegin(); it != currentMethod->parameters.rend(); it++)
+			for (auto it = frame->_method->parameters.rbegin(); it != frame->_method->parameters.rend(); it++)
 			{
 				if (objectStack.empty())
 				{
 					errors |= ERROR::OBJECTSTACK_EMPTY;
 					return;
 				}
-				locals[*it].object = objectStack.back();
+				frame->locals[*it].object = objectStack.back();
 				objectStack.pop_back();
 			}
-			BaseObject* currentClassObject = nullptr;
-			if ((currentMethod->modifiers & MethodType::Modifiers::STATIC) == 0)
+			if ((frame->_method->modifiers & MethodType::Modifiers::STATIC) == 0)
 			{
-				if (currentMethod->parameters.empty() || currentMethod->parameters.front() != "this")
+				if (frame->_method->parameters.empty() || frame->_method->parameters.front() != "this")
 				{
 					errors |= ERROR::INVALID_METHOD_SIGNATURE;
 				}
 				else
 				{
-					currentClassObject = locals["this"].object;
+					frame->classObject = frame->locals["this"].object;
 				}
 			}
 			else
 			{
-				currentClassObject = AllocClassWrapper(currentClass);
+				frame->classObject = frame->_class->wrapper;
 			}
-			while (frame.offset < currentMethod->body.size())
+			while (frame->offset < frame->_method->body.size())
 			{
-				if (frame.offset >= currentMethod->body.size())
+				if (frame->offset >= frame->_method->body.size())
 				{
 					errors |= ERROR::INVALID_STACKFRAME_OFFSET;
 				}
 				if (errors != 0) return;
-				OPCODE op = ReadOPCode(currentMethod->body, frame.offset);
+				OPCODE op = ReadOPCode(frame->_method->body, frame->offset);
 
 				switch (op)
 				{
 				case (OPCODE::PUSH_OBJECT):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					const std::string& objectName = currentMethod->dependencies[hash];
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					const std::string* objectName = &frame->_method->dependencies[hash];
 					objectStack.push_back(AllocUnknown(objectName));
 					break;
 				}
@@ -214,7 +227,7 @@ namespace MSL
 					break;
 				case (OPCODE::CALL_FUNCTION):
 				{
-					uint8_t paramSize = ReadOPCode(currentMethod->body, frame.offset);
+					uint8_t paramSize = ReadOPCode(frame->_method->body, frame->offset);
 					if (objectStack.size() < paramSize + 2u) // function object + caller object
 					{
 						errors |= ERROR::OBJECTSTACK_EMPTY;
@@ -230,17 +243,16 @@ namespace MSL
 					if (caller->type == Type::CLASS_OBJECT)
 					{
 						ClassObject* object = reinterpret_cast<ClassObject*>(caller);
-						newFrame.SetNamespace(object->type->namespaceName);
-						newFrame.SetClass(object->type->name);
+						newFrame.SetNamespace(&object->type->namespaceName);
+						newFrame.SetClass(&object->type->name);
 						newFrame.SetMethod(objectStack.back()->GetName());
 						callStack.push(newFrame);
-							
 					}
 					else if (caller->type == Type::CLASS)
 					{
 						ClassWrapper* object = reinterpret_cast<ClassWrapper*>(caller);
-						newFrame.SetNamespace(object->type->namespaceName);
-						newFrame.SetClass(object->type->name);
+						newFrame.SetNamespace(&object->type->namespaceName);
+						newFrame.SetClass(&object->type->name);
 						newFrame.SetMethod(objectStack.back()->GetName());
 						callStack.push(newFrame);
 					}
@@ -266,14 +278,14 @@ namespace MSL
 					objectStack.pop_back();
 					if (calledObject->type == Type::UNKNOWN)
 					{
-						calledObject = SearchForObject(calledObject->GetName(), locals, currentMethod, currentClassObject, currentNamespace);
+						calledObject = SearchForObject(*calledObject->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
 					}
 					if (calledObject == nullptr)
 					{
 						errors |= ERROR::OBJECT_NOT_FOUND;
 						return;
 					}
-					BaseObject* memberObject = calledObject->GetMember(member->GetName());
+					BaseObject* memberObject = calledObject->GetMember(*member->GetName());
 					if (memberObject == nullptr)
 					{
 						errors |= ERROR::MEMBER_NOT_FOUND;
@@ -293,35 +305,19 @@ namespace MSL
 					return;
 				case (OPCODE::ALLOC_VAR):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					if (ValidateHashValue(hash, currentMethod->dependencies.size()))
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
-						if (objectStack.empty())
-						{
-							errors |= ERROR::OBJECTSTACK_EMPTY;
-						}
-						else
-						{
-							locals[currentMethod->dependencies[hash]].object = objectStack.back();
-							objectStack.pop_back();
-						}
+						frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), false };
 					}
 					break;
 				}
 				case (OPCODE::ALLOC_CONST_VAR):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					if (ValidateHashValue(hash, currentMethod->dependencies.size()))
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
-						if (objectStack.empty())
-						{
-							errors |= ERROR::OBJECTSTACK_EMPTY;
-						}
-						else
-						{
-							locals[currentMethod->dependencies[hash]] = { objectStack.back(), true };
-							objectStack.pop_back();
-						}
+						frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), true };
 					}
 					break;
 				}
@@ -333,7 +329,7 @@ namespace MSL
 					break;
 				case (OPCODE::JUMP_IF_TRUE):
 				{
-					uint16_t label = ReadLabel(currentMethod->body, frame.offset);
+					uint16_t label = ReadLabel(frame->_method->body, frame->offset);
 					if (objectStack.empty())
 					{
 						errors |= ERROR::OBJECTSTACK_EMPTY;
@@ -342,12 +338,12 @@ namespace MSL
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
 					if (object->type == Type::TRUE)
-						frame.offset = currentMethod->labels[label];
+						frame->offset = frame->_method->labels[label];
 					break;
 				}
 				case (OPCODE::JUMP_IF_FALSE):
 				{
-					uint16_t label = ReadLabel(currentMethod->body, frame.offset);
+					uint16_t label = ReadLabel(frame->_method->body, frame->offset);
 					if (objectStack.empty())
 					{
 						errors |= ERROR::OBJECTSTACK_EMPTY;
@@ -356,32 +352,32 @@ namespace MSL
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
 					if (object->type == Type::FALSE)
-						frame.offset = currentMethod->labels[label];
+						frame->offset = frame->_method->labels[label];
 					break;
 				}
 				case (OPCODE::PUSH_STRING):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					if (ValidateHashValue(hash, currentMethod->dependencies.size()))
-						objectStack.push_back(AllocString(currentMethod->dependencies[hash]));
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
+						objectStack.push_back(AllocString(frame->_method->dependencies[hash]));
 					break;
 				}
 				case (OPCODE::PUSH_INTEGER):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					if(ValidateHashValue(hash, currentMethod->dependencies.size()))
-						objectStack.push_back(AllocInteger(currentMethod->dependencies[hash]));
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					if(ValidateHashValue(hash, frame->_method->dependencies.size()))
+						objectStack.push_back(AllocInteger(frame->_method->dependencies[hash]));
 					break;
 				}
 				case (OPCODE::PUSH_FLOAT):
 				{
-					size_t hash = ReadHash(currentMethod->body, frame.offset);
-					if(ValidateHashValue(hash, currentMethod->dependencies.size()))
-						objectStack.push_back(AllocInteger(currentMethod->dependencies[hash]));
+					size_t hash = ReadHash(frame->_method->body, frame->offset);
+					if(ValidateHashValue(hash, frame->_method->dependencies.size()))
+						objectStack.push_back(AllocFloat(frame->_method->dependencies[hash]));
 					break;
 				}
 				case (OPCODE::PUSH_THIS):
-					objectStack.push_back(currentClassObject);
+					objectStack.push_back(frame->classObject);
 					break;
 				case (OPCODE::PUSH_NULL):
 					objectStack.push_back(AllocNull());
@@ -395,7 +391,7 @@ namespace MSL
 					return;
 					break;
 				case (OPCODE::JUMP):
-					frame.offset = currentMethod->labels[ReadLabel(currentMethod->body, frame.offset)];
+					frame->offset = frame->_method->labels[ReadLabel(frame->_method->body, frame->offset)];
 					break;
 				case (OPCODE::POP_STACK_TOP):
 					objectStack.pop_back();
@@ -403,6 +399,44 @@ namespace MSL
 				default:
 					errors |= ERROR::INVALID_OPCODE;
 					break;
+				}
+			}
+		}
+
+		void VirtualMachine::PerformSystemCall(const ClassType* _class, const MethodType* _method)
+		{
+			if (objectStack.empty())
+			{
+				errors |= ERROR::OBJECTSTACK_EMPTY;
+				return;
+			}
+			if (_class->name == "Console")
+			{
+				if (_method->name == "Print_1")
+				{
+					BaseObject* object = objectStack.back();
+					objectStack.pop_back();
+					if (object->type == Type::STRING)
+					{
+						StringObject* str = reinterpret_cast<StringObject*>(object);
+						std::cout << str->value;
+						objectStack.push_back(AllocInteger(std::to_string(str->value.size())));
+					}
+					else if (object->type == Type::FLOAT)
+					{
+						FloatObject* f = reinterpret_cast<FloatObject*>(object);
+						size_t precision = 6;
+						std::string out = std::to_string(f->value);
+						std::cout << out;
+						objectStack.push_back(AllocInteger(std::to_string(out.size())));
+					}
+					else if (object->type == Type::INTEGER)
+					{
+						IntegerObject* integer = reinterpret_cast<IntegerObject*>(object);
+						std::string out = integer->value.to_string();
+						std::cout << out;
+						objectStack.push_back(AllocInteger(std::to_string(out.size())));
+					}
 				}
 			}
 		}
@@ -421,6 +455,28 @@ namespace MSL
 			}
 		}
 
+		void VirtualMachine::AddSystemNamespace()
+		{
+			NamespaceType system;
+			system.name = "System";
+
+			ClassType console;
+			console.name = "Console";
+			console.namespaceName = system.name;
+			console.modifiers |= ClassType::Modifiers::STATIC | ClassType::Modifiers::ABSTRACT | ClassType::Modifiers::SYSTEM;
+
+			MethodType print; // outputs value to console
+			print.name = "Print_1";
+			print.parameters.push_back("value");
+			print.modifiers |= MethodType::Modifiers::PUBLIC | MethodType::Modifiers::STATIC;
+
+			console.methods.insert({ "Print_1", std::move(print) });
+
+			system.classes.insert({ "Console", std::move(console) });
+
+			assembly.namespaces.insert({ "System", std::move(system) });
+		}
+
 		bool VirtualMachine::ValidateHashValue(size_t hashValue, size_t maxHashValue)
 		{
 			if (hashValue < maxHashValue)
@@ -434,7 +490,7 @@ namespace MSL
 			}
 		}
 
-		BaseObject* VirtualMachine::AllocUnknown(const std::string& value)
+		BaseObject* VirtualMachine::AllocUnknown(const std::string* value)
 		{
 			return new UnknownObject(value);
 		}
@@ -494,6 +550,7 @@ namespace MSL
 
 		void VirtualMachine::Run()
 		{
+			AddSystemNamespace();
 			InitializeStaticMembers();
 			if (callStack.empty())
 			{
@@ -501,7 +558,7 @@ namespace MSL
 				return;
 			}
 			const CallPath& path = callStack.top();
-			const MethodType* entryPoint = GetMethodOrNull(path.GetNamespace(), path.GetClass(), path.GetMethod());
+			const MethodType* entryPoint = GetMethodOrNull(*path.GetNamespace(), *path.GetClass(), *path.GetMethod());
 			if (entryPoint == nullptr)
 			{
 				errors |= ERROR::INVALID_CALL_ARGUMENT | ERROR::TERMINATE_ON_LAUNCH;

@@ -48,10 +48,12 @@ namespace MSL
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace);
 			void StartNewStackFrame();
+			void PerformSystemCall(const ClassType* _class, const MethodType* _method);
 			void InitializeStaticMembers();
+			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 
-			BaseObject* AllocUnknown(const std::string& value);
+			BaseObject* AllocUnknown(const std::string* value);
 			BaseObject* AllocNull();
 			BaseObject* AllocTrue();
 			BaseObject* AllocFalse();

@@ -1,27 +1,21 @@
 namespace Program
 {
 	internal class AnotherClass
-	{	
-		var attr1;
-		const var attr2;
-		public static const var attr3;
-		
-		public function Test()
-		{
-			var attr1 = 3;
-		}
-	
+	{		
 		public static function Main() 
 		{
-			Program.AnotherClass.Main();
+			var str = "hello!\n";
+			System.Console.Print(str);
+			return 0;
+		}
+		
+							/*
 			var arraySize = 10;
 			var A = Array[arraySize];
 			A.Fill(Utilities.Random(0, 10));
 			Console.Print(A);
 			BubbleSort(A, A.predicate);
-			Console.Print(A, stdout);
-			return 0;
-		}
+			Console.Print(A, stdout);*/
 
 		public static function BubbleSort(A, predicate)
 		{

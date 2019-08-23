@@ -24,15 +24,13 @@ namespace MSL
 			UNKNOWN
 		};
 
-		static const std::string emptyString;
-
 		struct BaseObject
 		{
 			Type type;
 
 			BaseObject(Type type);
 			virtual BaseObject* GetMember(const std::string& memberName) const = 0;
-			virtual const std::string& GetName() const = 0;
+			virtual const std::string* GetName() const = 0;
 			virtual ~BaseObject() = default;
 		};
 
@@ -41,23 +39,23 @@ namespace MSL
 			NullObject();
 
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct TrueObject : BaseObject
 		{
 			TrueObject();
 
-			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual BaseObject* GetMember(const std::string & memberName) const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct FalseObject : BaseObject
 		{
 			FalseObject();
 
-			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual BaseObject* GetMember(const std::string & memberName) const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct ClassWrapper : BaseObject
@@ -67,7 +65,7 @@ namespace MSL
 			ClassWrapper(const ClassType* type);
 
 			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct NamespaceWrapper : BaseObject
@@ -77,7 +75,7 @@ namespace MSL
 			NamespaceWrapper(const NamespaceType* type);
 
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct ClassObject : BaseObject
@@ -88,8 +86,8 @@ namespace MSL
 
 			ClassObject(const ClassType* type);
 
-			virtual BaseObject * GetMember(const std::string& memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual BaseObject* GetMember(const std::string& memberName) const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct IntegerObject : BaseObject
@@ -99,7 +97,7 @@ namespace MSL
 			IntegerObject(const std::string& value);
 
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct FloatObject : BaseObject
@@ -109,7 +107,7 @@ namespace MSL
 			FloatObject(const std::string& value);
 
 			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct StringObject : BaseObject
@@ -119,17 +117,17 @@ namespace MSL
 			StringObject(const std::string& value);
 
 			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual const std::string* GetName() const override;
 		};
 
 		struct UnknownObject : BaseObject
 		{
-			const std::string& ref;
+			const std::string* ref;
 
-			UnknownObject(const std::string& ref);
+			UnknownObject(const std::string* ref);
 
-			virtual BaseObject * GetMember(const std::string & memberName) const override;
-			virtual const std::string & GetName() const override;
+			virtual BaseObject * GetMember(const std::string& memberName) const override;
+			virtual const std::string* GetName() const override;
 
 		};
 	}

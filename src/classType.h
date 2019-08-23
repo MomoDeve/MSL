@@ -14,6 +14,15 @@ namespace MSL
 
 		struct ClassType
 		{
+			enum Modifiers : uint8_t
+			{
+				STATIC = 1,
+				INTERFACE = 2,
+				ABSTRACT = 4,
+				CONST = 8,
+				INTERNAL = 16,
+				SYSTEM = 128
+			};
 			using AttributeHashTable = std::unordered_map<std::string, AttributeType>;
 			using MethodHashTable = std::unordered_map<std::string, MethodType>;
 			AttributeHashTable attributes;

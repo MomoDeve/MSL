@@ -46,13 +46,26 @@ namespace MSL
 					}
 				}
 			}
+			std::string namespaceEntry;
+			if (callPath != nullptr && callPath->GetNamespace() != nullptr)
+			{
+				namespaceEntry = *callPath->GetNamespace();
+			}
 			if (extraAlloc) ReserveExtraSpace(assembly.namespaces, secondAssembly.namespaces.size());
 			if (success)
 			{
+				if (callPath->GetNamespace() != nullptr)
+				{
+					
+				}
 				for (auto it = secondAssembly.namespaces.begin(); it != secondAssembly.namespaces.end(); it++)
 				{
 					assembly.namespaces.insert(std::move(*it));
 				}
+			}
+			if (!namespaceEntry.empty())
+			{
+				callPath->SetNamespace(&assembly.namespaces[namespaceEntry].name);
 			}
 			return success;
 		}
@@ -83,9 +96,9 @@ namespace MSL
 				}
 				std::string namespaceName = ns.name;
 				assembly.namespaces.insert({ namespaceName, std::move(ns) });
-				if (entryPoint != nullptr && entryPoint->GetNamespace().empty() && !entryPoint->GetClass().empty())
+				if (entryPoint != nullptr && entryPoint->GetNamespace() == nullptr && entryPoint->GetClass() != nullptr)
 				{
-					entryPoint->SetNamespace(namespaceName);
+					entryPoint->SetNamespace(&assembly.namespaces[namespaceName].name);
 				}
 			}
 			if (!ExpectOpcode(OPCODE::ASSEMBLY_END_DECL, ReadOPCode())) return assembly;
@@ -115,9 +128,9 @@ namespace MSL
 				std::string className = c.name;
 				c.namespaceName = ns.name;
 				ns.classes.insert({ className, std::move(c) });
-				if (entryPoint != nullptr && entryPoint->GetClass().empty() && !entryPoint->GetMethod().empty())
+				if (entryPoint != nullptr && entryPoint->GetClass() == nullptr && entryPoint->GetMethod() != nullptr)
 				{
-					entryPoint->SetClass(className);
+					entryPoint->SetClass(&ns.classes[className].name);
 				}
 			}
 			return ns;
@@ -179,18 +192,19 @@ namespace MSL
 					errors |= ERROR::DECLARATION_DUBLICATE;
 					return c;
 				}
-				std::string methodName = method.name + '_' + std::to_string(method.parameters.size()); // unique name for overloading
+				method.name += '_' + std::to_string(method.parameters.size()); // unique name for overloading
+				std::string methodName = method.name;
 				c.methods.insert({ methodName, std::move(method) });
 				if (entryPoint != nullptr && (method.modifiers & MethodType::Modifiers::ENTRY_POINT))
 				{
-					if (!entryPoint->GetMethod().empty())
+					if (entryPoint->GetMethod() != nullptr)
 					{
 						DisplayError("Trying to add second entry-point to assembly: " + method.name);
 						errors |= ERROR::ENTRY_POINT_DUBLICATE;
 					}
 					else
 					{
-						entryPoint->SetMethod(methodName);
+						entryPoint->SetMethod(&c.methods[methodName].name);
 					}
 				}
 			}
@@ -226,7 +240,7 @@ namespace MSL
 
 			if (!ExpectOpcode(OPCODE::DEPENDENCY_POOL_DECL_SIZE, ReadOPCode())) return method;
 			size_t dependencyPoolSize = ReadSize();
-			method.dependencies.reserve(dependencyPoolSize);\
+			method.dependencies.reserve(dependencyPoolSize);
 
 			for (size_t i = 0; i < dependencyPoolSize; i++)
 			{

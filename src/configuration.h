@@ -31,7 +31,7 @@ namespace MSL
 			} compilation;
 			struct
 			{
-				size_t recursionLimit = 1000;
+				size_t recursionLimit = 20000;
 			} execution;
 		};
 	}

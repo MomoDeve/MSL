@@ -90,7 +90,31 @@ namespace MSL
 			{
 				if (insideString)
 				{
-					userString += c;
+					if (!userString.empty() && userString.back() == '\\')
+					{
+						switch (c)
+						{
+						case 'n':
+							userString.back() = '\n';
+							break;
+						case 't':
+							userString.back() = '\t';
+							break;
+						case '"':
+							userString.back() = '\"';
+							break;
+						case 'r':
+							userString.back() = '\r';
+							break;
+						default:
+							userString += c;
+							break;
+						}
+					}
+					else
+					{
+						userString += c;
+					}
 				}
 				else if (lineComment)
 				{

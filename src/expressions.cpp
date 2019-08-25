@@ -173,6 +173,9 @@ namespace MSL
 			case Token::Type::THIS:
 				code.write(OPCODE::PUSH_THIS);
 				break;
+			case Token::Type::NULLPTR:
+				code.write(OPCODE::PUSH_NULL);
+				break;
 			default:
 				code.write(OPCODE::ERROR_SYMBOL);
 				break;

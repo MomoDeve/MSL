@@ -1,11 +1,28 @@
 namespace Program
 {
+	class Test
+	{
+		public function Test()
+		{
+		
+		}
+	}
+
 	internal class AnotherClass
 	{		
+		var name;
+		
+		public function ToString()
+		{
+			return name;
+		}
+		
 		public static function Main() 
 		{
-			var str = "hello!\n";
-			System.Console.Print(str);
+			var Console = System.Console;
+			var obj = AnotherClass.AnotherClass();
+			obj.name = "my object";
+			Console.PrintLine(obj);
 			return 0;
 		}
 		
@@ -36,14 +53,6 @@ namespace Program
 			var tmp = left;
 			left = right;
 			right = tmp;
-		}
-
-		public function TestStrings()
-		{
-			var str1 = "hello world";
-			var str2 = "hello\nworld\t";
-			var str3 = "hello " + "world";
-			return;
 		}
 	}
 }

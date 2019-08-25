@@ -32,6 +32,7 @@ namespace MSL
 			struct
 			{
 				size_t recursionLimit = 20000;
+				bool checkExitCode = true;
 			} execution;
 		};
 	}

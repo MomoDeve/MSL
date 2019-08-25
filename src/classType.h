@@ -25,7 +25,8 @@ namespace MSL
 			};
 			using AttributeHashTable = std::unordered_map<std::string, AttributeType>;
 			using MethodHashTable = std::unordered_map<std::string, MethodType>;
-			AttributeHashTable attributes;
+			AttributeHashTable staticAttributes;
+			AttributeHashTable objectAttributes;
 			MethodHashTable methods;
 			ClassObject* staticInstance = nullptr;
 			BaseObject* wrapper = nullptr;

@@ -17,10 +17,10 @@ namespace MSL
 		{
 			std::istream& file;
 			std::ostream& error;
-			CallPath* entryPoint;
+			CallPath* entryPoint = nullptr;
 			bool success = true;
-			bool performCheck;
-			bool extraAlloc;
+			bool performCheck = true;
+			bool extraAlloc = true;
 			uint8_t errors = 0;
 
 			OPCODE ReadOPCode();

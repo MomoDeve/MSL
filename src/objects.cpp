@@ -51,29 +51,19 @@ namespace MSL
 
 		BaseObject* ClassObject::GetMember(const std::string& memberName) const
 		{
-			auto it = type->attributes.find(memberName);
-			if (it == type->attributes.end()) return nullptr;
-			if (it->second.modifiers & AttributeType::Modifiers::STATIC)
+			auto objectAttr = attributes.find(memberName);
+			if (objectAttr != attributes.end())
 			{
-				if (this == type->staticInstance)
-				{
-					return attributes[it->second.offset];
-				}
-				else
-				{
-					return nullptr;
-				}
+				return objectAttr->second.get();
+			}
+			auto staticAttr = type->staticInstance->attributes.find(memberName);
+			if (staticAttr != type->staticInstance->attributes.end())
+			{
+				return staticAttr->second.get();
 			}
 			else
 			{
-				if (this == type->staticInstance)
-				{
-					return nullptr;
-				}
-				else
-				{
-					return attributes[it->second.offset];
-				}
+				return nullptr;
 			}
 		}
 
@@ -143,6 +133,7 @@ namespace MSL
 		{
 			return type->staticInstance->GetMember(memberName);
 		}
+
 		const std::string* ClassWrapper::GetName() const
 		{
 			return &type->name;
@@ -159,6 +150,30 @@ namespace MSL
 		const std::string* UnknownObject::GetName() const
 		{
 			return ref;
+		}
+		LocalObject::LocalObject(Local& ref)
+			: BaseObject(Type::LOCAL), ref(ref) { }
+
+		BaseObject* LocalObject::GetMember(const std::string& memberName) const
+		{
+			return nullptr;
+		}
+
+		const std::string* LocalObject::GetName() const
+		{
+			return nullptr;
+		}
+
+		AttributeObject::AttributeObject(const AttributeType* type)
+			: BaseObject(Type::ATTRIBUTE), type(type) { }
+
+		BaseObject* AttributeObject::GetMember(const std::string& memberName) const
+		{
+			return nullptr;
+		}
+		const std::string* AttributeObject::GetName() const
+		{
+			return nullptr;
 		}
 }
 }

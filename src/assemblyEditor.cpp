@@ -51,13 +51,12 @@ namespace MSL
 			{
 				namespaceEntry = *callPath->GetNamespace();
 			}
-			if (extraAlloc) ReserveExtraSpace(assembly.namespaces, secondAssembly.namespaces.size());
+			if (extraAlloc)
+			{
+				ReserveExtraSpace(assembly.namespaces, secondAssembly.namespaces.size());
+			}
 			if (success)
 			{
-				if (callPath->GetNamespace() != nullptr)
-				{
-					
-				}
 				for (auto it = secondAssembly.namespaces.begin(); it != secondAssembly.namespaces.end(); it++)
 				{
 					assembly.namespaces.insert(std::move(*it));
@@ -145,22 +144,28 @@ namespace MSL
 			c.modifiers = ReadModifiers();
 			if (!ExpectOpcode(OPCODE::ATTRIBUTE_POOL_DECL_SIZE, ReadOPCode())) return c;
 			size_t attributePoolSize = ReadSize();
-			if (extraAlloc) ReserveExtraSpace(c.attributes, attributePoolSize);
 
 			for (size_t i = 0; i < attributePoolSize; i++)
 			{
 				AttributeType attr = ReadAttribute();
 				if (!success) return c;
 
-				if (performCheck && c.attributes.find(attr.name) != c.attributes.end())
+				if (performCheck && (c.staticAttributes.find(attr.name) != c.staticAttributes.end() || 
+									 c.objectAttributes.find(attr.name) != c.objectAttributes.end()))
 				{
 					DisplayError("Trying to add attribute dublicate: " + attr.name);
 					errors |= ERROR::DECLARATION_DUBLICATE;
 					return c;
 				}
 				std::string attributeName = attr.name;
-				attr.offset = static_cast<uint16_t>(c.attributes.size());
-				c.attributes.insert({ attributeName, std::move(attr) });
+				if (attr.modifiers & AttributeType::Modifiers::STATIC)
+				{
+					c.staticAttributes.insert({ attributeName, std::move(attr) });
+				}
+				else
+				{
+					c.objectAttributes.insert({ attributeName, std::move(attr) });
+				}
 			}
 
 			if (!ExpectOpcode(OPCODE::METHOD_POOL_DECL_SIZE, ReadOPCode())) return c;
@@ -186,7 +191,8 @@ namespace MSL
 						}
 					}
 				}
-				if (performCheck && c.attributes.find(method.name) != c.attributes.end())
+				if (performCheck && (c.staticAttributes.find(method.name) != c.staticAttributes.end() ||
+									 c.objectAttributes.find(method.name) != c.objectAttributes.end()))
 				{
 					DisplayError("Trying to add method with invalid name (attribute already added): " + method.name);
 					errors |= ERROR::DECLARATION_DUBLICATE;
@@ -246,6 +252,11 @@ namespace MSL
 			{
 				if (!ExpectOpcode(OPCODE::STRING_DECL, ReadOPCode())) return method;
 				method.dependencies.push_back(ReadString());
+			}
+
+			for (size_t i = 0; i < method.dependencies.size(); i++)
+			{
+				method.dependencies[i] = replaceEscapeTokens(method.dependencies[i]);
 			}
 
 			if (!ExpectOpcode(OPCODE::METHOD_BODY_BEGIN_DECL, ReadOPCode())) return method;

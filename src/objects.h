@@ -10,6 +10,8 @@ namespace MSL
 {
 	namespace VM
 	{
+		struct Local;
+		
 		enum class Type : uint8_t
 		{
 			CLASS_OBJECT,
@@ -21,6 +23,8 @@ namespace MSL
 			FALSE,
 			NAMESPACE,
 			CLASS,
+			LOCAL,
+			ATTRIBUTE,
 			UNKNOWN
 		};
 
@@ -78,10 +82,23 @@ namespace MSL
 			virtual const std::string* GetName() const override;
 		};
 
+		struct AttributeObject : BaseObject
+		{
+			const AttributeType* type;
+			BaseObject* object = nullptr;
+
+			AttributeObject(const AttributeType* ref);
+
+			virtual BaseObject* GetMember(const std::string& memberName) const override;
+
+			virtual const std::string* GetName() const override;
+
+		};
+
 		struct ClassObject : BaseObject
 		{
-			using AttributeArray = std::vector<BaseObject*>;
-			AttributeArray attributes;
+			using AttributeTable = std::unordered_map<std::string, std::unique_ptr<AttributeObject>>;
+			AttributeTable attributes;
 			const ClassType* type;
 
 			ClassObject(const ClassType* type);
@@ -117,6 +134,16 @@ namespace MSL
 			StringObject(const std::string& value);
 
 			virtual BaseObject * GetMember(const std::string & memberName) const override;
+			virtual const std::string* GetName() const override;
+		};
+
+		struct LocalObject : BaseObject
+		{
+			Local& ref;
+
+			LocalObject(Local& ref);
+
+			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 		};
 

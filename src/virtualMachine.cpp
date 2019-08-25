@@ -12,13 +12,22 @@ namespace MSL
 		BaseObject* VirtualMachine::AllocClassObject(const ClassType* _class)
 		{
 			ClassObject* object = new ClassObject(_class);
-			object->attributes.resize(_class->attributes.size(), AllocNull());
+			object->attributes.reserve(_class->objectAttributes.size());
+			for (const auto& attr : _class->objectAttributes)
+			{
+				object->attributes[attr.second.name] = std::make_unique<AttributeObject>(&attr.second);
+			}
 			return object;
 		}
 
 		BaseObject* VirtualMachine::AllocNamespaceWrapper(const NamespaceType* _namespace)
 		{
 			return new NamespaceWrapper(_namespace);
+		}
+
+		BaseObject* VirtualMachine::AllocLocal(Local& local)
+		{
+			return new LocalObject(local);
 		}
 
 		OPCODE VirtualMachine::ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset)
@@ -77,26 +86,19 @@ namespace MSL
 			if (_method->modifiers & MethodType::Modifiers::STATIC)
 			{
 				const ClassType* actualClass = reinterpret_cast<const ClassWrapper*>(_class)->type;
-				auto classIt = actualClass->attributes.find(objectName);
-				if (classIt != actualClass->attributes.end() && (classIt->second.modifiers & AttributeType::Modifiers::STATIC))
+				auto classIt = actualClass->staticInstance->attributes.find(objectName);
+				if (classIt != actualClass->staticInstance->attributes.end())
 				{
-					return actualClass->staticInstance->attributes[classIt->second.offset];
+					return classIt->second.get();
 				}
 			}
 			else
 			{
 				const ClassObject* thisObject = reinterpret_cast<const ClassObject*>(_class);
-				auto classIt = thisObject->type->attributes.find(objectName);
-				if (classIt != thisObject->type->attributes.end())
+				auto classIt = thisObject->attributes.find(objectName);
+				if (classIt != thisObject->attributes.end())
 				{
-					if (classIt->second.modifiers & AttributeType::Modifiers::STATIC)
-					{
-						return thisObject->type->staticInstance->attributes[classIt->second.offset];
-					}
-					else
-					{
-						return thisObject->attributes[classIt->second.offset];
-					}
+					return classIt->second.get();
 				}
 			}
 			auto namespaceIt = _namespace->classes.find(objectName);
@@ -141,7 +143,7 @@ namespace MSL
 			}
 			if (frame->_method->body[frame->offset++] != OPCODE::PUSH_STACKFRAME)
 			{
-				errors |= ERROR::OPERANDSTACK_CORRUPTION;
+				errors |= ERROR::INVALID_OPCODE;
 				return;
 			}
 			for (auto it = frame->_method->parameters.rbegin(); it != frame->_method->parameters.rend(); it++)
@@ -154,7 +156,7 @@ namespace MSL
 				frame->locals[*it].object = objectStack.back();
 				objectStack.pop_back();
 			}
-			if ((frame->_method->modifiers & MethodType::Modifiers::STATIC) == 0)
+			if ((frame->_method->modifiers & MethodType::Modifiers::STATIC) == 0 && (frame->_method->modifiers & MethodType::Modifiers::CONSTRUCTOR) == 0)
 			{
 				if (frame->_method->parameters.empty() || frame->_method->parameters.front() != "this")
 				{
@@ -167,7 +169,12 @@ namespace MSL
 			}
 			else
 			{
+				objectStack.pop_back(); // reference to this / class should be popped anyway
 				frame->classObject = frame->_class->wrapper;
+			}
+			if (frame->_method->modifiers & MethodType::Modifiers::CONSTRUCTOR)
+			{
+				frame->locals["this"].object = AllocClassObject(frame->_class);
 			}
 			while (frame->offset < frame->_method->body.size())
 			{
@@ -206,6 +213,40 @@ namespace MSL
 				case (OPCODE::POWER_OP):
 					break;
 				case (OPCODE::ASSIGN_OP):
+					if (objectStack.size() < 2)
+					{
+						errors |= ERROR::OBJECTSTACK_EMPTY;
+					}
+					else
+					{
+						BaseObject* value = objectStack.back();
+						objectStack.pop_back();
+						BaseObject* obj = objectStack.back();
+						objectStack.pop_back();
+						if (obj->type == Type::UNKNOWN)
+						{
+							obj = SearchForObject(*obj->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
+							if (obj == nullptr)
+							{
+								errors |= ERROR::OBJECT_NOT_FOUND;
+								return;
+							}
+						}
+						switch (obj->type)
+						{
+						case Type::LOCAL:
+							reinterpret_cast<LocalObject*>(obj)->ref.object = value;
+							objectStack.push_back(obj);
+							break;
+						case Type::ATTRIBUTE:
+							reinterpret_cast<AttributeObject*>(obj)->object = value;
+							objectStack.push_back(obj);
+							break;
+						default:
+							errors |= ERROR::INVALID_STACKOBJECT;
+							break;
+						}
+					}
 					break;
 				case (OPCODE::CMP_EQ):
 					break;
@@ -238,8 +279,31 @@ namespace MSL
 						errors |= ERROR::INVALID_STACKOBJECT;
 						return;
 					}
+					for (size_t i = 0; i < paramSize; i++)
+					{
+						size_t index = objectStack.size() - i - 2;
+						BaseObject* obj = objectStack[index];
+						if (obj->type == Type::UNKNOWN)
+						{
+							objectStack[index] = SearchForObject(*obj->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
+							if (objectStack[index] == nullptr)
+							{
+								errors |= ERROR::INVALID_CALL_ARGUMENT;
+								return;
+							}
+						}
+					}
 					CallPath newFrame;
 					BaseObject* caller = objectStack[objectStack.size() - paramSize - 2];
+					if (caller->type == Type::UNKNOWN)
+					{
+						caller = SearchForObject(*caller->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
+					}
+					if (caller == nullptr)
+					{
+						errors |= ERROR::OBJECT_NOT_FOUND;
+						return;
+					}
 					if (caller->type == Type::CLASS_OBJECT)
 					{
 						ClassObject* object = reinterpret_cast<ClassObject*>(caller);
@@ -301,14 +365,27 @@ namespace MSL
 					{
 						errors |= ERROR::OBJECTSTACK_EMPTY;
 					}
-					else callStack.pop();
+					else
+					{
+						if (objectStack.back()->type == Type::UNKNOWN)
+						{
+							objectStack.back() = SearchForObject(*objectStack.back()->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
+						}
+						if (objectStack.back() == nullptr)
+						{
+							errors |= ERROR::OBJECT_NOT_FOUND;
+						}
+						callStack.pop();
+					}
 					return;
 				case (OPCODE::ALLOC_VAR):
 				{
 					size_t hash = ReadHash(frame->_method->body, frame->offset);
 					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
-						frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), false };
+						objectStack.push_back(AllocLocal(
+							frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), false }
+						));
 					}
 					break;
 				}
@@ -317,7 +394,9 @@ namespace MSL
 					size_t hash = ReadHash(frame->_method->body, frame->offset);
 					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
-						frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), true };
+						objectStack.push_back(AllocLocal(
+							frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), true }
+						));
 					}
 					break;
 				}
@@ -386,7 +465,14 @@ namespace MSL
 					ALUinIncrMode = true;
 					break;
 				case (OPCODE::RETURN):
-					objectStack.push_back(AllocNull());
+					if (frame->_method->modifiers & MethodType::Modifiers::CONSTRUCTOR)
+					{
+						objectStack.push_back(frame->locals["this"].object);
+					}
+					else
+					{
+						objectStack.push_back(AllocNull());
+					}
 					callStack.pop();
 					return;
 					break;
@@ -394,7 +480,14 @@ namespace MSL
 					frame->offset = frame->_method->labels[ReadLabel(frame->_method->body, frame->offset)];
 					break;
 				case (OPCODE::POP_STACK_TOP):
-					objectStack.pop_back();
+					if (objectStack.empty())
+					{
+						errors |= ERROR::OBJECTSTACK_EMPTY;
+					}
+					else
+					{
+						objectStack.pop_back();
+					}
 					break;
 				default:
 					errors |= ERROR::INVALID_OPCODE;
@@ -412,30 +505,89 @@ namespace MSL
 			}
 			if (_class->name == "Console")
 			{
-				if (_method->name == "Print_1")
+				if (_method->name == "Print_1" || _method->name == "PrintLine_1")
 				{
+					std::ostream& out = *config.streams.out;
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
-					if (object->type == Type::STRING)
+					switch (object->type)
+					{
+					case Type::STRING:
 					{
 						StringObject* str = reinterpret_cast<StringObject*>(object);
-						std::cout << str->value;
-						objectStack.push_back(AllocInteger(std::to_string(str->value.size())));
+						out << str->value;
+						break;
 					}
-					else if (object->type == Type::FLOAT)
+					case Type::FLOAT:
 					{
 						FloatObject* f = reinterpret_cast<FloatObject*>(object);
-						size_t precision = 6;
-						std::string out = std::to_string(f->value);
-						std::cout << out;
-						objectStack.push_back(AllocInteger(std::to_string(out.size())));
+						out << f->value;
+						break;
 					}
-					else if (object->type == Type::INTEGER)
+					case Type::INTEGER:
 					{
 						IntegerObject* integer = reinterpret_cast<IntegerObject*>(object);
-						std::string out = integer->value.to_string();
-						std::cout << out;
-						objectStack.push_back(AllocInteger(std::to_string(out.size())));
+						out << integer->value;
+						break;
+					}
+					case Type::NULLPTR:
+					{
+						out << "null";
+						break;
+					}
+					case Type::TRUE:
+					{
+						out << "true";
+						break;
+					}
+					case Type::FALSE:
+					{
+						out << "false";
+						break;
+					}
+					case Type::NAMESPACE:
+					{
+						out << "namespace " << *object->GetName();
+						break;
+					}
+					case Type::CLASS:
+					{
+						ClassWrapper* c = reinterpret_cast<ClassWrapper*>(object);
+						out << "class " << c->type->namespaceName << '.' << c->type->name;
+						break;
+					}
+					case Type::ATTRIBUTE:
+					{
+						AttributeObject* attr = reinterpret_cast<AttributeObject*>(object);
+						objectStack.push_back(attr->object);
+						PerformSystemCall(_class, _method);
+						return; // no PrintLine check, because it will happen inside recursion call
+					}
+					case Type::CLASS_OBJECT:
+					{
+						ClassObject* classObject = reinterpret_cast<ClassObject*>(object);
+						const ClassType* classType = classObject->type;
+						auto it = classType->methods.find("ToString_1");
+						if (it != classType->methods.end() && (it->second.modifiers & (MethodType::Modifiers::STATIC | MethodType::Modifiers::ABSTRACT)) == 0)
+						{
+							objectStack.push_back(classObject);
+							InvokeObjectMethod("ToString_1", classObject);
+							PerformSystemCall(_class, _method);
+							return; // no PrintLine check, because it will happen inside recursion call
+						}
+						else
+						{
+							out << classType->namespaceName << '.' << classType->name << " object";
+						}
+						break;
+					}
+					default:
+						errors |= ERROR::INVALID_CALL_ARGUMENT;
+						break;
+					}
+					if (_method->name == "PrintLine_1")
+					{
+						out << std::endl;
 					}
 				}
 			}
@@ -450,7 +602,12 @@ namespace MSL
 				{
 					ClassType& c = namespaceIt->second;
 					c.wrapper = AllocClassWrapper(&c);
-					c.staticInstance = reinterpret_cast<ClassObject*>(AllocClassObject(&c));
+					c.staticInstance = new ClassObject(&c);
+					c.staticInstance->attributes.reserve(c.staticAttributes.size());
+					for (const auto& attr : c.staticAttributes)
+					{
+						c.staticInstance->attributes[attr.second.name] = std::make_unique<AttributeObject>(&attr.second);
+					}
 				}
 			}
 		}
@@ -469,8 +626,13 @@ namespace MSL
 			print.name = "Print_1";
 			print.parameters.push_back("value");
 			print.modifiers |= MethodType::Modifiers::PUBLIC | MethodType::Modifiers::STATIC;
-
 			console.methods.insert({ "Print_1", std::move(print) });
+
+			MethodType printLine; // outputs line and flushes out stream
+			printLine.name = "PrintLine_1";
+			printLine.parameters.push_back("value");
+			printLine.modifiers |= MethodType::Modifiers::PUBLIC | MethodType::Modifiers::STATIC;
+			console.methods.insert({ "PrintLine_1", std::move(printLine) });
 
 			system.classes.insert({ "Console", std::move(console) });
 
@@ -488,6 +650,32 @@ namespace MSL
 				errors |= ERROR::INVALID_HASH_VALUE;
 				return false;
 			}
+		}
+
+		void VirtualMachine::InvokeObjectMethod(const std::string& methodName, const ClassObject* object)
+		{
+			auto it = object->type->methods.find(methodName);
+			if (it == object->type->methods.end())
+			{
+				errors |= ERROR::MEMBER_NOT_FOUND;
+				return;
+			}
+			if (it->second.modifiers & (MethodType::Modifiers::ABSTRACT | MethodType::Modifiers::STATIC))
+			{
+				errors |= ERROR::INVALID_METHOD_SIGNATURE;
+				return;
+			}
+			if ((it->second.modifiers & MethodType::Modifiers::PUBLIC) == 0)
+			{
+				errors |= ERROR::PRIVATE_MEMBER_ACCESS;
+				return;
+			}
+			CallPath newFrame;
+			newFrame.SetMethod(&methodName);
+			newFrame.SetClass(&object->type->name);
+			newFrame.SetNamespace(&object->type->namespaceName);
+			callStack.push(std::move(newFrame));
+			StartNewStackFrame();
 		}
 
 		BaseObject* VirtualMachine::AllocUnknown(const std::string* value)
@@ -564,11 +752,32 @@ namespace MSL
 				errors |= ERROR::INVALID_CALL_ARGUMENT | ERROR::TERMINATE_ON_LAUNCH;
 				return;
 			}
+			objectStack.push_back(AllocNull()); // reference to class, not needed anyway
 			for (size_t i = 0; i < entryPoint->parameters.size(); i++)
 			{
 				objectStack.push_back(AllocNull());
 			}
 			StartNewStackFrame();
+			if (config.execution.checkExitCode)
+			{
+				if (objectStack.size() != 1)
+				{
+					errors |= ERROR::OBJECTSTACK_CORRUPTION;
+					return;
+				}
+				if (objectStack.back()->type == Type::INTEGER)
+				{
+					*config.streams.out << "VM execution finished with exit code " << reinterpret_cast<IntegerObject*>(objectStack.back())->value << std::endl;
+				}
+				else if (objectStack.back()->type == Type::NULLPTR)
+				{
+					*config.streams.out << "VM execution finished with exit code 0" << std::endl;
+				}
+				else
+				{
+					errors |= ERROR::INVALID_STACKOBJECT;
+				}
+			}
 		}
 
 		uint32_t VirtualMachine::GetErrors() const

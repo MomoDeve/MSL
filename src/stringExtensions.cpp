@@ -25,6 +25,53 @@ namespace MSL
 		if (i != str.size() - 1) str.erase(i + 1);
 	}
 
+	std::string replaceEscapeTokens(const std::string& str)
+	{
+		std::string res;
+		if (str.empty()) return res;
+		res.reserve(str.size());
+		res += str[0];
+		for (size_t i = 1; i < str.size(); i++)
+		{
+			if (str[i - 1] == '\\')
+			{
+				switch (str[i])
+				{
+				case 'n':
+					res.back() = '\n';
+					break;
+				case 't':
+					res.back() = '\t';
+					break;
+				case 'r':
+					res.back() = '\r';
+					break;
+				case '\\':
+					res.back() = '\\';
+					i++;
+					if (i < str.size())
+						res += str[i];
+					break;
+				case '\'':
+					res.back() = '\'';
+					break;
+				case '\"':
+					res.back() = '\"';
+					break;
+				default:
+					res += str[i];
+					break;
+				}
+			}
+			else
+			{
+				res += str[i];
+			}
+		}
+		res.shrink_to_fit();
+		return res;
+	}
+
 	bool find(const std::vector<std::string>& args, const std::string& arg)
 	{
 		return std::find(args.begin(), args.end(), arg) != args.end();

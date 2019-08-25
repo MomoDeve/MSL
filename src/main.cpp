@@ -30,8 +30,8 @@ void PrintErrors(uint32_t errors)
 		cout << STRING(ERROR::INVALID_STACKFRAME_OFFSET) << endl;
 	if (errors & ERROR::OBJECTSTACK_EMPTY)
 		cout << STRING(ERROR::OBJECTSTACK_EMPTY) << endl;
-	if (errors & ERROR::OPERANDSTACK_CORRUPTION)
-		cout << STRING(ERROR::OPERANDSTACK_CORRUPTION) << endl;
+	if (errors & ERROR::INVALID_OPCODE)
+		cout << STRING(ERROR::INVALID_OPCODE) << endl;
 	if (errors & ERROR::TERMINATE_ON_LAUNCH)
 		cout << STRING(ERROR::TERMINATE_ON_LAUNCH) << endl;
 	if (errors & ERROR::OBJECT_NOT_FOUND)
@@ -57,7 +57,7 @@ bool createAssembly(string filePath)
 	MSL::compiler::Lexer lexer(reader.GetBuffer());
 	lexer.ReplaceStrings(reader.GetReplacedStrings());
 
-	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::NO_OUTPUT);
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::ERROR_ONLY);
 	parser.Parse();
 
 	if (!parser.ParsingSuccess())
@@ -94,9 +94,11 @@ int main()
 		config.streams = { &std::cin, &std::cout, &std::cout };
 		MSL::VM::VirtualMachine VM(move(config));
 		std::ifstream executable(filePath + ".emsl", std::ios::binary);
-		VM.AddBytecodeFile(&executable);
-		VM.Run();
-		PrintErrors(VM.GetErrors());
+		if (VM.AddBytecodeFile(&executable))
+		{
+			VM.Run();
+			PrintErrors(VM.GetErrors());
+		}
 	}
 	system("pause");
 }

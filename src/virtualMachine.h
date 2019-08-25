@@ -14,13 +14,14 @@ namespace MSL
 {
 	namespace VM
 	{
+		struct Local
+		{
+			BaseObject* object = nullptr;
+			bool isConst = false;
+		};
+
 		class VirtualMachine
 		{
-			struct Local
-			{
-				BaseObject* object = nullptr;
-				bool isConst = false;
-			};
 			using CallStack = std::stack<CallPath>;
 			using ObjectStack = std::vector<BaseObject*>;
 			using LocalsTable = std::unordered_map<std::string, Local>;
@@ -52,6 +53,7 @@ namespace MSL
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
+			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 
 			BaseObject* AllocUnknown(const std::string* value);
 			BaseObject* AllocNull();
@@ -63,15 +65,16 @@ namespace MSL
 			BaseObject* AllocClassWrapper(const ClassType* _class);
 			BaseObject* AllocClassObject(const ClassType* _class);
 			BaseObject* AllocNamespaceWrapper(const NamespaceType* _namespace);
+			BaseObject* AllocLocal(Local& local);
 		public:
 			enum ERROR
 			{
 				CALLSTACK_EMPTY = 1,
 				INVALID_CALL_ARGUMENT = 2,
 				TERMINATE_ON_LAUNCH = 4,
-				OPERANDSTACK_CORRUPTION = 8,
-				INVALID_OPCODE = 16,
-				INVALID_STACKFRAME_OFFSET = 32,
+				INVALID_OPCODE = 8,
+				INVALID_STACKFRAME_OFFSET = 16,
+				OBJECTSTACK_CORRUPTION = 32,
 				INVALID_METHOD_SIGNATURE = 64,
 				OBJECTSTACK_EMPTY = 128,
 				INVALID_HASH_VALUE = 256,
@@ -79,6 +82,7 @@ namespace MSL
 				MEMBER_NOT_FOUND = 1024,
 				INVALID_STACKOBJECT = 2048,
 				STACKOVERFLOW = 4096,
+				PRIVATE_MEMBER_ACCESS = 8192,
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);

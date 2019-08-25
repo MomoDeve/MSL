@@ -6,6 +6,8 @@ namespace MSL
 {
 	namespace VM
 	{
+		struct BaseObject;
+
 		struct AttributeType
 		{
 			enum Modifiers
@@ -15,7 +17,6 @@ namespace MSL
 				PUBLIC = 4,
 			};
 			std::string name;
-			uint16_t offset;
 			uint8_t modifiers = 0;
 
 			AttributeType() = default;

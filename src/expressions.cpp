@@ -265,10 +265,7 @@ namespace MSL
 			code.write(OPCODE::JUMP_IF_FALSE);
 			code.write<uint16_t>(labelId + 1); // to end-for
 
-			for (const auto& expr : body)
-			{
-				expr->GenerateBytecode(code, function);
-			}
+			GenerateExpressionListBytecode(body, code, function);
 			if (hasIterationStatement())
 			{
 				iteration->GenerateBytecode(code, function);
@@ -467,10 +464,7 @@ namespace MSL
 			code.write(OPCODE::JUMP_IF_FALSE);
 			code.write<uint16_t>(labelId + 1); // to end-while
 
-			for (const auto& expr : body)
-			{
-				expr->GenerateBytecode(code, function);
-			}
+			GenerateExpressionListBytecode(body, code, function);
 
 			code.write(OPCODE::JUMP);
 			code.write(labelId); // to predicate
@@ -571,10 +565,7 @@ namespace MSL
 			code.write(OPCODE::JUMP_IF_TRUE);
 			code.write<uint16_t>(labelId + 1); // to end-foreach
 
-			for (const auto& expr : body)
-			{
-				expr->GenerateBytecode(code, function);
-			}
+			GenerateExpressionListBytecode(body, code, function);
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(iterator));
 

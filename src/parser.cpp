@@ -500,7 +500,7 @@ namespace MSL
 			{
 				THROW("function must be declared with parameters: " + memberName);
 			}
-			if (!isStatic)
+			if (!isStatic && memberName != classObject.name)
 			{
 				functionObject.params.push_back("this");
 			}

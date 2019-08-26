@@ -44,6 +44,12 @@ void PrintErrors(uint32_t errors)
 		cout << STRING(ERROR::INVALID_STACKOBJECT) << endl;
 	if (errors & ERROR::STACKOVERFLOW)
 		cout << STRING(ERROR::STACKOVERFLOW) << endl;
+	if (errors & ERROR::PRIVATE_MEMBER_ACCESS)
+		cout << STRING(ERROR::PRIVATE_MEMBER_ACCESS) << endl;
+	if (errors & ERROR::CALLSTACK_CORRUPTION)
+		cout << STRING(ERROR::CALLSTACK_CORRUPTION) << endl;
+	if (errors & ERROR::OBJECTSTACK_CORRUPTION)
+		cout << STRING(OBJECTSTACK_CORRUPTION) << endl;
 }
 
 bool createAssembly(string filePath)
@@ -65,14 +71,14 @@ bool createAssembly(string filePath)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-	/*for (const auto& _namespace : assembly.GetNamespaces())
+	for (const auto& _namespace : assembly.GetNamespaces())
 	{
 		cout << _namespace.toString() << "\n\n";
 		for (const auto& member : _namespace.getMembers())
 		{
 			cout << member.ToString() << endl;
 		}
-	}*/
+	}
 	MSL::compiler::CodeGenerator generator(std::move(assembly));
 	generator.GenerateBytecode(filePath + ".emsl");
 
@@ -82,7 +88,7 @@ bool createAssembly(string filePath)
 int main()
 {
 	#define SIZE(T) cout << #T << ": " << sizeof(T) << endl
-	string filePath = "main";
+	string filePath = "gay";
 	if (createAssembly(filePath))
 	{
 		MSL::BytecodeReader reader(filePath + ".emsl");

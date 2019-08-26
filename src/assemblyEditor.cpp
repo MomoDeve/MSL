@@ -418,7 +418,6 @@ namespace MSL
 
 		void AssemblyEditor::RegisterLabelInMethod(MethodType& method, uint16_t label)
 		{
-			AddIntegerToByteArray(method.body, label);
 			if (label >= method.labels.size())
 			{
 				method.labels.resize(label + 1);

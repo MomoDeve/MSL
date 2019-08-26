@@ -3,6 +3,7 @@
 #include <memory>
 #include <istream>
 #include <stack>
+#include <chrono>
 
 #include "objects.h"
 #include "configuration.h"
@@ -54,6 +55,11 @@ namespace MSL
 			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
+			void DisplayError(std::string message) const;
+			void DisplayExtra(std::string message) const;
+			std::string GetFullClassType(const ClassType* type) const;
+			std::string GetFullMethodType(const MethodType* type) const;
+			std::string GetMethodActualName(const std::string& methodName) const;
 
 			BaseObject* AllocUnknown(const std::string* value);
 			BaseObject* AllocNull();
@@ -83,6 +89,7 @@ namespace MSL
 				INVALID_STACKOBJECT = 2048,
 				STACKOVERFLOW = 4096,
 				PRIVATE_MEMBER_ACCESS = 8192,
+				CALLSTACK_CORRUPTION = 16384
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);

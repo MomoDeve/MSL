@@ -1,28 +1,28 @@
-namespace Program
+namespace Data
 {
-	class Test
+	public class Test
 	{
-		public function Test()
-		{
-		
-		}
-	}
-
-	internal class AnotherClass
-	{		
 		var name;
 		
-		public function ToString()
+		public function Test(arg)
+		{
+			name = arg;
+		}
+		
+		public function GetName()
 		{
 			return name;
 		}
-		
+	}
+}
+
+namespace Program
+{
+	internal class ProgramClass
+	{			
 		public static function Main() 
 		{
-			var Console = System.Console;
-			var obj = AnotherClass.AnotherClass();
-			obj.name = "my object";
-			Console.PrintLine(obj);
+			System.Console.PrintLine("u gay");
 			return 0;
 		}
 		
@@ -30,7 +30,7 @@ namespace Program
 			var arraySize = 10;
 			var A = Array[arraySize];
 			A.Fill(Utilities.Random(0, 10));
-			Console.Print(A);
+			System.Console.Print(A);
 			BubbleSort(A, A.predicate);
 			Console.Print(A, stdout);*/
 

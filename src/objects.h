@@ -140,8 +140,9 @@ namespace MSL
 		struct LocalObject : BaseObject
 		{
 			Local& ref;
+			const std::string& nameRef;
 
-			LocalObject(Local& ref);
+			LocalObject(Local& ref, const std::string& nameRef);
 
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;

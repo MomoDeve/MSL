@@ -2,7 +2,7 @@ namespace Data
 {
 	public class Test
 	{
-		var name;
+		const static var name;
 		
 		public function Test(arg)
 		{
@@ -22,7 +22,9 @@ namespace Program
 	{			
 		public static function Main() 
 		{
-			System.Console.PrintLine("u gay");
+			const var Console = System.Console;
+			var obj = Data.Test("myObject");
+			Console.PrintLine(obj);
 			return 0;
 		}
 		

@@ -49,7 +49,9 @@ void PrintErrors(uint32_t errors)
 	if (errors & ERROR::CALLSTACK_CORRUPTION)
 		cout << STRING(ERROR::CALLSTACK_CORRUPTION) << endl;
 	if (errors & ERROR::OBJECTSTACK_CORRUPTION)
-		cout << STRING(OBJECTSTACK_CORRUPTION) << endl;
+		cout << STRING(ERROR::OBJECTSTACK_CORRUPTION) << endl;
+	if (errors & ERROR::CONST_MEMBER_MODIFICATION)
+		cout << STRING(ERROR::CONST_MEMBER_MODIFICATION) << endl;
 }
 
 bool createAssembly(string filePath)
@@ -71,14 +73,14 @@ bool createAssembly(string filePath)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-	for (const auto& _namespace : assembly.GetNamespaces())
+	/*for (const auto& _namespace : assembly.GetNamespaces())
 	{
 		cout << _namespace.toString() << "\n\n";
 		for (const auto& member : _namespace.getMembers())
 		{
 			cout << member.ToString() << endl;
 		}
-	}
+	}*/
 	MSL::compiler::CodeGenerator generator(std::move(assembly));
 	generator.GenerateBytecode(filePath + ".emsl");
 
@@ -88,11 +90,11 @@ bool createAssembly(string filePath)
 int main()
 {
 	#define SIZE(T) cout << #T << ": " << sizeof(T) << endl
-	string filePath = "gay";
+	string filePath = "main";
 	if (createAssembly(filePath))
 	{
 		MSL::BytecodeReader reader(filePath + ".emsl");
-		std::ofstream binary("main_binary.bmsl");
+		std::ofstream binary(filePath + "_binary.bmsl");
 		reader.ReadToEnd(binary);
 		binary.close();
 

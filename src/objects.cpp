@@ -151,8 +151,8 @@ namespace MSL
 		{
 			return ref;
 		}
-		LocalObject::LocalObject(Local& ref)
-			: BaseObject(Type::LOCAL), ref(ref) { }
+		LocalObject::LocalObject(Local& ref, const std::string& nameRef)
+			: BaseObject(Type::LOCAL), ref(ref), nameRef(nameRef) { }
 
 		BaseObject* LocalObject::GetMember(const std::string& memberName) const
 		{
@@ -161,7 +161,7 @@ namespace MSL
 
 		const std::string* LocalObject::GetName() const
 		{
-			return nullptr;
+			return &nameRef;
 		}
 
 		AttributeObject::AttributeObject(const AttributeType* type)

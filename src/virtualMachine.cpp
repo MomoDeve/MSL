@@ -15,7 +15,9 @@ namespace MSL
 			object->attributes.reserve(_class->objectAttributes.size());
 			for (const auto& attr : _class->objectAttributes)
 			{
-				object->attributes[attr.second.name] = std::make_unique<AttributeObject>(&attr.second);
+				std::unique_ptr<AttributeObject> objectAttr = std::make_unique<AttributeObject>(&attr.second);
+				objectAttr->object = AllocNull();
+				object->attributes[attr.second.name] = std::move(objectAttr);
 			}
 			return object;
 		}
@@ -25,9 +27,9 @@ namespace MSL
 			return new NamespaceWrapper(_namespace);
 		}
 
-		BaseObject* VirtualMachine::AllocLocal(Local& local)
+		BaseObject* VirtualMachine::AllocLocal(const std::string& localName, Local& local)
 		{
-			return new LocalObject(local);
+			return new LocalObject(local, localName);
 		}
 
 		OPCODE VirtualMachine::ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset)
@@ -209,6 +211,8 @@ namespace MSL
 				if (objectStack.empty())
 				{
 					errors |= ERROR::OBJECTSTACK_EMPTY;
+					DisplayError("object stack does not contain enough parameters for method call");
+					DisplayExtra("frame: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
 					return;
 				}
 				frame->locals[*it].object = objectStack.back();
@@ -232,8 +236,20 @@ namespace MSL
 			}
 			if (frame->_method->modifiers & MethodType::Modifiers::CONSTRUCTOR)
 			{
-				frame->classObject = AllocClassObject(frame->_class);
-				frame->locals["this"].object = frame->classObject;
+				if (frame->_class->modifiers & ClassType::Modifiers::STATIC)
+				{
+					CallPath top = callStack.top();
+					callStack.pop();
+					DisplayError("can not create instance of static class: " + GetFullClassType(frame->_class));
+					if (!callStack.empty())
+						DisplayExtra("from frame: " + *callStack.top().GetNamespace() + '.' + *callStack.top().GetClass() + '.' + *callStack.top().GetMethod());
+					callStack.push(std::move(top));
+				}
+				else
+				{
+					frame->classObject = AllocClassObject(frame->_class);
+					frame->locals["this"].object = frame->classObject;
+				}
 			}
 			while (frame->offset < frame->_method->body.size())
 			{
@@ -272,26 +288,44 @@ namespace MSL
 				case (OPCODE::POWER_OP):
 					break;
 				case (OPCODE::ASSIGN_OP):
+				{
 					if (objectStack.size() < 2)
 					{
 						errors |= ERROR::OBJECTSTACK_EMPTY;
+						DisplayError("assignment failed, not enough arguments");
+						return;
 					}
-					else
+
+					BaseObject* value = objectStack.back();
+					objectStack.pop_back();
+					if (value->type == Type::UNKNOWN)
 					{
-						BaseObject* value = objectStack.back();
-						objectStack.pop_back();
-						if (value->type == Type::UNKNOWN)
+						value = SearchForObject(*value->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
+						if (value == nullptr)
 						{
-							value = SearchForObject(*value->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
-							if (value == nullptr)
+							errors |= ERROR::OBJECT_NOT_FOUND;
+							return;
+						}
+					}
+					BaseObject* obj = objectStack.back();
+					objectStack.pop_back();
+					if (obj->type == Type::UNKNOWN)
+					{
+						auto localIt = frame->locals.find(*obj->GetName());
+						if (localIt != frame->locals.end())
+						{
+							if (localIt->second.isConst && localIt->second.object->type != Type::NULLPTR)
 							{
-								errors |= ERROR::OBJECT_NOT_FOUND;
+								errors |= ERROR::CONST_MEMBER_MODIFICATION;
+								DisplayError("trying to modify const local variable: " + localIt->first);
+								DisplayExtra("frame: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
 								return;
 							}
+							localIt->second.object = value;
+							objectStack.push_back(obj);
+							break;
 						}
-						BaseObject* obj = objectStack.back();
-						objectStack.pop_back();
-						if (obj->type == Type::UNKNOWN)
+						else
 						{
 							obj = SearchForObject(*obj->GetName(), frame->locals, frame->_method, frame->classObject, frame->_namespace);
 							if (obj == nullptr)
@@ -300,24 +334,45 @@ namespace MSL
 								return;
 							}
 						}
-						switch (obj->type)
+					}
+					switch (obj->type)
+					{
+					case Type::LOCAL:
+					{
+						LocalObject* local = reinterpret_cast<LocalObject*>(obj);
+						if (local->ref.isConst && local->ref.object->type != Type::NULLPTR)
 						{
-						case Type::LOCAL:
-							reinterpret_cast<LocalObject*>(obj)->ref.object = value;
-							objectStack.push_back(obj);
-							break;
-						case Type::ATTRIBUTE:
-							reinterpret_cast<AttributeObject*>(obj)->object = value;
-							objectStack.push_back(obj);
-							break;
-						default:
-							errors |= ERROR::INVALID_STACKOBJECT;
-							DisplayError("trying to assign value to object which is neither local variable, not class attribute");
+							errors |= ERROR::CONST_MEMBER_MODIFICATION;
+							DisplayError("trying to modify const local variable: " + local->nameRef);
 							DisplayExtra("frame: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
-							break;
+							return;
 						}
+						local->ref.object = value;
+						objectStack.push_back(local);
+						break;
+					}
+					case Type::ATTRIBUTE:
+					{
+						AttributeObject* attr = reinterpret_cast<AttributeObject*>(obj);
+						if ((attr->type->modifiers & AttributeType::Modifiers::CONST) && attr->object->type != Type::NULLPTR)
+						{
+							errors |= ERROR::CONST_MEMBER_MODIFICATION;
+							DisplayError("trying to modify const class attribute: " + attr->type->name);
+							DisplayExtra("frame: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
+							return;
+						}
+						attr->object = value;
+						objectStack.push_back(attr);
+						break;
+					}
+					default:
+						errors |= ERROR::INVALID_STACKOBJECT;
+						DisplayError("trying to assign value to object with invalid type");
+						DisplayExtra("frame: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
+						break;
 					}
 					break;
+				}
 				case (OPCODE::CMP_EQ):
 					break;
 				case (OPCODE::CMP_NEQ):
@@ -510,6 +565,7 @@ namespace MSL
 					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
 						objectStack.push_back(AllocLocal(
+							frame->_method->dependencies[hash],
 							frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), false }
 						));
 					}
@@ -521,6 +577,7 @@ namespace MSL
 					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
 					{
 						objectStack.push_back(AllocLocal(
+							frame->_method->dependencies[hash],
 							frame->locals[frame->_method->dependencies[hash]] = { AllocNull(), true }
 						));
 					}
@@ -730,56 +787,55 @@ namespace MSL
 			{
 				if (_method->name == "GetType_1")
 				{
-					NamespaceType& systemNamespace = assembly.namespaces.find(_class->namespaceName)->second;
-					ClassType& reflectedObjectType = systemNamespace.classes.find("ReflectedObject")->second;
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
 					objectStack.pop_back(); // deleting reflection class reference
 					switch (object->type)
 					{
 					case Type::CLASS_OBJECT:
-						ClassObject* reflectedObject = reinterpret_cast<ClassObject*>(AllocClassObject(&reflectedObjectType));
-						reflectedObject->attributes["ClassInstance"]->object = reinterpret_cast<ClassObject*>(object)->type->wrapper;
-						objectStack.push_back(reflectedObject);
+						objectStack.push_back(reinterpret_cast<ClassObject*>(object)->type->wrapper);
+						break;
+					case Type::CLASS:
+						objectStack.push_back(object);
+						break;
+					default:
+						errors |= ERROR::INVALID_CALL_ARGUMENT;
+						DisplayError("class object expected as a parameter");
+						DisplayExtra("frame: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
 						break;
 					}
 				}
-			}
-			else if (_class->name == "ReflectedObject")
-			{
-				if (_method->name == "CreateInstance_1")
+				else if (_method->name == "CreateInstance_1")
 				{
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
-					if (object->type != Type::CLASS_OBJECT)
+					objectStack.pop_back(); // deleting reflection class reference
+					if (object->type != Type::CLASS)
 					{
-						errors |= ERROR::INVALID_STACKOBJECT;
+						errors |= ERROR::INVALID_CALL_ARGUMENT;
+						DisplayError("class type expected as a parameter");
+						DisplayExtra("frame: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
 						return;
 					}
-					ClassObject* reflectedObject = reinterpret_cast<ClassObject*>(object);
-					const ClassType* classType = reinterpret_cast<ClassWrapper*>(reflectedObject->attributes["ClassInstance"]->object)->type;
-					objectStack.push_back(AllocNull());
-					auto constructor = classType->methods.find(classType->name + "_0");
-					if (constructor == classType->methods.end())
+					std::string constructor = *object->GetName() + "_0";
+					const ClassType* classType = reinterpret_cast<ClassWrapper*>(object)->type;
+					auto methodIt = classType->methods.find(constructor);
+					if (methodIt == classType->methods.end())
 					{
 						errors |= ERROR::MEMBER_NOT_FOUND;
-						DisplayError("constructor with no parameters not found: class " + GetFullClassType(classType));
+						DisplayError("class type provided does not have constructor with no parameters: " + GetFullClassType(classType));
 						DisplayExtra("frame: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
-						return;
 					}
-					if ((constructor->second.modifiers & MethodType::Modifiers::PUBLIC) == 0)
+					else
 					{
-						errors |= ERROR::PRIVATE_MEMBER_ACCESS;
-						DisplayError("constructor has a private modifier: " + GetFullClassType(classType) + '.' + GetFullMethodType(&constructor->second));
-						DisplayExtra("frame: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
-						return;
+						CallPath newFrame;
+						newFrame.SetNamespace(&classType->namespaceName);
+						newFrame.SetClass(&classType->name);
+						newFrame.SetMethod(&constructor);
+						callStack.push(std::move(newFrame));
+						objectStack.push_back(classType->wrapper);
+						StartNewStackFrame();
 					}
-					CallPath newFrame;
-					newFrame.SetNamespace(&classType->namespaceName);
-					newFrame.SetClass(&classType->name);
-					newFrame.SetMethod(&constructor->second.name);
-					callStack.push(std::move(newFrame));
-					StartNewStackFrame();
 				}
 			}
 			callStack.pop();
@@ -798,7 +854,9 @@ namespace MSL
 					c.staticInstance->attributes.reserve(c.staticAttributes.size());
 					for (const auto& attr : c.staticAttributes)
 					{
-						c.staticInstance->attributes[attr.second.name] = std::make_unique<AttributeObject>(&attr.second);
+						std::unique_ptr<AttributeObject> staticAttr = std::make_unique<AttributeObject>(&attr.second);
+						staticAttr->object = AllocNull();
+						c.staticInstance->attributes[attr.second.name] = std::move(staticAttr);
 					}
 				}
 			}
@@ -833,30 +891,20 @@ namespace MSL
 			reflection.namespaceName = system.name;
 			reflection.modifiers |= ClassType::Modifiers::STATIC | ClassType::Modifiers::SYSTEM;
 
-			MethodType getType; // gets type of object
+			MethodType getType; // gets object type
 			getType.name = "GetType_1";
-			getType.parameters.push_back("value");
+			getType.parameters.push_back("object");
 			getType.modifiers |= MethodType::Modifiers::PUBLIC | MethodType::Modifiers::STATIC;
 			reflection.methods.insert({ "GetType_1", std::move(getType) });
 
-			ClassType reflectedObject;
-			reflectedObject.name = "ReflectedObject";
-			reflectedObject.namespaceName = system.name;
-			reflectedObject.modifiers |= ClassType::Modifiers::INTERNAL | ClassType::Modifiers::SYSTEM;
-			AttributeType classInstance;
-			classInstance.name = "ClassInstance";
-			reflectedObject.objectAttributes.insert({ "ClassInstance", std::move(classInstance) });
-
 			MethodType createInstance;
 			createInstance.name = "CreateInstance_1";
-			createInstance.parameters.push_back("this");
-			createInstance.modifiers |= MethodType::Modifiers::PUBLIC;
-
-			reflectedObject.methods.insert({ "CreateInstance_1", std::move(createInstance) });
+			createInstance.parameters.push_back("type");
+			createInstance.modifiers |= MethodType::Modifiers::PUBLIC | MethodType::Modifiers::STATIC;
+			reflection.methods.insert({ "CreateInstance_1", std::move(createInstance) });
 
 			system.classes.insert({ "Console", std::move(console) });
 			system.classes.insert({ "Reflection", std::move(reflection) });
-			system.classes.insert({ "ReflectedObject", std::move(reflectedObject) });
 
 			assembly.namespaces.insert({ "System", std::move(system) });
 		}

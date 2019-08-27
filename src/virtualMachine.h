@@ -71,7 +71,7 @@ namespace MSL
 			BaseObject* AllocClassWrapper(const ClassType* _class);
 			BaseObject* AllocClassObject(const ClassType* _class);
 			BaseObject* AllocNamespaceWrapper(const NamespaceType* _namespace);
-			BaseObject* AllocLocal(Local& local);
+			BaseObject* AllocLocal(const std::string& localName, Local& local);
 		public:
 			enum ERROR
 			{
@@ -89,7 +89,8 @@ namespace MSL
 				INVALID_STACKOBJECT = 2048,
 				STACKOVERFLOW = 4096,
 				PRIVATE_MEMBER_ACCESS = 8192,
-				CALLSTACK_CORRUPTION = 16384
+				CALLSTACK_CORRUPTION = 16384,
+				CONST_MEMBER_MODIFICATION = 32768,
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);

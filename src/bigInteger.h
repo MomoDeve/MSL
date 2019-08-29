@@ -40,8 +40,8 @@ namespace momo
 		big_integer(int value);
 		big_integer(const std::string& value);
 		big_integer(const char* value);
-		big_integer(const big_integer& other);
-		big_integer(big_integer&& other);
+		big_integer(const big_integer&) = default;
+		big_integer(big_integer&&) = default;
 
 		big_integer& operator=(long long value);
 		big_integer& operator=(unsigned long long value);
@@ -73,17 +73,19 @@ namespace momo
 		big_integer operator-() const;
 		big_integer operator+() const;
 
-		std::string to_string(const std::string& sep = "") const;
+		std::string to_string(std::string sep = "") const;
 
 		friend std::ostream& operator<<(std::ostream& out, const big_integer& num);
 		friend const big_integer& max(const big_integer& num1, const big_integer& num2);
 		friend const big_integer& min(const big_integer& num1, const big_integer& num2);
 		friend big_integer abs(big_integer num);
-		friend big_integer pow(const big_integer& num, size_t power);
+		friend big_integer pow(const big_integer& num, const big_integer& power);
 		friend big_integer pow(const big_integer& num, size_t power, const big_integer& mod);
 		friend big_integer fact(big_integer num);
 		friend big_integer sqrt(const big_integer& num);
 	};
+
+	big_integer pow(const big_integer& num, const big_integer& power);
 
 	typedef big_integer BigInteger;
 

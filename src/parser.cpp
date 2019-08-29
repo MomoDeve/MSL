@@ -8,11 +8,10 @@ namespace MSL
 		#define TO_BASE(derived_ptr) unique_ptr<BaseExpression>(derived_ptr.release())
 
 		Parser::Parser(Lexer* lexer, std::ostream* errorStream, Mode mode)
-			: lexer(lexer), stream(errorStream), mode(mode), hasEntryPoint(false) { }
+			: lexer(lexer), stream(errorStream), mode(mode), hasEntryPoint(false), success(true) { }
 
 		bool Parser::Parse()
 		{
-			success = true;
 			while (!lexer->End())
 			{
 				Token::Type tokenType = lexer->Peek().type;
@@ -36,7 +35,7 @@ namespace MSL
 			if (!hasEntryPoint)
 			{
 				success = false;
-				Notify("[Error]: Entry point must be defined: no Main function found");
+				Notify("[Error]: entry point must be defined: no Main function found");
 			}
 			return success;
 		}
@@ -71,7 +70,7 @@ namespace MSL
 
 						if (!GenerateMembers(_namespace))
 						{
-							THROW("Error while generating namespace: " + namespaceName);
+							THROW("error while generating namespace: " + namespaceName);
 						}
 						if (_namespace.getMembers().empty())
 						{
@@ -100,7 +99,7 @@ namespace MSL
 			{
 				if (lexer->End()) // expected `{`
 				{
-					THROW("Namespace must be closed with `{`: " + _namespace.getName());
+					THROW("namespace must be closed with `{`: " + _namespace.getName());
 				}
 
 				ModifierList modifiers;
@@ -239,13 +238,15 @@ namespace MSL
 			{
 				Warning(className.value + ": class declared empty");
 			}
-			if (!classObject.ContainsMember(classObject.name) && !classObject.IsStatic() && !classObject.IsAbstract())
+			std::string constructorName = classObject.name + "_0";
+			if (!classObject.ContainsMember(constructorName) && !classObject.IsStatic() && !classObject.IsAbstract())
 			{
-				Function constructor(classObject.name);
+				Function constructor(constructorName);
 				constructor.modifiers = Function::Modifiers::_PUBLIC | Function::Modifiers::_CONSTRUCTOR;
 				constructor.body = unique_ptr<ExpressionList>(new ExpressionList());
 				constructor.body->push_back(std::unique_ptr<BaseExpression>(new ReturnExpression()));
-				classObject.InsertMethod(classObject.name, std::move(constructor));
+				constructor.name = classObject.name;
+				classObject.InsertMethod(constructorName, std::move(constructor));
 			}
 
 			return true; // class is parsed successfully
@@ -507,7 +508,7 @@ namespace MSL
 			functionObject.name = memberName;
 			if (!ParseFunctionParamsDecl(functionObject.params))
 			{
-				THROW("Error while parsing function parameter list: " + functionObject.name);
+				THROW("error while parsing function parameter list: " + functionObject.name);
 			}
 
 			if (isAbstract)
@@ -524,7 +525,19 @@ namespace MSL
 			}
 			if (memberName == classObject.name)
 			{
-				functionObject.modifiers |= Function::Modifiers::_CONSTRUCTOR;
+				if (!isStatic)
+				{
+					functionObject.modifiers |= Function::Modifiers::_CONSTRUCTOR;
+				}
+				else if(functionObject.params.size() == 0)
+				{
+					classObject.modifiers |= Class::Modifiers::_STATIC_CONSTRUCTOR;
+					functionObject.modifiers |= Function::Modifiers::_STATIC_CONSTRUCTOR;
+				}
+				else
+				{
+					THROW("static constructor must not have parameters");
+				}
 			}
 
 			lexer->Next(); // skipping `)` -> `{` 
@@ -559,6 +572,10 @@ namespace MSL
 
 			Debug(classObject.name + ": method added: " + memberName);
 			std::string functionInnerName = Function::GenerateUniqueName(memberName, functionObject.params.size()); // unique name for overloading
+			if (memberName == classObject.name && functionObject.modifiers & Function::Modifiers::_STATIC)
+			{
+				functionInnerName += "_static";
+			}
 
 			if (isStatic && !isAbstract && (memberName == entryPointName))
 			{
@@ -566,17 +583,12 @@ namespace MSL
 				functionObject.modifiers |= Function::Modifiers::_ENTRY_POINT;
 				Debug("entry-point located in class: " + classObject.name);
 			}
-			if (classObject.ContainsMember(functionObject.name))
-			{
-				lexer->Prev();
-				THROW("this member has already been declared: " + memberName);
-			}
 			if (classObject.ContainsMember(functionInnerName))
 			{
 				lexer->Prev();
 				THROW("this member has already been declared: " + memberName);
 			}
-			classObject.InsertMethod(memberName, std::move(functionObject));
+			classObject.InsertMethod(functionInnerName, std::move(functionObject));
 
 			return true;
 		}
@@ -1018,7 +1030,7 @@ namespace MSL
 			if (lexer->Peek().type & Token::Type::UNARY_OPERAND)
 			{
 				unique_ptr<UnaryExpression> unaryExpr(new UnaryExpression());
-				unaryExpr->type = lexer->Peek().type;
+				unaryExpr->expressionType = lexer->Peek().type;
 				lexer->Next(); // skipping [unary_op]
 				unaryExpr->expression = ParseNextVariable(function);
 				return TO_BASE(unaryExpr);
@@ -1093,7 +1105,7 @@ namespace MSL
 					Error("value type before binary operand expected");
 				}
 				binExpr->left = std::move(leftBranch);
-				binExpr->type = firstToken.type;
+				binExpr->expressionType = firstToken.type;
 				uint32_t currentPriority = firstToken.type & Token::PRIORITY;
 				lexer->Next(); // skipping `BINARY_OP`
 				unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function);

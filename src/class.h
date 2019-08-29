@@ -62,6 +62,8 @@ namespace MSL
 				_ABSTRACT = 4,
 				_CONST = 8,
 				_INTERNAL = 16,
+				_STATIC_CONSTRUCTOR = 32,
+				_SYSTEM = 128
 			};
 
 			/*

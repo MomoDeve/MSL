@@ -21,6 +21,7 @@ namespace MSL
 				ABSTRACT = 4,
 				CONST = 8,
 				INTERNAL = 16,
+				STATIC_CONSTRUCTOR = 32,
 				SYSTEM = 128
 			};
 			using AttributeHashTable = std::unordered_map<std::string, AttributeType>;
@@ -30,6 +31,7 @@ namespace MSL
 			MethodHashTable methods;
 			ClassObject* staticInstance = nullptr;
 			BaseObject* wrapper = nullptr;
+			mutable bool staticConstructorCalled = false;
 			std::string namespaceName;
 
 			std::string name;

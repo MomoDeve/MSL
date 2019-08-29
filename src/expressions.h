@@ -26,7 +26,7 @@ namespace MSL
 		*/
 		struct BinaryExpression : public BaseExpression
 		{
-			Token::Type type;
+			Token::Type expressionType;
 			unique_ptr<BaseExpression> left;
 			unique_ptr<BaseExpression> right;
 			void Print(std::ostream& out, int depth = 0) const override;
@@ -41,7 +41,7 @@ namespace MSL
 		*/
 		struct UnaryExpression : public BaseExpression
 		{
-			Token::Type type;
+			Token::Type expressionType;
 			unique_ptr<BaseExpression> expression;
 			void Print(std::ostream& out, int depth = 0) const override;
 
@@ -136,6 +136,9 @@ namespace MSL
 		struct ObjectExpression : public BaseExpression
 		{
 			Token object = Token(Token::Type::ERROR, "unnamed");
+
+			ObjectExpression();
+
 			void Print(std::ostream& out, int depth = 0) const override;
 			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
 		};
@@ -147,7 +150,7 @@ namespace MSL
 		{
 			std::string objectName;
 			unique_ptr<BaseExpression> assignment;
-			bool isConst;
+			bool isConst = false;
 
 			ObjectDeclareExpression();
 

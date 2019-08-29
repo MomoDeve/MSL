@@ -52,6 +52,8 @@ void PrintErrors(uint32_t errors)
 		cout << STRING(ERROR::OBJECTSTACK_CORRUPTION) << endl;
 	if (errors & ERROR::CONST_MEMBER_MODIFICATION)
 		cout << STRING(ERROR::CONST_MEMBER_MODIFICATION) << endl;
+	if (errors & ERROR::ABSTRACT_MEMBER_CALL)
+		cout << STRING(ERROR::ABSTRACT_MEMBER_CALL) << endl;
 }
 
 bool createAssembly(string filePath)

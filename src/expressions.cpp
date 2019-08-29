@@ -138,6 +138,11 @@ namespace MSL
 
 #undef TO_BASE
 
+		ObjectExpression::ObjectExpression()
+		{
+			BaseExpression::type = ExpressionType::OBJECT;
+		}
+
 		void ObjectExpression::Print(std::ostream& out, int depth) const
 		{
 			out << std::string(depth, '\t');
@@ -281,7 +286,7 @@ namespace MSL
 
 		void UnaryExpression::Print(std::ostream& out, int depth) const
 		{
-			out << std::string(depth, '\t') << Token::ToString(type) << '\n';
+			out << std::string(depth, '\t') << Token::ToString(expressionType) << '\n';
 			out << std::string(depth, '\t') << ">> EXPR:\n";
 			expression->Print(out, depth + 1);
 		}
@@ -294,7 +299,7 @@ namespace MSL
 		void UnaryExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
 			expression->GenerateBytecode(code, function);
-			switch (type)
+			switch (expressionType)
 			{
 			case Token::Type::NEGATION_OP:
 				code.write(OPCODE::NEGATION_OP);
@@ -314,7 +319,7 @@ namespace MSL
 
 		void BinaryExpression::Print(std::ostream& out, int depth) const
 		{
-			out << std::string(depth, '\t') << Token::ToString(type) << '\n';
+			out << std::string(depth, '\t') << Token::ToString(expressionType) << '\n';
 			out << std::string(depth, '\t') << ">> LEFT_EXPR:\n";
 			left->Print(out, depth + 1);
 			out << std::string(depth, '\t') << ">> RIGHT_EXPR:\n";
@@ -330,7 +335,7 @@ namespace MSL
 		{
 			left->GenerateBytecode(code, function);
 			right->GenerateBytecode(code, function);
-			switch (type)
+			switch (expressionType)
 			{
 			case Token::Type::SUM_OP:
 				code.write(OPCODE::SUM_OP);
@@ -625,6 +630,7 @@ namespace MSL
 				case ExpressionType::CALL:
 				case ExpressionType::INDEX:
 				case ExpressionType::DECLARE:
+				case ExpressionType::OBJECT:
 					code.write(OPCODE::POP_STACK_TOP); // if result of these expressions is not needed, it should be discarded by stack_pop
 					break;
 				default:

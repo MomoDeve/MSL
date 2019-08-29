@@ -15,6 +15,7 @@ namespace MSL
 				STATIC = 2,
 				PUBLIC = 4,
 				CONSTRUCTOR = 8,
+				STATIC_CONSTRUCTOR = 16,
 				ENTRY_POINT = 128,
 			};
 

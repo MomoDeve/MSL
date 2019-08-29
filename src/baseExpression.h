@@ -58,7 +58,7 @@ namespace MSL
 		};
 
 		/*
-		ExpressionList should be used when eExpressions should be stored in a array
+		ExpressionList should be used when expressions are need to be stored in an array
 		*/
 		typedef std::vector<std::unique_ptr<BaseExpression> > ExpressionList;
 	}

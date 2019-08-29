@@ -215,12 +215,6 @@ namespace momo
 	big_integer::big_integer(const char* value)
 		: big_integer(std::string(value)) { }
 
-	big_integer::big_integer(const big_integer& other)
-		: _negative(other._negative), _digits(other._digits), _inf(other._inf) { }
-
-	big_integer::big_integer(big_integer&& other)
-		: _negative(other._negative), _digits(std::move(other._digits)), _inf(other._inf) { }
-
 	big_integer& big_integer::operator=(const std::string& value)
 	{
 		_negative = value[0] == '-';
@@ -373,7 +367,7 @@ namespace momo
 		return *this;
 	}
 
-	std::string big_integer::to_string(const std::string& sep) const
+	std::string big_integer::to_string(std::string sep) const
 	{
 		std::stringstream res;
 		if (_negative) res << '-';
@@ -415,7 +409,7 @@ namespace momo
 		return num;
 	}
 
-	big_integer pow(const big_integer& num, size_t power)
+	big_integer pow(const big_integer& num, const big_integer& power)
 	{
 		if (power == 0) return big_integer(1);
 		if (power % 2 == 0)
@@ -433,11 +427,11 @@ namespace momo
 		if (power == 0) return big_integer(1);
 		if (power % 2 == 0)
 		{
-			return pow(num * num % mod, power / 2) % mod;
+			return pow(num * num % mod, power / 2, mod) % mod;
 		}
 		else
 		{
-			return num * pow(num, power - 1) % mod;
+			return num * pow(num, power - 1, mod) % mod;
 		}
 	}
 

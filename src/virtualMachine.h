@@ -20,12 +20,24 @@ namespace MSL
 			BaseObject* object = nullptr;
 			bool isConst = false;
 		};
+		using LocalsTable = std::unordered_map<std::string, Local>;
+		using LocalStorage = std::vector<std::unique_ptr<std::string>>;
+
+		struct Frame
+		{
+			LocalsTable locals;
+			LocalStorage localStorage;
+			const NamespaceType* _namespace = nullptr;
+			const ClassType* _class = nullptr;
+			const MethodType* _method = nullptr;
+			BaseObject* classObject = nullptr;
+			size_t offset = 0;
+		};
 
 		class VirtualMachine
 		{
 			using CallStack = std::stack<CallPath>;
 			using ObjectStack = std::vector<BaseObject*>;
-			using LocalsTable = std::unordered_map<std::string, Local>;
 			CallStack callStack;
 			ObjectStack objectStack;
 
@@ -51,6 +63,7 @@ namespace MSL
 			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace);
 			void StartNewStackFrame();
 			void PerformSystemCall(const ClassType* _class, const MethodType* _method);
+			void PerformALUCall(OPCODE op, size_t parameters, Frame& frame);
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
@@ -91,6 +104,7 @@ namespace MSL
 				PRIVATE_MEMBER_ACCESS = 8192,
 				CALLSTACK_CORRUPTION = 16384,
 				CONST_MEMBER_MODIFICATION = 32768,
+				ABSTRACT_MEMBER_CALL = 65536
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);

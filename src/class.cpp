@@ -37,13 +37,7 @@ namespace MSL
 			size_t index = methods.size();
 			bool isFunction = true;
 
-			std::string overloadedFunctionName = Function::GenerateUniqueName(function.name, function.params.size());
-
-			table.insert({ overloadedFunctionName, TableIndex{isFunction, index} });
-			if (!ContainsMember(name))
-			{
-				table.insert({ name, TableIndex{isFunction, index} });
-			}
+			table.insert({ name, TableIndex{isFunction, index} });
 			methods.push_back(std::move(function));
 		}
 

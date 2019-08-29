@@ -1,30 +1,22 @@
 namespace Data
 {
 	public class Test
-	{
-		const static var name;
-		
-		public function Test(arg)
-		{
-			name = arg;
-		}
-		
-		public function GetName()
-		{
-			return name;
-		}
+	{	
+	
 	}
 }
 
 namespace Program
 {
-	internal class ProgramClass
+	internal static class ProgramClass
 	{			
 		public static function Main() 
 		{
-			const var Console = System.Console;
-			var obj = Data.Test("myObject");
-			Console.PrintLine(obj);
+			for(var i = 0; i < 1000; i = i + 1)
+			{
+				System.Console.Print(i);
+				System.Console.Print(" ");
+			}
 			return 0;
 		}
 		

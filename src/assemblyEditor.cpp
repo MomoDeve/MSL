@@ -191,14 +191,14 @@ namespace MSL
 						}
 					}
 				}
-				if (performCheck && (c.staticAttributes.find(method.name) != c.staticAttributes.end() ||
-									 c.objectAttributes.find(method.name) != c.objectAttributes.end()))
+				if (method.modifiers & MethodType::Modifiers::STATIC_CONSTRUCTOR)
 				{
-					DisplayError("Trying to add method with invalid name (attribute already added): " + method.name);
-					errors |= ERROR::DECLARATION_DUBLICATE;
-					return c;
+					method.name += "_0static";
 				}
-				method.name += '_' + std::to_string(method.parameters.size()); // unique name for overloading
+				else
+				{
+					method.name += '_' + std::to_string(method.parameters.size()); // unique name for overloading
+				}
 				std::string methodName = method.name;
 				c.methods.insert({ methodName, std::move(method) });
 				if (entryPoint != nullptr && (method.modifiers & MethodType::Modifiers::ENTRY_POINT))

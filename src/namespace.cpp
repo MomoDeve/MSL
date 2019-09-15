@@ -10,11 +10,6 @@ namespace MSL
 		Namespace::Namespace(std::string name)
 			: name(std::move(name)) { }
 
-		Namespace::Namespace(Namespace&& other)
-			: table(std::move(other.table)), classes(std::move(other.classes)), name(std::move(other.name))
-		{
-		}
-
 		std::string Namespace::getName() const
 		{
 			return name;

@@ -52,6 +52,7 @@ namespace MSL
 				LAMBDA,
 				FOREACH,
 				IN,
+				USING,
 
 				OBJECT = VALUE_TYPE + 1,
 				THIS,

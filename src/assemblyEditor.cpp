@@ -109,6 +109,13 @@ namespace MSL
 			NamespaceType ns;
 			if (!ExpectOpcode(OPCODE::STRING_DECL, ReadOPCode())) return ns;
 			ns.name = ReadString();
+			if (!ExpectOpcode(OPCODE::FRIEND_POOL_DECL_SIZE, ReadOPCode())) return ns;
+			size_t friendPoolSize = ReadSize();
+			for (size_t i = 0; i < friendPoolSize; i++)
+			{
+				if (!ExpectOpcode(OPCODE::STRING_DECL, ReadOPCode())) return ns;
+				ns.friendNamespaces.insert(ReadString());
+			}
 			if (!ExpectOpcode(OPCODE::CLASS_POOL_DECL_SIZE, ReadOPCode())) return ns;
 			size_t classPoolSize = ReadSize();
 			if (extraAlloc) ReserveExtraSpace(ns.classes, classPoolSize);
@@ -343,9 +350,6 @@ namespace MSL
 				case (OPCODE::GET_MEMBER):
 					WRITE_OPCODE(OPCODE::GET_MEMBER);
 					break;
-				case (OPCODE::SET_ALU_INCR):
-					WRITE_OPCODE(OPCODE::SET_ALU_INCR);
-					break;
 				case (OPCODE::CMP_EQ):
 					WRITE_OPCODE(OPCODE::CMP_EQ);
 					break;
@@ -372,6 +376,9 @@ namespace MSL
 					break;
 				case (OPCODE::GET_INDEX):
 					WRITE_OPCODE(OPCODE::GET_INDEX);
+					break;
+				case (OPCODE::SET_ALU_INCR):
+					WRITE_OPCODE(OPCODE::SET_ALU_INCR);
 					break;
 				case (OPCODE::CALL_FUNCTION):
 					WRITE_OPCODE(OPCODE::CALL_FUNCTION);

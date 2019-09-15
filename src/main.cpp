@@ -54,11 +54,13 @@ void PrintErrors(uint32_t errors)
 		cout << STRING(ERROR::CONST_MEMBER_MODIFICATION) << endl;
 	if (errors & ERROR::ABSTRACT_MEMBER_CALL)
 		cout << STRING(ERROR::ABSTRACT_MEMBER_CALL) << endl;
+	if (errors & ERROR::INVALID_METHOD_CALL)
+		cout << STRING(ERROR::INVALID_METHOD_CALL) << endl;
 }
 
 bool createAssembly(string filePath)
 {
-	ifstream file(filePath + ".msl");
+	ifstream file(filePath);
 	MSL::compiler::StreamReader reader;
 
 	reader << file;
@@ -67,7 +69,7 @@ bool createAssembly(string filePath)
 	MSL::compiler::Lexer lexer(reader.GetBuffer());
 	lexer.ReplaceStrings(reader.GetReplacedStrings());
 
-	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::ERROR_ONLY);
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::NO_DEBUG);
 	parser.Parse();
 
 	if (!parser.ParsingSuccess())
@@ -89,10 +91,11 @@ bool createAssembly(string filePath)
 	return true;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	#define SIZE(T) cout << #T << ": " << sizeof(T) << endl
-	string filePath = "main";
+	string filePath = "main.msl";
+	if (argc == 2) filePath = argv[1];
+
 	if (createAssembly(filePath))
 	{
 		MSL::BytecodeReader reader(filePath + ".emsl");
@@ -101,6 +104,7 @@ int main()
 		binary.close();
 
 		MSL::VM::Configuration config;
+		config.execution.allowDebug = true;
 		config.streams = { &std::cin, &std::cout, &std::cout };
 		MSL::VM::VirtualMachine VM(move(config));
 		std::ifstream executable(filePath + ".emsl", std::ios::binary);
@@ -110,5 +114,9 @@ int main()
 			PrintErrors(VM.GetErrors());
 		}
 	}
+
+
+	
+
 	system("pause");
 }

@@ -62,6 +62,7 @@ namespace MSL
 
 			void Print(std::ostream& out, int depth = 0) const override;
 			bool hasIterationStatement() const;
+			bool hasInitStatement() const;
 
 			ForExpression();
 

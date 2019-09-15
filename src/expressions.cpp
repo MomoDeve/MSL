@@ -251,6 +251,11 @@ namespace MSL
 			return iteration != nullptr;
 		}
 
+		bool ForExpression::hasInitStatement() const
+		{
+			return init != nullptr;
+		}
+
 		ForExpression::ForExpression()
 		{
 			BaseExpression::type = ExpressionType::FOR;
@@ -258,8 +263,11 @@ namespace MSL
 
 		void ForExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
-			init->GenerateBytecode(code, function);
-			code.write(OPCODE::POP_STACK_TOP);
+			if (hasInitStatement())
+			{
+				init->GenerateBytecode(code, function);
+				code.write(OPCODE::POP_STACK_TOP);
+			}
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += 2; // predicate and end-for label
 
@@ -502,7 +510,7 @@ namespace MSL
 			BaseExpression::type = ExpressionType::LAMBDA;
 		}
 
-		void LambdaExpression::GenerateBytecode(CodeGenerator & code, const Function & function) const
+		void LambdaExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
 		}
 
@@ -538,6 +546,7 @@ namespace MSL
 
 			auto containerDeclare = reinterpret_cast<ObjectDeclareExpression*>(container.get());
 			containerDeclare->GenerateBytecode(code, function);
+			code.write(OPCODE::POP_STACK_TOP);
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(containerDeclare->objectName));
 
@@ -573,12 +582,15 @@ namespace MSL
 			GenerateExpressionListBytecode(body, code, function);
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(iterator));
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash(containerDeclare->objectName));
 
 			CallExpression nextCall;
 			nextCall.hasParent = true;
 			nextCall.functionName = next;
 			nextCall.GenerateBytecode(code, function);
 
+			code.write(OPCODE::ASSIGN_OP);
 			code.write(OPCODE::POP_STACK_TOP);
 
 			code.write(OPCODE::JUMP);

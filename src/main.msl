@@ -1,23 +1,103 @@
-namespace Data
+namespace System
 {
-	public class Test
-	{	
+	public interface Console
+	{
+		function Print(value);
+		function PrintLine(value);
+		function Read();
+		function ReadLine();
+		function ReadInt();
+		function ReadFloat();
+		function ReadBool();
+	}
 	
+	public interface Reflection
+	{
+		function GetType(object);
+		function CreateInstance(type);
+	}
+}
+
+namespace Utils
+{
+	public class Range
+	{	
+		private var iter;
+		private var last;
+		private var step;
+		
+		public function Range(last)
+		{
+			return Range(0, last, 1);
+		}
+		
+		public function Range(first, last)
+		{
+			return Range(first, last, 1);
+		}
+		
+		public function Range(first, last, step)
+		{
+			this.iter = first;
+			this.last = last;
+			this.step = step;
+		}
+		
+		public function Begin()
+		{
+			return iter;
+		}
+		
+		public function End()
+		{
+			if(iter < last)
+			{
+				return last;
+			}
+			else
+			{
+				return iter;
+			}
+		}
+		
+		public function Next()
+		{
+			this.iter += step;
+			return iter;
+		}
 	}
 }
 
 namespace Program
 {
-	internal static class ProgramClass
+	using namespace System;
+	using namespace Utils;
+	
+	internal class ProgramClass
 	{			
-		public static function Main() 
+		public static function RecFact(n)
 		{
-			for(var i = 0; i < 1000; i = i + 1)
+			if(n == 0)
 			{
-				System.Console.Print(i);
-				System.Console.Print(" ");
+				return 1;
 			}
-			return 0;
+			return n * RecFact(n - 1);
+		}
+	
+		public static function Fact(n)
+		{
+			var res = 1;
+			while(n > 0)
+			{
+				res *= n;
+				n -= 1;
+			}
+			return res;
+		}
+
+		public static function Main()
+		{	
+			
 		}
 		
 							/*
@@ -28,7 +108,7 @@ namespace Program
 			BubbleSort(A, A.predicate);
 			Console.Print(A, stdout);*/
 
-		public static function BubbleSort(A, predicate)
+	/*	public static function BubbleSort(A, predicate)
 		{
 			for( i = 0; i < A.size(); i += 1)
 			{
@@ -47,6 +127,6 @@ namespace Program
 			var tmp = left;
 			left = right;
 			right = tmp;
-		}
+		}*/
 	}
 }

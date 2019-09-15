@@ -64,6 +64,7 @@ namespace MSL
 			if (value == "true") return Type::TRUE_CONSTANT;
 			if (value == "false") return Type::FALSE_CONSTANT;
 			if (value == "null") return Type::NULLPTR;
+			if (value == "using") return Type::USING;
 			if (isInteger(value)) return Type::INTEGER_CONSTANT;
 			if (isFloat(value)) return Type::FLOAT_CONSTANT;
 			if (isString(value)) return Type::STRING_CONSTANT;

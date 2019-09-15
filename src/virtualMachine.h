@@ -61,18 +61,26 @@ namespace MSL
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace);
+			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			void StartNewStackFrame();
-			void PerformSystemCall(const ClassType* _class, const MethodType* _method);
-			void PerformALUCall(OPCODE op, size_t parameters, Frame& frame);
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void DisplayError(std::string message) const;
 			void DisplayExtra(std::string message) const;
+			void PrintObjectStack() const;
 			std::string GetFullClassType(const ClassType* type) const;
 			std::string GetFullMethodType(const MethodType* type) const;
 			std::string GetMethodActualName(const std::string& methodName) const;
+			void PerformSystemCall(const ClassType* _class, const MethodType* _method);
+			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
+			void PerformALUcallIntegers(IntegerObject* int1, const IntegerObject::InnerType* int2, OPCODE op, Frame* frame);
+			void PerformALUcallStrings(StringObject* str1, const StringObject::InnerType* str2, OPCODE op, Frame* frame);
+			void PerformALUcallStringInteger(StringObject* str, const IntegerObject::InnerType* integer, OPCODE op, Frame* frame);
+			void PerformALUcallFloats(FloatObject* f1, const FloatObject::InnerType* f2, OPCODE op, Frame* frame);
+			void PerformALUcallClassTypes(ClassWrapper* class1, const ClassType* class2, OPCODE op, Frame* frame);
+			void PerformALUcallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
 
 			BaseObject* AllocUnknown(const std::string* value);
 			BaseObject* AllocNull();
@@ -104,7 +112,8 @@ namespace MSL
 				PRIVATE_MEMBER_ACCESS = 8192,
 				CALLSTACK_CORRUPTION = 16384,
 				CONST_MEMBER_MODIFICATION = 32768,
-				ABSTRACT_MEMBER_CALL = 65536
+				ABSTRACT_MEMBER_CALL = 65536,
+				INVALID_METHOD_CALL = 131072
 			};
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);

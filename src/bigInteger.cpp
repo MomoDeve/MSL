@@ -8,7 +8,7 @@ namespace momo
 	const int32_t big_integer::_base = (int32_t)std::pow(10, big_integer::_base_digits);
 	const big_integer big_integer::inf("inf");
 
-	size_t big_integer::to_buffer(std::stringstream& buffer, const std::string str)
+	size_t big_integer::to_buffer(std::stringstream& buffer, const std::string& str)
 	{
 		bool is_signed = false;
 		size_t digit_count = 0;
@@ -17,19 +17,32 @@ namespace momo
 			is_signed = true;
 		}
 
-		size_t first_digits = (str.size() - is_signed) % _base_digits;
+		std::string no_err_str;
+		const std::string* str_ptr = &str;
+
+		auto it_err = std::find_if(str.begin() + is_signed, str.end(), [](char c) {return c < '0' || c > '9'; });
+		if (it_err != str.end())
+		{
+			no_err_str = std::string(str.begin(), it_err);
+			str_ptr = &no_err_str;
+		}
+
+		size_t first_digits = (str_ptr->size() - is_signed) % _base_digits;
 		if (first_digits != 0)
 		{
-			auto it_start = str.cbegin() + is_signed;
-			buffer << std::string(it_start, it_start + (str.size() - is_signed) % _base_digits) << ' ';
+			auto it_start = str_ptr->begin() + is_signed;
+			auto it_end = it_start + (str_ptr->size() - is_signed) % _base_digits;
+			buffer << std::string(it_start, it_end) << ' ';
 			digit_count++;
 		}
 
-		size_t length = (str.size() - is_signed) / _base_digits;
-		auto it = str.cbegin() + first_digits + is_signed;
+		size_t length = (str_ptr->size() - is_signed) / _base_digits;
+		auto it = str_ptr->cbegin() + first_digits + is_signed;
 		for (size_t i = 0; i < length; i++, digit_count++)
 		{
-			buffer << std::string(it + i * _base_digits, it + (i + 1) * _base_digits) << ' ';
+			auto it_start = it + i * _base_digits;
+			auto it_end = it + (i + 1) * _base_digits;
+			buffer << std::string(it_start, it_end) << ' ';
 		}
 		return digit_count;
 	}
@@ -48,6 +61,7 @@ namespace momo
 
 	void big_integer::from_buffer(std::stringstream& buffer, size_t size)
 	{
+		size = std::max(size, 1U);
 		_digits.resize(size);
 		for (size_t i = 0; i < size; i++)
 		{
@@ -84,7 +98,7 @@ namespace momo
 			{
 				return (_digits.size() < other._digits.size() ? -1 : 1);
 			}
-			for (int i = _digits.size() - 1; i >= 0; i--)
+			for (int i = (int)_digits.size() - 1; i >= 0; i--)
 			{
 				if (_digits[i] != other._digits[i])
 				{
@@ -385,6 +399,17 @@ namespace momo
 			}
 		}
 		return res.str();
+	}
+
+	double big_integer::to_double() const
+	{
+		double res = 0.0;
+		for (size_t i = 0; i < _digits.size(); i++)
+		{
+			res *= _base;
+			res += _digits[i];
+		}
+		return res;
 	}
 
 	std::ostream& operator<<(std::ostream& out, const big_integer& num)

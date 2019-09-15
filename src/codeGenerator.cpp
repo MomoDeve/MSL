@@ -26,6 +26,12 @@ namespace MSL
 			for (const auto& _namespace : namespaces)
 			{
 				writeString(_namespace.getName());
+				write(OPCODE::FRIEND_POOL_DECL_SIZE);
+				write(_namespace.friendNamespaces.size());
+				for (const auto& friendNamespace : _namespace.friendNamespaces)
+				{
+					writeString(friendNamespace);
+				}
 				GenerateClassPool(_namespace);
 			}
 			write(OPCODE::ASSEMBLY_END_DECL);

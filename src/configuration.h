@@ -33,6 +33,7 @@ namespace MSL
 			{
 				size_t recursionLimit = 2000;
 				bool checkExitCode = true;
+				bool allowDebug = false;
 			} execution;
 		};
 	}

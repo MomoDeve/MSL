@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "class.h"
 
@@ -30,6 +31,7 @@ namespace MSL
 			*/
 			std::string name;
 		public:
+			std::unordered_set<std::string> friendNamespaces;
 			/*
 			creates an empty namespace with 'name' = "unnamed"
 			*/
@@ -45,7 +47,7 @@ namespace MSL
 			/*
 			moves namespace contents
 			*/
-			Namespace(Namespace&& other);
+			Namespace(Namespace&& other) = default;
 			/*
 			returns namespace name as string copy
 			*/

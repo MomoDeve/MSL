@@ -19,7 +19,7 @@ namespace momo
 		bool _negative;
 		bool _inf;
 
-		static size_t to_buffer(std::stringstream& buffer, const std::string str);
+		static size_t to_buffer(std::stringstream& buffer, const std::string& str);
 		void normalize();
 		void free();
 		void from_buffer(std::stringstream& buffer, size_t size);
@@ -74,6 +74,7 @@ namespace momo
 		big_integer operator+() const;
 
 		std::string to_string(std::string sep = "") const;
+		double to_double() const;
 
 		friend std::ostream& operator<<(std::ostream& out, const big_integer& num);
 		friend const big_integer& max(const big_integer& num1, const big_integer& num2);

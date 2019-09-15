@@ -103,7 +103,7 @@ namespace MSL
 				}
 
 				ModifierList modifiers;
-				if (!GetModifiers(modifiers, { Token::Type::CLASS, Token::Type::INTERFACE }))
+				if (!GetModifiers(modifiers, { Token::Type::CLASS, Token::Type::INTERFACE, Token::Type::USING }))
 				{
 					THROW("incorrect namespace member declaration"); // unknown modifier or no `class` / `interface`
 				}
@@ -143,8 +143,51 @@ namespace MSL
 						THROW("cannot process interface in namespace: " + _namespace.getName());
 					}
 				}
+				else if (lexer->Peek().type == Token::Type::USING)
+				{
+					if (modifiers.size() > 0)
+					{
+						THROW("using expression cannot have modifiers");
+					}
+					if (!AddUsingExpression(_namespace))
+					{
+						THROW("processing of using expression failed in namespace: " + _namespace.getName());
+					}
+				}
+				else
+				{
+					THROW("invalid unit declaration");
+				}
 			}
 			lexer->Next(); // skipping `}` of namespace decl
+			return true;
+		}
+
+		bool Parser::AddUsingExpression(Namespace& _namespace)
+		{
+			lexer->Next(); // skipping `using` -> `namespace`
+			if (lexer->Peek().type == Token::Type::NAMESPACE)
+			{
+				lexer->Next(); // skipping `namespace` -> [namespace name]
+				if (lexer->Peek().type == Token::Type::OBJECT)
+				{
+					_namespace.friendNamespaces.insert(lexer->Peek().value);
+					lexer->Next(); // skipping [namespace name] -> `;`
+				}
+				else
+				{
+					THROW("`using namespace` does not define namespace name");
+				}
+			}
+			else
+			{
+				THROW("`namespace` token must be used after `using` token");
+			}
+			if (lexer->Peek().type != Token::Type::SEMICOLON)
+			{
+				THROW("`;` expected after using expression");
+			}
+			lexer->Next(); // skipping `;`
 			return true;
 		}
 
@@ -849,7 +892,7 @@ namespace MSL
 			{
 				forExpr->init = ParseVariableDecl(function);
 			}
-			else // for(i = ...
+			else if (lexer->Peek().type != Token::Type::SEMICOLON) // has init expression
 			{
 				forExpr->init = ParseRawExpression(function);
 			}

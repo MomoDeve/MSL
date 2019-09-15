@@ -76,6 +76,10 @@ namespace MSL
 			returns true on success, false either
 			*/
 			bool GenerateMembers(Namespace& _namespace);
+
+
+
+			bool AddUsingExpression(Namespace& _namespace);
 			/*
 			generate class members and check them for dublicates
 			also perform validation check of class modifiers

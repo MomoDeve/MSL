@@ -16,6 +16,11 @@ namespace System
 		function GetType(object);
 		function CreateInstance(type);
 	}
+	
+	public interface Array
+	{
+		function GetByIndex(index);
+	}
 }
 
 namespace Utils
@@ -74,59 +79,36 @@ namespace Program
 	using namespace Utils;
 	
 	internal class ProgramClass
-	{			
-		public static function RecFact(n)
-		{
-			if(n == 0)
-			{
-				return 1;
-			}
-			return n * RecFact(n - 1);
-		}
-	
-		public static function Fact(n)
-		{
-			var res = 1;
-			while(n > 0)
-			{
-				res *= n;
-				n -= 1;
-			}
-			return res;
-		}
-
+	{	
 		public static function Main()
-		{	
-			
-		}
+		{
 		
-							/*
-			var arraySize = 10;
-			var A = Array[arraySize];
-			A.Fill(Utilities.Random(0, 10));
-			System.Console.Print(A);
-			BubbleSort(A, A.predicate);
-			Console.Print(A, stdout);*/
-
-	/*	public static function BubbleSort(A, predicate)
-		{
-			for( i = 0; i < A.size(); i += 1)
-			{
-				for(var j = i; j < A.size(); j += 1)
-				{
-					if(predicate(A[j], A[i]))
-					{
-						Swap(A[i], A[j]); 
-					}
-				}
-			}
 		}
-
-		public static function Swap(left, right)
-		{
-			var tmp = left;
-			left = right;
-			right = tmp;
-		}*/
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

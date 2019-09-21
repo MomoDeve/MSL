@@ -25,14 +25,15 @@ namespace MSL
 			CLASS,
 			LOCAL,
 			ATTRIBUTE,
-			UNKNOWN
+			UNKNOWN,
+			BASE,
 		};
 
 		std::string ToString(Type type);
 
 		struct BaseObject
 		{
-			Type type;
+			Type type = Type::BASE;
 
 			BaseObject(Type type);
 			virtual BaseObject* GetMember(const std::string& memberName) const = 0;
@@ -77,8 +78,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 
-			// Унаследовано через BaseObject
-			virtual std::string ToString() const  override;
+			virtual std::string ToString() const override;
 		};
 
 		struct NamespaceWrapper : BaseObject
@@ -90,8 +90,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 
-			// Унаследовано через BaseObject
-			virtual std::string ToString() const  override;
+			virtual std::string ToString() const override;
 		};
 
 		struct AttributeObject : BaseObject
@@ -162,6 +161,12 @@ namespace MSL
 			virtual std::string ToString() const  override;
 		};
 
+		struct Local
+		{
+			BaseObject* object = nullptr;
+			bool isConst = false;
+		};
+
 		struct LocalObject : BaseObject
 		{
 			Local& ref;
@@ -186,6 +191,18 @@ namespace MSL
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 
+		};
+
+		struct ArrayObject : BaseObject
+		{
+			using InnerType = std::vector<Local>;
+			InnerType array;
+
+			ArrayObject(Type type, size_t size);
+
+			virtual BaseObject* GetMember(const std::string& memberName) const override;
+			virtual const std::string* GetName() const override;
+			virtual std::string ToString() const override;
 		};
 	}
 }

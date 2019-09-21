@@ -11,6 +11,7 @@ namespace MSL
 	{
 		struct ClassObject;
 		struct BaseObject;
+		struct ClassWrapper;
 
 		struct ClassType
 		{
@@ -30,9 +31,17 @@ namespace MSL
 			AttributeHashTable objectAttributes;
 			MethodHashTable methods;
 			ClassObject* staticInstance = nullptr;
-			BaseObject* wrapper = nullptr;
+			ClassWrapper* wrapper = nullptr;
 			mutable bool staticConstructorCalled = false;
 			std::string namespaceName;
+
+			bool isStatic() const;
+			bool isInterface() const;
+			bool isAbstract() const;
+			bool isConst() const;
+			bool isInternal() const;
+			bool hasStaticConstructor() const;
+			bool isSystem() const;
 
 			std::string name;
 			uint8_t modifiers = 0;

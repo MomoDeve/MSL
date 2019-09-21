@@ -32,6 +32,13 @@ namespace MSL
 
 			MethodType() = default;
 			MethodType(MethodType&&) = default;
+
+			bool isPublic() const;
+			bool isAbstract() const;
+			bool isStatic() const;
+			bool isConstructor() const;
+			bool isStaticConstructor() const;
+			bool isEntryPoint() const;
 		};
 	}
 }

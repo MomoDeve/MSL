@@ -31,7 +31,7 @@ namespace MSL
 
 		bool Function::hasBody() const
 		{
-			return !body->empty();
+			return body != nullptr && !body->empty();
 		}
 
 		std::string Function::ToString() const

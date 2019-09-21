@@ -19,6 +19,10 @@ namespace MSL
 			std::string name;
 			uint8_t modifiers = 0;
 
+			bool isStatic() const;
+			bool isConst() const;
+			bool isPublic() const;
+
 			AttributeType() = default;
 			AttributeType(AttributeType&&) = default;
 		};

@@ -122,7 +122,7 @@ namespace MSL
 		*/
 		struct IndexExpression : public BaseExpression
 		{
-			std::string objectName;
+			unique_ptr<BaseExpression> caller;
 			unique_ptr<BaseExpression> parameter;
 			void Print(std::ostream& out, int depth = 0) const override;
 

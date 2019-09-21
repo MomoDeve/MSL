@@ -234,6 +234,15 @@
     <ClCompile Include="callPath.cpp">
       <Filter>MSL\VM\callPath</Filter>
     </ClCompile>
+    <ClCompile Include="methodType.cpp">
+      <Filter>MSL\VM\types</Filter>
+    </ClCompile>
+    <ClCompile Include="classType.cpp">
+      <Filter>MSL\VM\types</Filter>
+    </ClCompile>
+    <ClCompile Include="attributeType.cpp">
+      <Filter>MSL\VM\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />

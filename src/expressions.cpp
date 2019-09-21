@@ -425,8 +425,9 @@ namespace MSL
 
 		void IndexExpression::Print(std::ostream& out, int depth) const
 		{
-			out << std::string(depth, '\t');
-			out << objectName << '\n';
+			out << std::string(depth, '\t') << "[\n";
+			caller->Print(out, depth + 1);
+			out << std::string(depth, '\t') << "]\n";
 			out << std::string(depth, '\t') << "[\n";
 			parameter->Print(out, depth + 1);
 			out << std::string(depth, '\t') << "]\n";
@@ -440,8 +441,7 @@ namespace MSL
 		void IndexExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
 			parameter->GenerateBytecode(code, function);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(objectName));
+			caller->GenerateBytecode(code, function);
 			code.write(OPCODE::GET_INDEX);
 		}
 

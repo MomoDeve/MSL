@@ -69,7 +69,7 @@ bool createAssembly(string filePath)
 	MSL::compiler::Lexer lexer(reader.GetBuffer());
 	lexer.ReplaceStrings(reader.GetReplacedStrings());
 
-	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::NO_DEBUG);
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::ERROR_ONLY);
 	parser.Parse();
 
 	if (!parser.ParsingSuccess())
@@ -77,14 +77,19 @@ bool createAssembly(string filePath)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-	/*for (const auto& _namespace : assembly.GetNamespaces())
+#if 0
 	{
-		cout << _namespace.toString() << "\n\n";
-		for (const auto& member : _namespace.getMembers())
+		for (const auto& _namespace : assembly.GetNamespaces())
 		{
-			cout << member.ToString() << endl;
+			cout << _namespace.toString() << "\n\n";
+			for (const auto& member : _namespace.getMembers())
+			{
+				cout << member.ToString() << endl;
+			}
 		}
-	}*/
+	}
+#endif
+
 	MSL::compiler::CodeGenerator generator(std::move(assembly));
 	generator.GenerateBytecode(filePath + ".emsl");
 
@@ -114,9 +119,5 @@ int main(int argc, char* argv[])
 			PrintErrors(VM.GetErrors());
 		}
 	}
-
-
-	
-
 	system("pause");
 }

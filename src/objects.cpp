@@ -245,6 +245,7 @@ namespace MSL
 			out += type->name + " attribute";
 			return out;
 		}
+
 		std::string ToString(Type type)
 		{
 			switch (type)
@@ -277,5 +278,26 @@ namespace MSL
 				return "ERROR";
 			}
 		}
-	}
+
+		ArrayObject::ArrayObject(Type type, size_t size)
+			: BaseObject(type), array(size)
+		{
+
+		}
+
+		BaseObject* ArrayObject::GetMember(const std::string& memberName) const
+		{
+			return nullptr;
+		}
+
+		const std::string* ArrayObject::GetName() const
+		{
+			return nullptr;
+		}
+
+		std::string ArrayObject::ToString() const
+		{
+			return "Array";
+		}
+}
 }

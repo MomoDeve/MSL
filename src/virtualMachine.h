@@ -15,11 +15,6 @@ namespace MSL
 {
 	namespace VM
 	{
-		struct Local
-		{
-			BaseObject* object = nullptr;
-			bool isConst = false;
-		};
 		using LocalsTable = std::unordered_map<std::string, Local>;
 		using LocalStorage = std::vector<std::unique_ptr<std::string>>;
 
@@ -62,6 +57,7 @@ namespace MSL
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
+			BaseObject* GetUnderlyingObject(BaseObject* object) const;
 			void StartNewStackFrame();
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
@@ -73,7 +69,7 @@ namespace MSL
 			std::string GetFullClassType(const ClassType* type) const;
 			std::string GetFullMethodType(const MethodType* type) const;
 			std::string GetMethodActualName(const std::string& methodName) const;
-			void PerformSystemCall(const ClassType* _class, const MethodType* _method);
+			void PerformSystemCall(const ClassType* _class, const MethodType* _method, Frame* frame);
 			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
 			void PerformALUcallIntegers(IntegerObject* int1, const IntegerObject::InnerType* int2, OPCODE op, Frame* frame);
 			void PerformALUcallStrings(StringObject* str1, const StringObject::InnerType* str2, OPCODE op, Frame* frame);
@@ -82,17 +78,18 @@ namespace MSL
 			void PerformALUcallClassTypes(ClassWrapper* class1, const ClassType* class2, OPCODE op, Frame* frame);
 			void PerformALUcallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
 
-			BaseObject* AllocUnknown(const std::string* value);
-			BaseObject* AllocNull();
-			BaseObject* AllocTrue();
-			BaseObject* AllocFalse();
-			BaseObject* AllocString(const std::string& value);
-			BaseObject* AllocInteger(const std::string& value);
-			BaseObject* AllocFloat(const std::string& value);
-			BaseObject* AllocClassWrapper(const ClassType* _class);
-			BaseObject* AllocClassObject(const ClassType* _class);
-			BaseObject* AllocNamespaceWrapper(const NamespaceType* _namespace);
-			BaseObject* AllocLocal(const std::string& localName, Local& local);
+			UnknownObject* AllocUnknown(const std::string* value);
+			NullObject* AllocNull();
+			TrueObject* AllocTrue();
+			FalseObject* AllocFalse();
+			ArrayObject* AllocArray(size_t size = 0);
+			StringObject* AllocString(const std::string& value);
+			IntegerObject* AllocInteger(const std::string& value);
+			FloatObject* AllocFloat(const std::string& value);
+			ClassWrapper* AllocClassWrapper(const ClassType* _class);
+			ClassObject* AllocClassObject(const ClassType* _class);
+			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
+			LocalObject* AllocLocal(const std::string& localName, Local& local);
 		public:
 			enum ERROR
 			{

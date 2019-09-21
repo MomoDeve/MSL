@@ -764,7 +764,6 @@ namespace MSL
 
 		unique_ptr<BaseExpression> Parser::ParseIndexArgument(Function& function)
 		{
-			ExpressionList args;
 			if (lexer->Peek().type != Token::Type::SQUARE_BRACKET_O)
 			{
 				Error("`[` expected in index expression");
@@ -1101,7 +1100,9 @@ namespace MSL
 				else if (nextToken.type == Token::Type::SQUARE_BRACKET_O)
 				{
 					unique_ptr<IndexExpression> indexExpr(new IndexExpression());
-					indexExpr->objectName = object.value;
+					auto objectExpr = std::make_unique<ObjectExpression>();
+					objectExpr->object = object;
+					indexExpr->caller = TO_BASE(objectExpr);
 					function.InsertDependency(object.value);
 					indexExpr->parameter = ParseIndexArgument(function);
 					lexer->Next(); // skipping `]`
@@ -1184,6 +1185,14 @@ namespace MSL
 				lexer->Prev();
 				Error("Error while parsing: bracket or semicolon probably missing");
 				lexer->Next();
+			}
+			if (firstToken.type == Token::Type::SQUARE_BRACKET_O)
+			{
+				auto expr = std::make_unique<IndexExpression>();
+				expr->caller = std::move(leftBranch);
+				expr->parameter = ParseIndexArgument(function);
+				lexer->Next(); // skipping `]`
+				return ParseRawExpression(function, TO_BASE(expr));
 			}
 			if (leftBranch == nullptr)
 			{

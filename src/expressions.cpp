@@ -537,26 +537,26 @@ namespace MSL
 
 		void ForeachExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
-			const char* begin = "Begin_0";
-			const char* end = "End_0";
-			const char* next = "Next_0";
-
 			code.write(OPCODE::ALLOC_VAR);
 			code.write(function.GetHash(iterator));
+			code.write(OPCODE::POP_STACK_TOP);
+
+			// var iteratorIndex = container.Begin();
+			code.write(OPCODE::ALLOC_VAR);
+			code.write(function.GetHash(iteratorIndex));
 
 			auto containerDeclare = reinterpret_cast<ObjectDeclareExpression*>(container.get());
 			containerDeclare->GenerateBytecode(code, function);
-			code.write(OPCODE::POP_STACK_TOP);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(containerDeclare->objectName));
 
-			CallExpression beginCall;
-			beginCall.hasParent = true;
-			beginCall.functionName = begin;
-			beginCall.GenerateBytecode(code, function);
+			// call of .Begin(this);
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash("Begin_0"));
+			code.write(OPCODE::CALL_FUNCTION);
+			code.write((uint8_t)0);
 
 			code.write(OPCODE::ASSIGN_OP); // init iterator with begin of container
 			code.write(OPCODE::POP_STACK_TOP);
+
 
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += 2; // predicate and end-foreach label
@@ -564,41 +564,65 @@ namespace MSL
 			code.write(OPCODE::SET_LABEL); // predicate
 			code.write(labelId);
 
+			// if(iteratorIndex == container.End()) jump_end;
 			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iterator));
-
+			code.write(function.GetHash(iteratorIndex));
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(containerDeclare->objectName));
 
-			CallExpression endCall;
-			endCall.hasParent = true;
-			endCall.functionName = end;
-			endCall.GenerateBytecode(code, function);
+			// call of .End(this);
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash("End_0"));
+			code.write(OPCODE::CALL_FUNCTION);
+			code.write((uint8_t)0);
 
 			code.write(OPCODE::CMP_EQ);
 			code.write(OPCODE::JUMP_IF_TRUE);
 			code.write<uint16_t>(labelId + 1); // to end-foreach
 
-			GenerateExpressionListBytecode(body, code, function);
+			// iterator = container.GetByIter(iteratorIndex);
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(iterator));
 			code.write(OPCODE::PUSH_OBJECT);
 			code.write(function.GetHash(containerDeclare->objectName));
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash(iteratorIndex));
 
-			CallExpression nextCall;
-			nextCall.hasParent = true;
-			nextCall.functionName = next;
-			nextCall.GenerateBytecode(code, function);
+			// call of .GetByIter(this, iter);
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash("GetByIter_1"));
+			code.write(OPCODE::CALL_FUNCTION);
+			code.write((uint8_t)1);
 
 			code.write(OPCODE::ASSIGN_OP);
 			code.write(OPCODE::POP_STACK_TOP);
+
+			// generate body inside { }
+			GenerateExpressionListBytecode(body, code, function);
+
+			// iteratorIndex = container.Next(iteratorIndex);
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash(iteratorIndex));
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash(containerDeclare->objectName));
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash(iteratorIndex));
+
+			// call of .Next(this, iter);
+			code.write(OPCODE::PUSH_OBJECT);
+			code.write(function.GetHash("Next_1"));
+			code.write(OPCODE::CALL_FUNCTION);
+			code.write((uint8_t)1);
+
+			code.write(OPCODE::ASSIGN_OP);
+			code.write(OPCODE::POP_STACK_TOP);
+
 
 			code.write(OPCODE::JUMP);
 			code.write(labelId); // to predicate
 			code.write(OPCODE::SET_LABEL);
 			code.write<uint16_t>(labelId + 1); // end-foreach
 		}
-
 
 		void ReturnExpression::Print(std::ostream& out, int depth) const
 		{

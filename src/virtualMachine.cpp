@@ -1036,14 +1036,15 @@ namespace MSL
 					arr->attributes["array"]->object = AllocArray(arraySize);
 					objectStack.push_back(arr);
 				}
-				else if (_method->name == "GetByIndex_2")
+				else if (_method->name == "GetByIndex_2" || _method->name == "GetByIter_2")
 				{
 					size_t idx = 0;
 					BaseObject* index = objectStack.back();
-					objectStack.pop_back();
+					objectStack.pop_back(); // pop index
 					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(objectStack.back());
 					ArrayObject* arrayObject = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object);
-					objectStack.pop_back();
+					objectStack.pop_back(); // pop array object
+
 					if (index->type == Type::INTEGER)
 					{
 						IntegerObject::InnerType& value = reinterpret_cast<IntegerObject*>(index)->value;
@@ -1064,11 +1065,18 @@ namespace MSL
 					}
 					objectStack.push_back(AllocLocal(arrayClass->type->name, arrayObject->array[idx]));
 				}
+				else if (_method->name == "Size_1")
+				{
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
+					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
+					objectStack.push_back(AllocInteger(std::to_string(objects.size())));
+				}
 				else if (_method->name == "ToString_1")
 				{
 					BaseObject* array = objectStack.back();
-					objectStack.pop_back();
-					objectStack.pop_back();
+					objectStack.pop_back(); // pop array
 					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
 					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
 
@@ -1085,6 +1093,46 @@ namespace MSL
 						}
 					}
 					reinterpret_cast<StringObject*>(objectStack.back())->value += ']';
+				}
+				else if (_method->name == "Begin_1")
+				{
+					objectStack.pop_back(); // array object
+					objectStack.push_back(AllocInteger("0"));
+				}
+				else if (_method->name == "End_1")
+				{
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
+					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
+					objectStack.push_back(AllocInteger(std::to_string(objects.size())));
+				}
+				else if (_method->name == "Append_2")
+				{
+					BaseObject* object = objectStack.back();
+					objectStack.pop_back(); // pop object
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
+					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
+
+					objects.push_back({ object, false }); // OBJECT MUST NOT BE DESTROYED
+					objectStack.push_back(object);
+				}
+				else if (_method->name == "Next_2")
+				{
+					BaseObject* iter = objectStack.back(); 
+					objectStack.pop_back(); // pop iter
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					if (iter->type != Type::INTEGER)
+					{
+						DisplayError("Invalid iterator was passed to Array.Next(this, iter) method: " + iter->ToString());
+						PRINTFRAME_2(_class, _method);
+						return;
+					}
+					IntegerObject::InnerType& iterValue = reinterpret_cast<IntegerObject*>(iter)->value;
+					objectStack.push_back(AllocInteger((iterValue + 1).to_string()));
 				}
 				else
 				{
@@ -1480,7 +1528,7 @@ namespace MSL
 			_name##params.modifiers |= MethodType::Modifiers::CONSTRUCTOR
 
 			#define CONSTRUCTOR_0(_name) CONSTRUCTOR(_name, 0); \
-			INSERT_METHOD(_name, _name##0, params)
+			INSERT_METHOD(_name, _name##0, 0)
 
 			#define CONSTRUCTOR_1(_name, param1) CONSTRUCTOR(_name, 1); \
 			_name##1.parameters.push_back(#param1); \
@@ -1556,8 +1604,14 @@ namespace MSL
 					Array.modifiers &= ~ClassType::Modifiers::STATIC;
 					CONSTRUCTOR_0(Array);
 					CONSTRUCTOR_1(Array, size);
+					METHOD_2(Append, this, object);
 					METHOD_2(GetByIndex, this, index);
+					METHOD_2(GetByIter, this, iter);
+					METHOD_2(Next, this, iter);
+					METHOD_1(Size, this);
 					METHOD_1(ToString, this);
+					METHOD_1(Begin, this);
+					METHOD_1(End, this);
 					ATTRIBUTE(array);
 				END_CLASS(Array);
 

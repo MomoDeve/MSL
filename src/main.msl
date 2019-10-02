@@ -19,7 +19,14 @@ namespace System
 	
 	public interface Array
 	{
+		function Size();
+		function ToString();
+		function Begin();
+		function End();
 		function GetByIndex(index);
+		function Append(object);
+		function GetByIter(iter);
+		function Next(iter);
 	}
 }
 
@@ -27,7 +34,7 @@ namespace Utils
 {
 	public class Range
 	{	
-		private var iter;
+		private var first;
 		private var last;
 		private var step;
 		
@@ -43,19 +50,25 @@ namespace Utils
 		
 		public function Range(first, last, step)
 		{
-			this.iter = first;
+			this.first = first;
 			this.last = last;
 			this.step = step;
 		}
 		
 		public function Begin()
 		{
-			return iter;
+			return first;
 		}
 		
 		public function End()
 		{
-			if(iter < last)
+			return last;
+		}
+		
+		public function Next(iter)
+		{
+			iter += step;
+			if(iter > last)
 			{
 				return last;
 			}
@@ -65,9 +78,8 @@ namespace Utils
 			}
 		}
 		
-		public function Next()
+		public function GetByIter(iter)
 		{
-			this.iter += step;
 			return iter;
 		}
 	}
@@ -82,7 +94,12 @@ namespace Program
 	{	
 		public static function Main()
 		{
-		
+			var array = Array();
+			foreach(var i in Range(0, 11, 2))
+			{
+				array.Append(i);
+			}
+			Console.Print(array);
 		}
 	}
 }

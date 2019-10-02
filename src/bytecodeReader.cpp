@@ -32,7 +32,7 @@ namespace MSL
 	{
 		using namespace VM;
 		OPCODE op;
-		size_t stringSize;
+		size_t stringSize, dependencyCounter = 0;
 		while (!file.eof())
 		{
 			op = ReadOPCode();
@@ -65,8 +65,10 @@ namespace MSL
 				OPCODE_CASE(ASSEMBLY_END_DECL)
 					return; // no more read after this opcode
 				OPCODE_CASE(METHOD_BODY_BEGIN_DECL)
+					dependencyCounter = 0;
 					break;
 				OPCODE_CASE(METHOD_BODY_END_DECL)
+					dependencyCounter = 0;
 					break;
 				OPCODE_CASE(NEGATION_OP)
 					break;
@@ -136,20 +138,31 @@ namespace MSL
 				READ_LABEL_CASE(JUMP)
 					break;
 				READ_SIZE_OPCODE(NAMESPACE_POOL_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 				READ_SIZE_OPCODE(FRIEND_POOL_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 				READ_SIZE_OPCODE(CLASS_POOL_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 				READ_SIZE_OPCODE(ATTRIBUTE_POOL_DECL_SIZE)
 					break;
 				READ_SIZE_OPCODE(METHOD_POOL_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 				READ_SIZE_OPCODE(METHOD_PARAMS_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 				READ_SIZE_OPCODE(DEPENDENCY_POOL_DECL_SIZE)
+					dependencyCounter = 0;
 					break;
 			case STRING_DECL:
+			{
+				std::string tmp = '[' + std::to_string(dependencyCounter++) + ']';
+				tmp.resize(5, ' ');
+				out << tmp;
+			}
 				out << STRING(STRING_DECL) << ' ';
 				stringSize = GenericRead<uint8_t>();
 				out << (size_t)stringSize << ' ';
@@ -159,7 +172,7 @@ namespace MSL
 					out << BINARY(ReadModifiers(), sizeof(uint8_t));
 				break;
 			default:
-				out << "[[ unresolved instruction ]]: " << BINARY(op, sizeof(OPCODE));
+				out << "[ unresolved instruction ]: " << BINARY(op, sizeof(OPCODE));
 				break;
 			}
 			out << '\n';

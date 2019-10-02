@@ -930,7 +930,8 @@ namespace MSL
 		{
 			unique_ptr<ForeachExpression> foreachExpr(new ForeachExpression());
 			function.InsertDependency("Begin_0");
-			function.InsertDependency("Next_0");
+			function.InsertDependency("Next_1");
+			function.InsertDependency("GetByIter_1");
 			function.InsertDependency("End_0");
 
 			if (lexer->Peek().type != Token::Type::FOREACH)
@@ -956,11 +957,10 @@ namespace MSL
 				Error("invalid iterator name");
 			}
 			std::string& iteratorName = lexer->Peek().value;
-			if (function.ContainsLocal(iteratorName))
+			if (!function.ContainsLocal(iteratorName))
 			{
-				Error("iterator variable has already been declared in function scope (function " + function.name + ')');
+				function.InsertLocal(iteratorName);
 			}
-			function.InsertLocal(iteratorName);
 			foreachExpr->iterator = iteratorName;
 
 			lexer->Next(); // skipping [Class name] -> `in`
@@ -971,10 +971,12 @@ namespace MSL
 
 			lexer->Next(); // skipping `in` -> [container]
 			unique_ptr<ObjectDeclareExpression> container(new ObjectDeclareExpression());
-			container->objectName = "__CONTAINER_COMPILE_" + std::to_string(function.labelInnerId++);
+			container->objectName = "__CONTAINER_COMPILE_" + std::to_string(function.labelInnerId);
 			function.InsertDependency(container->objectName);
 			container->assignment = ParseRawExpression(function);
 			foreachExpr->container = TO_BASE(container);
+			foreachExpr->iteratorIndex = "__ITERATOR_COMPILE_" + std::to_string(function.labelInnerId++);
+			function.InsertDependency(foreachExpr->iteratorIndex);
 
 			if (lexer->Peek().type != Token::Type::ROUND_BRACKET_C)
 			{

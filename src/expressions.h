@@ -184,6 +184,7 @@ namespace MSL
 		struct ForeachExpression : public BaseExpression
 		{
 			std::string iterator;
+			std::string iteratorIndex;
 			unique_ptr<BaseExpression> container;
 			ExpressionList body;
 

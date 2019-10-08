@@ -103,7 +103,7 @@ namespace MSL
 			else return &(it->second);
 		}
 
-		BaseObject* VirtualMachine::SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace)
+		BaseObject* VirtualMachine::SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError = true)
 		{
 			// search for local variable in method
 			auto localsIt = locals.find(objectName);
@@ -140,18 +140,21 @@ namespace MSL
 			const auto ns = GetNamespaceOrNull(objectName);
 			if (ns != nullptr) return AllocNamespaceWrapper(ns);
 
-			errors |= ERROR::OBJECT_NOT_FOUND;
-			DisplayError("object with name: `" + objectName + "` was not found");
-			std::string className;
-			if (_method->isStatic())
+			if (checkError)
 			{
-				className = reinterpret_cast<const ClassWrapper*>(_class)->type->name + "[static]";
+				errors |= ERROR::OBJECT_NOT_FOUND;
+				DisplayError("object with name: `" + objectName + "` was not found");
+				std::string className;
+				if (_method->isStatic())
+				{
+					className = reinterpret_cast<const ClassWrapper*>(_class)->type->name + "[static]";
+				}
+				else
+				{
+					className = reinterpret_cast<const ClassObject*>(_class)->type->name + "[this]";
+				}
+				DisplayExtra("current frame: " + _namespace->name + '.' + className + '.' + GetFullMethodType(_method));
 			}
-			else
-			{
-				className = reinterpret_cast<const ClassObject*>(_class)->type->name + "[this]";
-			}
-			DisplayExtra("current frame: " + _namespace->name + '.' + className + '.' + GetFullMethodType(_method));
 			return nullptr;
 		}
 
@@ -402,6 +405,7 @@ namespace MSL
 					frame->locals["this"].object = frame->classObject;
 				}
 			}
+
 			while (frame->offset < frame->_method->body.size())
 			{
 				if (errors != 0) return;
@@ -1063,7 +1067,8 @@ namespace MSL
 						DisplayError("invalid argument was passed as array index: " + index->ToString());
 						PRINTFRAME_2(_class, _method);
 					}
-					objectStack.push_back(AllocLocal(arrayClass->type->name, arrayObject->array[idx]));
+					std::string name = "System.Array.array[" + std::to_string(idx) + ']';
+					objectStack.push_back(AllocLocal(name, arrayObject->array[idx]));
 				}
 				else if (_method->name == "Size_1")
 				{
@@ -1072,6 +1077,21 @@ namespace MSL
 					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
 					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
 					objectStack.push_back(AllocInteger(std::to_string(objects.size())));
+				}
+				else if (_method->name == "Empty_1")
+				{
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
+					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
+					if (objects.empty())
+					{
+						objectStack.push_back(AllocTrue());
+					}
+					else
+					{
+						objectStack.push_back(AllocFalse());
+					}
 				}
 				else if (_method->name == "ToString_1")
 				{
@@ -1083,9 +1103,13 @@ namespace MSL
 					objectStack.push_back(AllocString("["));
 					for (int i = 0; i < int(objects.size()); i++)
 					{
+						bool isString = objects[i].object->type == Type::STRING;
+						if (isString) reinterpret_cast<StringObject*>(objectStack.back())->value += '"';
+
 						objectStack.push_back(objects[i].object);
-						ALUinIncrMode = true;
 						PerformALUCall(OPCODE::SUM_OP, 2, frame);
+
+						if (isString) reinterpret_cast<StringObject*>(objectStack.back())->value += '"';
 						
 						if (i != int(objects.size()) - 1)
 						{
@@ -1107,6 +1131,23 @@ namespace MSL
 					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
 					objectStack.push_back(AllocInteger(std::to_string(objects.size())));
 				}
+				else if (_method->name == "Pop_1")
+				{
+					BaseObject* array = objectStack.back();
+					objectStack.pop_back(); // pop array
+					ClassObject* arrayClass = reinterpret_cast<ClassObject*>(array);
+					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
+					if (!objects.empty())
+					{
+						BaseObject* object = objects.back().object;
+						objects.pop_back();
+						objectStack.push_back(object);
+					}
+					else
+					{
+						objectStack.push_back(AllocNull());
+					}
+				}
 				else if (_method->name == "Append_2")
 				{
 					BaseObject* object = objectStack.back();
@@ -1117,7 +1158,7 @@ namespace MSL
 					ArrayObject::InnerType& objects = reinterpret_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
 
 					objects.push_back({ object, false }); // OBJECT MUST NOT BE DESTROYED
-					objectStack.push_back(object);
+					objectStack.push_back(array);
 				}
 				else if (_method->name == "Next_2")
 				{
@@ -1227,7 +1268,7 @@ namespace MSL
 				if (local->ref.isConst && local->ref.object->type != Type::NULLPTR)
 				{
 					errors |= ERROR::CONST_MEMBER_MODIFICATION;
-					DisplayError("trying to modify const local variable: " + local->nameRef + " = " + value->ToString());
+					DisplayError("trying to modify const local variable: " + local->ToString() + " = " + value->ToString());
 					PRINTFRAME;
 					return;
 				}
@@ -1255,7 +1296,7 @@ namespace MSL
 				break;
 			default:
 				errors |= ERROR::INVALID_STACKOBJECT;
-				DisplayError("trying to assign value to object with invalid type: <" + object->ToString() + "> = " + value->ToString());
+				DisplayError("trying to perform operation with invalid object: " + object->ToString());
 				PRINTFRAME;
 				return;
 			}
@@ -1608,6 +1649,8 @@ namespace MSL
 					METHOD_2(GetByIndex, this, index);
 					METHOD_2(GetByIter, this, iter);
 					METHOD_2(Next, this, iter);
+					METHOD_1(Pop, this);
+					METHOD_1(Empty, this);
 					METHOD_1(Size, this);
 					METHOD_1(ToString, this);
 					METHOD_1(Begin, this);
@@ -1666,7 +1709,7 @@ namespace MSL
 
 		void VirtualMachine::DisplayError(std::string message) const
 		{
-			*config.streams.error << "[error]: " <<  message << std::endl;
+			*config.streams.error << "[VM ERROR]: " <<  message << std::endl;
 			PrintObjectStack();
 		}
 
@@ -1679,13 +1722,16 @@ namespace MSL
 		{
 			if (config.execution.allowDebug)
 			{
+				std::string line = "-----------------------------------------------------------\n";
 				*config.streams.error << "---------------------------STACK---------------------------\n";
 				size_t count = 0;
 				for (auto it = objectStack.rbegin(); it != objectStack.rend(); it++, count++)
 				{
-					*config.streams.error << '[' << count << "] " << (*it != nullptr ? (*it)->ToString() : "<error type>") << std::endl;
+					*config.streams.error << std::left << std::setw(line.size() / 2);
+					*config.streams.error << "[" + std::to_string(count) + "] " + (*it != nullptr ? (*it)->ToString() : "<error type>");
+					*config.streams.error << std::right << std::setw(line.size() / 2 - 1) << (*it != nullptr ? (*it)->GetExtraInfo() : "") << std::endl;
 				}
-				*config.streams.error << "-----------------------------------------------------------\n";
+				*config.streams.error << line;
 			}
 		}
 
@@ -1725,6 +1771,20 @@ namespace MSL
 			IntegerObject* result = reinterpret_cast<IntegerObject*>(AllocInteger("0"));
 			switch (op)
 			{
+			case OPCODE::NEGATION_OP:
+				if (result->value == 0)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			case OPCODE::NEGATIVE_OP:
+				result->value = int1->value * -1;
+				objectStack.push_back(result);
+				break;
+			case OPCODE::POSITIVE_OP:
+				result->value = int1->value;
+				objectStack.push_back(result);
+				break;
 			case OPCODE::SUM_OP:
 				result->value = int1->value + *int2;
 				objectStack.push_back(result);
@@ -1988,6 +2048,14 @@ namespace MSL
 			FloatObject* result = reinterpret_cast<FloatObject*>(AllocFloat("0.0"));
 			switch (op)
 			{
+			case OPCODE::NEGATIVE_OP:
+				result->value = -1.0f * f1->value;
+				objectStack.push_back(result);
+				break;
+			case OPCODE::POSITIVE_OP:
+				result->value = f1->value;
+				objectStack.push_back(result);
+				break;
 			case OPCODE::SUM_OP:
 				result->value = f1->value + *f2;
 				objectStack.push_back(result);
@@ -2102,6 +2170,7 @@ namespace MSL
 				break;
 			default:
 				errors |= ERROR::INVALID_OPCODE;
+				objectStack.push_back(class1);
 				DisplayError("invalid operation with two class types: " + ToString(op));
 				PRINTFRAME;
 				break;
@@ -2185,6 +2254,12 @@ namespace MSL
 				return;
 			}
 			const CallPath& path = callStack.top();
+			if (path.GetNamespace() == nullptr || path.GetClass() == nullptr || path.GetMethod() == nullptr)
+			{
+				errors |= ERROR::TERMINATE_ON_LAUNCH;
+				DisplayError("entry-point was not provided to the VM");
+				return;
+			}
 			const MethodType* entryPoint = GetMethodOrNull(*path.GetNamespace(), *path.GetClass(), *path.GetMethod());
 			if (entryPoint == nullptr)
 			{

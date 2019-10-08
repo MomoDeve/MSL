@@ -20,6 +20,8 @@ namespace System
 	public interface Array
 	{
 		function Size();
+		function Empty();
+		function Pop();
 		function ToString();
 		function Begin();
 		function End();
@@ -32,6 +34,15 @@ namespace System
 
 namespace Utils
 {
+	public static class Type
+	{
+		public static function SameAs(object1, object2)
+		{
+			var R = System.Reflection;
+			return R.GetType(object1) == R.GetType(object2);
+		}
+	}
+
 	public class Range
 	{	
 		private var first;
@@ -95,21 +106,20 @@ namespace Program
 		public static function Main()
 		{
 			var array = Array();
-			foreach(var i in Range(0, 11, 2))
+			foreach(var i in Range(1, 11))
 			{
-				array.Append(i);
+				var inner = Array(2);
+				inner[0] = i;
+				inner[1] = i ** 2;
+				array.Append(inner);
 			}
-			Console.Print(array);
+			while(array.Size() > 0)
+			{
+				Console.PrintLine(array.Pop());
+			}
 		}
 	}
 }
-
-
-
-
-
-
-
 
 
 

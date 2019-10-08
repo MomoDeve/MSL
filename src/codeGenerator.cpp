@@ -122,8 +122,8 @@ namespace MSL
 			out.Write(data.c_str(), stringSize);
 		}
 
-		CodeGenerator::CodeGenerator(Assembly&& assembly)
-			: assembly(std::move(assembly)) { }
+		CodeGenerator::CodeGenerator(const Assembly& assembly)
+			: assembly(assembly) { }
 
 		void CodeGenerator::GenerateBytecode(const std::string& outFileName)
 		{

@@ -76,9 +76,10 @@ namespace MSL
 			returns true on success, false either
 			*/
 			bool GenerateMembers(Namespace& _namespace);
-
-
-
+			
+			/*
+			add 'friend' namespace to using list. Dublicates are allowed and does not cause errors
+			*/
 			bool AddUsingExpression(Namespace& _namespace);
 			/*
 			generate class members and check them for dublicates
@@ -213,7 +214,7 @@ namespace MSL
 			/*
 			bit-masks for which say which information parser will print to provided stream
 			*/
-			enum Mode
+			enum Mode : uint8_t
 			{
 				NO_OUTPUT = 0,
 				ERROR_ONLY = 1,

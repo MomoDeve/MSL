@@ -97,6 +97,10 @@ namespace MSL
 			consider using Peek() instead
 			*/
 			int GetIteratorPos() const;
+			/*
+			prints all tokens which were successfully analysed in input stream
+			*/
+			std::string PrintFile();
 		};
 	}
 }

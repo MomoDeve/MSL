@@ -36,7 +36,7 @@ namespace MSL
 			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
 		};
 
-		/*
+		/*f
 		unary expression (such as -, +)
 		*/
 		struct UnaryExpression : public BaseExpression

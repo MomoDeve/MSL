@@ -509,7 +509,6 @@ namespace momo
 		big_integer res;
 		if (check_inf(other) > 0)
 		{
-			res._negative = _negative != other._negative;
 			res._inf = true;
 			res.free();
 			#ifndef NOEXCEPT
@@ -540,6 +539,7 @@ namespace momo
 				res += tmp;
 			}
 		}
+		res._negative = _negative != other._negative;
 		return res;
 	}
 	big_integer big_integer::operator/(const big_integer& other) const

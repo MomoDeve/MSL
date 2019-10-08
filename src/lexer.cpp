@@ -66,6 +66,11 @@ namespace MSL
 		{
 			iteratorPos = 0;
 			lineCount = 0;
+			while (tokens[iteratorPos].type == Token::ENDLINE)
+			{
+				iteratorPos++;
+				lineCount++;
+			}
 		}
 
 		bool Lexer::End() const
@@ -86,6 +91,20 @@ namespace MSL
 		int Lexer::GetIteratorPos() const
 		{
 			return iteratorPos;
+		}
+
+		std::string Lexer::PrintFile()
+		{
+			std::stringstream out;
+			int pos = this->iteratorPos;
+			ToBegin();
+			while (!End())
+			{
+				out << beautify(ToNextLine()) << '\n';
+				Next();
+			}
+			iteratorPos = pos;
+			return out.str();
 		}
 
 		std::string Lexer::ToNextLine()

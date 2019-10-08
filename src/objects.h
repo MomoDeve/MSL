@@ -39,6 +39,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string& memberName) const = 0;
 			virtual const std::string* GetName() const = 0;
 			virtual std::string ToString() const  = 0;
+			virtual std::string GetExtraInfo() const = 0;
 			virtual ~BaseObject() = default;
 		};
 
@@ -49,6 +50,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct TrueObject : BaseObject
@@ -58,6 +60,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct FalseObject : BaseObject
@@ -67,6 +70,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct ClassWrapper : BaseObject
@@ -77,8 +81,8 @@ namespace MSL
 
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
-
 			virtual std::string ToString() const override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct NamespaceWrapper : BaseObject
@@ -89,8 +93,8 @@ namespace MSL
 
 			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
-
 			virtual std::string ToString() const override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct AttributeObject : BaseObject
@@ -101,12 +105,9 @@ namespace MSL
 			AttributeObject(const AttributeType* ref);
 
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
-
 			virtual const std::string* GetName() const override;
-
-
-			// Унаследовано через BaseObject
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 
 		};
 
@@ -120,9 +121,8 @@ namespace MSL
 
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
-
-			// Унаследовано через BaseObject
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct IntegerObject : BaseObject
@@ -135,6 +135,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct FloatObject : BaseObject
@@ -145,8 +146,8 @@ namespace MSL
 			FloatObject(InnerType value);
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
-
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct StringObject : BaseObject
@@ -159,6 +160,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct Local
@@ -170,15 +172,14 @@ namespace MSL
 		struct LocalObject : BaseObject
 		{
 			Local& ref;
-			const std::string& nameRef;
+			std::string name;
 
-			LocalObject(Local& ref, const std::string& nameRef);
+			LocalObject(Local& ref, const std::string& name);
 
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
-
-			// Унаследовано через BaseObject
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 		};
 
 		struct UnknownObject : BaseObject
@@ -190,6 +191,7 @@ namespace MSL
 			virtual BaseObject * GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
+			virtual std::string GetExtraInfo() const override;
 
 		};
 
@@ -203,6 +205,7 @@ namespace MSL
 			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
+			virtual std::string GetExtraInfo() const override;
 		};
 	}
 }

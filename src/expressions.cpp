@@ -295,8 +295,9 @@ namespace MSL
 		void UnaryExpression::Print(std::ostream& out, int depth) const
 		{
 			out << std::string(depth, '\t') << Token::ToString(expressionType) << '\n';
-			out << std::string(depth, '\t') << ">> EXPR:\n";
+			out << std::string(depth, '\t') << "{\n";
 			expression->Print(out, depth + 1);
+			out << std::string(depth, '\t') << "}\n";
 		}
 
 		UnaryExpression::UnaryExpression()
@@ -328,10 +329,12 @@ namespace MSL
 		void BinaryExpression::Print(std::ostream& out, int depth) const
 		{
 			out << std::string(depth, '\t') << Token::ToString(expressionType) << '\n';
-			out << std::string(depth, '\t') << ">> LEFT_EXPR:\n";
+			out << std::string(depth, '\t') << "{\n";
 			left->Print(out, depth + 1);
-			out << std::string(depth, '\t') << ">> RIGHT_EXPR:\n";
+			out << std::string(depth, '\t') << "}\n";
+			out << std::string(depth, '\t') << "{\n";
 			right->Print(out, depth + 1);
+			out << std::string(depth, '\t') << "}\n";
 		}
 
 		BinaryExpression::BinaryExpression()
@@ -387,7 +390,7 @@ namespace MSL
 				code.write(OPCODE::MOD_OP);
 				break;
 			case Token::Type::DOT:
-				if (dynamic_cast<CallExpression*>(right.get()) == nullptr &&
+				if (dynamic_cast<CallExpression*> (right.get()) == nullptr &&
 					dynamic_cast<IndexExpression*>(right.get()) == nullptr)
 				{
 					code.write(OPCODE::GET_MEMBER);
@@ -626,9 +629,11 @@ namespace MSL
 
 		void ReturnExpression::Print(std::ostream& out, int depth) const
 		{
-			out << std::string(depth, '\t') << "return:\n";
+			out << std::string(depth, '\t') << "return\n";
+			out << std::string(depth, '\t') << "{\n";
 			if (!Empty()) returnValue->Print(out, depth + 1);
 			else out << std::string(depth + 1, '\t') << "VOID\n";
+			out << std::string(depth, '\t') << "}\n";
 		}
 
 		bool ReturnExpression::Empty() const

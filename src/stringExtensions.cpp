@@ -72,6 +72,32 @@ namespace MSL
 		return res;
 	}
 
+	std::string beautify(const std::string& str)
+	{
+		std::stringstream out;
+		for (int i = 0; i < int(str.size()); i++)
+		{
+			if(i + 1 < str.size())
+			{
+				char cur = str[i];
+				char next = str[i + 1];
+				if (cur == ' ' && contains(";,.()[]", next))
+				{
+					continue;
+				}
+				if (next == ' ' && contains("[(.", cur))
+				{
+					out << cur;
+					i++;
+					continue;
+				}
+			}
+			out << str[i];
+		}
+		return out.str();
+		#undef PRED
+	}
+
 	bool find(const std::vector<std::string>& args, const std::string& arg)
 	{
 		return std::find(args.begin(), args.end(), arg) != args.end();

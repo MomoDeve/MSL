@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <functional>
 #include <regex>
+#include <sstream>
 
 namespace MSL
 {
@@ -34,8 +35,12 @@ namespace MSL
 	checks if the symbol can be used in variable name in MSL language
 	*/
 	bool validVariableCharacter(char c);
-
+	/*
+	replaces tokens such as '\n', '\t' with two symbols as '\' 't' etc
+	*/
 	std::string replaceEscapeTokens(const std::string& str);
+
+	std::string beautify(const std::string& str);
 	/*
 	move offset of str parameter until pred is true and appends content to the resulting string
 	*/

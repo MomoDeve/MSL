@@ -12,6 +12,7 @@ namespace MSL
 
 		bool Parser::Parse()
 		{
+			int lexerPos = lexer->GetIteratorPos();
 			while (!lexer->End())
 			{
 				Token::Type tokenType = lexer->Peek().type;
@@ -30,13 +31,13 @@ namespace MSL
 				}
 				lexer->Next();
 			}
-			lexer->ToBegin();
+			lexer->SetIteratorPos(lexerPos);
 			GenerateAssembly();
 			if (!hasEntryPoint)
 			{
-				success = false;
-				Notify("[Error]: entry point must be defined: no Main function found");
+				Notify("[WARNING]: entry point must be defined: no Main function found");
 			}
+			lexer->SetIteratorPos(lexerPos);
 			return success;
 		}
 
@@ -171,6 +172,10 @@ namespace MSL
 				lexer->Next(); // skipping `namespace` -> [namespace name]
 				if (lexer->Peek().type == Token::Type::OBJECT)
 				{
+					if (_namespace.friendNamespaces.find(lexer->Peek().value) != _namespace.friendNamespaces.end())
+					{
+						Warning("namespace " + lexer->Peek().value + " is already a friend namespace to " + _namespace.getName());
+					}
 					_namespace.friendNamespaces.insert(lexer->Peek().value);
 					lexer->Next(); // skipping [namespace name] -> `;`
 				}
@@ -286,8 +291,8 @@ namespace MSL
 			{
 				Function constructor(constructorName);
 				constructor.modifiers = Function::Modifiers::_PUBLIC | Function::Modifiers::_CONSTRUCTOR;
-				constructor.body = unique_ptr<ExpressionList>(new ExpressionList());
-				constructor.body->push_back(std::unique_ptr<BaseExpression>(new ReturnExpression()));
+				constructor.body = std::make_unique<ExpressionList>();
+				constructor.body->push_back(std::make_unique<ReturnExpression>());
 				constructor.name = classObject.name;
 				classObject.InsertMethod(constructorName, std::move(constructor));
 			}
@@ -591,10 +596,10 @@ namespace MSL
 					lexer->Prev();
 					THROW("interface method cannot contain body: " + memberName);
 				}
-				unique_ptr<ExpressionList> body(new ExpressionList(ParseExpressionBlock(functionObject)));
+				auto body = std::make_unique<ExpressionList>(ParseExpressionBlock(functionObject));
 				if (body->empty() || dynamic_cast<ReturnExpression*>(body->back().get()) == nullptr) // if no return, return void
 				{
-					body->push_back(unique_ptr<BaseExpression>(new ReturnExpression()));
+					body->push_back(std::make_unique<ReturnExpression>());
 				}
 				functionObject.body = std::move(body);
 				lexer->Next(); // skipping `}`
@@ -807,7 +812,7 @@ namespace MSL
 
 		unique_ptr<BaseExpression> Parser::ParseVariableDecl(Function& function)
 		{
-			unique_ptr<ObjectDeclareExpression> variable(new ObjectDeclareExpression());
+			unique_ptr<ObjectDeclareExpression> variable(std::make_unique<ObjectDeclareExpression>());
 			variable->isConst = lexer->Peek().type == Token::Type::CONST;
 			if (variable->isConst)
 			{
@@ -862,7 +867,7 @@ namespace MSL
 			}
 
 			// this code will never be executed
-			unique_ptr<LambdaExpression> lambdaExpr(new LambdaExpression());
+			unique_ptr<LambdaExpression> lambdaExpr(std::make_unique<LambdaExpression>());
 			lexer->Next(); // skipping `lambda` -> `(`
 			if (!ParseFunctionParamsDecl(lambdaExpr->params))
 			{
@@ -880,7 +885,7 @@ namespace MSL
 			{
 				Error("`for` expected");
 			}
-			unique_ptr<ForExpression> forExpr(new ForExpression());
+			unique_ptr<ForExpression> forExpr(std::make_unique<ForExpression>());
 			lexer->Next(); // skipping `for` -> `(`
 			if (lexer->Peek().type != Token::Type::ROUND_BRACKET_O)
 			{
@@ -898,7 +903,7 @@ namespace MSL
 			lexer->Next(); // skipping `;`
 			if (lexer->Peek().type == Token::Type::SEMICOLON) // no predicate
 			{
-				unique_ptr<ObjectExpression> trueStatement(new ObjectExpression());
+				unique_ptr<ObjectExpression> trueStatement(std::make_unique<ObjectExpression>());
 				trueStatement->object = Token(Token::Type::TRUE_CONSTANT, "true");
 				function.InsertDependency(trueStatement->object.value);
 				forExpr->predicate = TO_BASE(trueStatement);
@@ -928,7 +933,7 @@ namespace MSL
 
 		unique_ptr<BaseExpression> Parser::ParseForeachExpression(Function& function)
 		{
-			unique_ptr<ForeachExpression> foreachExpr(new ForeachExpression());
+			unique_ptr<ForeachExpression> foreachExpr(std::make_unique<ForeachExpression>());
 			function.InsertDependency("Begin_0");
 			function.InsertDependency("Next_1");
 			function.InsertDependency("GetByIter_1");
@@ -970,7 +975,7 @@ namespace MSL
 			}
 
 			lexer->Next(); // skipping `in` -> [container]
-			unique_ptr<ObjectDeclareExpression> container(new ObjectDeclareExpression());
+			unique_ptr<ObjectDeclareExpression> container(std::make_unique<ObjectDeclareExpression>());
 			container->objectName = "__CONTAINER_COMPILE_" + std::to_string(function.labelInnerId);
 			function.InsertDependency(container->objectName);
 			container->assignment = ParseRawExpression(function);
@@ -995,7 +1000,7 @@ namespace MSL
 				Error("`while` expected");
 			}
 			lexer->Next(); // skipping `while` -> `(`
-			unique_ptr<WhileExpression> whileExpr(new WhileExpression());
+			unique_ptr<WhileExpression> whileExpr(std::make_unique<WhileExpression>());
 			whileExpr->predicate = ParseStatementInBrackets(function);
 			lexer->Next(); // skipping `)` -> `{`
 			whileExpr->body = ParseExpressionBlock(function);
@@ -1009,7 +1014,7 @@ namespace MSL
 			{
 				Error("`if` expected");
 			}
-			unique_ptr<IfExpression> ifExpr(new IfExpression());
+			unique_ptr<IfExpression> ifExpr(std::make_unique<IfExpression>());
 
 			lexer->Next(); // skipping `if` -> `(`
 			ifExpr->ifStatements.push_back(ParseStatementInBrackets(function));
@@ -1041,7 +1046,7 @@ namespace MSL
 			{
 				Error("`return` expected");
 			}
-			unique_ptr<ReturnExpression> returnExpr(new ReturnExpression());
+			unique_ptr<ReturnExpression> returnExpr(std::make_unique<ReturnExpression>());
 			lexer->Next(); // skipping `return` -> [expr]
 			if (lexer->Peek().type == Token::Type::SEMICOLON)
 			{
@@ -1071,19 +1076,42 @@ namespace MSL
 
 		unique_ptr<BaseExpression> Parser::ParseNextVariable(Function& function)
 		{
-			if (lexer->Peek().type & Token::Type::UNARY_OPERAND)
-			{
-				unique_ptr<UnaryExpression> unaryExpr(new UnaryExpression());
-				unaryExpr->expressionType = lexer->Peek().type;
-				lexer->Next(); // skipping [unary_op]
-				unaryExpr->expression = ParseNextVariable(function);
-				return TO_BASE(unaryExpr);
-			}
 			if (lexer->Peek().type == Token::Type::ROUND_BRACKET_O)
 			{
 				unique_ptr<BaseExpression> statement = ParseStatementInBrackets(function);
 				lexer->Next(); // skipping `)`
 				return statement;
+			}
+			if (lexer->Peek().type & Token::Type::UNARY_OPERAND)
+			{
+				auto unaryExpr = std::make_unique<UnaryExpression>();
+				unaryExpr->expressionType = lexer->Peek().type;
+				lexer->Next(); // skipping [unary op]
+				if (lexer->Peek().type & Token::Type::UNARY_OPERAND)
+				{
+					unaryExpr->expression = ParseNextVariable(function);
+					return TO_BASE(unaryExpr);
+				}
+				if (lexer->Peek().type == Token::Type::ROUND_BRACKET_O || (lexer->Peek().type & Token::Type::VALUE_TYPE))
+				{
+					unique_ptr<BaseExpression> obj = ParseNextVariable(function);
+					uint32_t currentPriority = unaryExpr->expressionType & Token::Type::PRIORITY;
+					uint32_t nextPriority = lexer->Peek().type & Token::Type::PRIORITY;
+					if (currentPriority < nextPriority)
+					{
+						unaryExpr->expression = ParseRawExpression(function, TO_BASE(obj));
+					}
+					else
+					{
+						unaryExpr->expression = std::move(obj);
+					}
+					return TO_BASE(unaryExpr);
+				}
+				else
+				{
+					Error("another unary operand or value expected after unary operand");
+					return nullptr;
+				}
 			}
 			if (lexer->Peek().type & Token::Type::VALUE_TYPE)
 			{
@@ -1092,7 +1120,7 @@ namespace MSL
 				Token& nextToken = lexer->Peek();
 				if (nextToken.type == Token::Type::ROUND_BRACKET_O)
 				{
-					unique_ptr<CallExpression> callExpr(new CallExpression());
+					unique_ptr<CallExpression> callExpr(std::make_unique<CallExpression>());
 					callExpr->parameters = ParseFunctionArguments(function);
 					callExpr->functionName = Function::GenerateUniqueName(object.value, callExpr->parameters.size());
 					function.InsertDependency(callExpr->functionName);
@@ -1101,7 +1129,7 @@ namespace MSL
 				}
 				else if (nextToken.type == Token::Type::SQUARE_BRACKET_O)
 				{
-					unique_ptr<IndexExpression> indexExpr(new IndexExpression());
+					unique_ptr<IndexExpression> indexExpr(std::make_unique<IndexExpression>());
 					auto objectExpr = std::make_unique<ObjectExpression>();
 					objectExpr->object = object;
 					indexExpr->caller = TO_BASE(objectExpr);
@@ -1112,7 +1140,7 @@ namespace MSL
 				}
 				else
 				{
-					unique_ptr<ObjectExpression> expr(new ObjectExpression());
+					unique_ptr<ObjectExpression> expr(std::make_unique<ObjectExpression>());
 					if (object.type == Token::Type::THIS && (function.isStatic()))
 					{
 						Error("`this` reference inside a static function: " + function.name);
@@ -1122,30 +1150,25 @@ namespace MSL
 					return TO_BASE(expr);
 				}
 			}
-			Error("value, bracket expression or unary operand expected");
+			Error("value or round brackets expression expected");
 			return nullptr;
 		}
 
 		unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch)
 		{
 			const Token& firstToken = lexer->Peek();
-			if (firstToken.type == Token::Type::LAMBDA) // lambda cannot be used, so going into this if will cause error while parsing
+			if (firstToken.type == Token::Type::LAMBDA) // lambda cannot be used, so going into this block will cause error while parsing
 			{
 				unique_ptr<BaseExpression> expr = ParseLambdaExpression(function);
 				return ParseRawExpression(function, std::move(expr));
 			}
 			if (firstToken.type & Token::Type::UNARY_OPERAND)
 			{
-				if (leftBranch != nullptr)
-				{
-					Error("binary operand expected, but unary found");
-				}
-				unique_ptr<BaseExpression> expr = ParseNextVariable(function);
-				return ParseRawExpression(function, std::move(expr));
+				return ParseRawExpression(function, TO_BASE(ParseNextVariable(function)));
 			}
 			if (firstToken.type & Token::Type::BINARY_OPERAND) // left branch should not be `nullptr`
 			{
-				unique_ptr<BinaryExpression> binExpr(new BinaryExpression());
+				unique_ptr<BinaryExpression> binExpr(std::make_unique<BinaryExpression>());
 				if (leftBranch == nullptr)
 				{
 					Error("value type before binary operand expected");
@@ -1257,7 +1280,9 @@ namespace MSL
 			std::string lineCount = "[" + std::to_string(lexer->GetLineCount() + 1) + "] ";
 			std::string filler(lexer->ToPrevLine().size() + lineCount.size() - 1, '~');
 			filler += '^';
-			Notify(lineCount + lexer->ToNextLine() + '\n' + filler);
+			std::string fileLine = lexer->ToNextLine();
+			fileLine = beautify(fileLine);
+			Notify(lineCount + fileLine + '\n' + filler);
 			lexer->SetIteratorPos(iterPos);
 		}
 
@@ -1265,6 +1290,7 @@ namespace MSL
 		{
 			return assembly;
 		}
+
 		bool Parser::HasEntryPoint() const
 		{
 			return hasEntryPoint;

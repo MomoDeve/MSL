@@ -58,12 +58,14 @@ void PrintErrors(uint32_t errors)
 		cout << STRING(ERROR::INVALID_METHOD_CALL) << endl;
 }
 
+#undef SYNTAX_TREE
+
 bool createAssembly(string filePath)
 {
 	ifstream file(filePath);
 	MSL::compiler::StreamReader reader;
 
-	reader << file;
+	reader.ReadToEnd(file);
 	file.close();
 
 	MSL::compiler::Lexer lexer(reader.GetBuffer());
@@ -77,7 +79,7 @@ bool createAssembly(string filePath)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-#if 0
+#ifdef SYNTAX_TREE
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -90,7 +92,7 @@ bool createAssembly(string filePath)
 	}
 #endif
 
-	MSL::compiler::CodeGenerator generator(std::move(assembly));
+	MSL::compiler::CodeGenerator generator(assembly);
 	generator.GenerateBytecode(filePath + ".emsl");
 
 	return true;
@@ -119,5 +121,5 @@ int main(int argc, char* argv[])
 			PrintErrors(VM.GetErrors());
 		}
 	}
-	system("pause");
+	int unused = getchar();
 }

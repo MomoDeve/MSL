@@ -25,6 +25,11 @@ namespace MSL
 			return value;
 		}
 
+		std::string StringObject::GetExtraInfo() const
+		{
+			return "String";
+		}
+
 		FloatObject::FloatObject(FloatObject::InnerType value)
 			: value((value)), BaseObject(Type::FLOAT) { }
 
@@ -47,6 +52,11 @@ namespace MSL
 			return out;
 		}
 
+		std::string FloatObject::GetExtraInfo() const
+		{
+			return "Double";
+		}
+
 		IntegerObject::IntegerObject(IntegerObject::InnerType value)
 			: value(value), BaseObject(Type::INTEGER) { }
 
@@ -63,6 +73,11 @@ namespace MSL
 		std::string IntegerObject::ToString() const
 		{
 			return value.to_string();
+		}
+
+		std::string IntegerObject::GetExtraInfo() const
+		{
+			return "BigInteger";
 		}
 
 		ClassObject::ClassObject(const ClassType* type)
@@ -93,7 +108,12 @@ namespace MSL
 
 		std::string ClassObject::ToString() const
 		{
-			return type->name + '.' + type->name;
+			return type->namespaceName + '.' + type->name;
+		}
+
+		std::string ClassObject::GetExtraInfo() const
+		{
+			return " class instance";
 		}
 			
 		NullObject::NullObject()
@@ -114,6 +134,11 @@ namespace MSL
 			return "null";
 		}
 
+		std::string NullObject::GetExtraInfo() const
+		{
+			return std::string();
+		}
+
 		TrueObject::TrueObject()
 			: BaseObject(Type::TRUE) { }
 
@@ -132,6 +157,11 @@ namespace MSL
 			return "true";
 		}
 
+		std::string TrueObject::GetExtraInfo() const
+		{
+			return " Boolean";
+		}
+
 		FalseObject::FalseObject()
 			: BaseObject(Type::FALSE) { }
 
@@ -148,6 +178,11 @@ namespace MSL
 		std::string FalseObject::ToString() const
 		{
 			return "false";
+		}
+
+		std::string FalseObject::GetExtraInfo() const
+		{
+			return " Boolean";
 		}
 
 		NamespaceWrapper::NamespaceWrapper(const NamespaceType* type)
@@ -170,6 +205,16 @@ namespace MSL
 			return type->name;
 		}
 
+		std::string NamespaceWrapper::GetExtraInfo() const
+		{
+			std::string info = "friends";
+			for (const auto& ns : type->friendNamespaces)
+			{
+				info += ' ' + ns;
+			}
+			return info;
+		}
+
 		ClassWrapper::ClassWrapper(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS) { }
 
@@ -186,6 +231,21 @@ namespace MSL
 		std::string ClassWrapper::ToString() const
 		{
 			return type->namespaceName + '.' + type->name;
+		}
+
+		std::string ClassWrapper::GetExtraInfo() const
+		{
+			std::string info;
+			if (type->isInternal()) info += " internal";
+			if (!type->isInternal()) info += " public";
+
+			if (type->isSystem()) info += " system";
+			if (type->isAbstract()) info += " abstract";
+			if (type->isConst()) info += " const";
+			if (type->isInterface()) info += " interface";
+			if (type->isStatic()) info += " static";
+			info += " class";
+			return info;
 		}
 
 		UnknownObject::UnknownObject(const std::string* ref)
@@ -206,8 +266,13 @@ namespace MSL
 			return *ref;
 		}
 
-		LocalObject::LocalObject(Local& ref, const std::string& nameRef)
-			: BaseObject(Type::LOCAL), ref(ref), nameRef(nameRef) { }
+		std::string UnknownObject::GetExtraInfo() const
+		{
+			return "unresolved reference";
+		}
+
+		LocalObject::LocalObject(Local& ref, const std::string& name)
+			: BaseObject(Type::LOCAL), ref(ref), name(name) { }
 
 		BaseObject* LocalObject::GetMember(const std::string& memberName) const
 		{
@@ -216,12 +281,17 @@ namespace MSL
 
 		const std::string* LocalObject::GetName() const
 		{
-			return &nameRef;
+			return &name;
 		}
 
 		std::string LocalObject::ToString() const
 		{
-			return nameRef;
+			return name;
+		}
+
+		std::string LocalObject::GetExtraInfo() const
+		{
+			return ref.object->ToString();
 		}
 
 		AttributeObject::AttributeObject(const AttributeType* type)
@@ -239,11 +309,16 @@ namespace MSL
 		std::string AttributeObject::ToString() const
 		{
 			std::string out;
-			if (type->modifiers & AttributeType::Modifiers::PUBLIC) out += "public ";
-			if (type->modifiers & AttributeType::Modifiers::STATIC) out += "static ";
-			if (type->modifiers & AttributeType::Modifiers::CONST) out += "const ";
+			if (type->isPublic()) out += "public ";
+			if (type->isStatic()) out += "static ";
+			if (type->isConst()) out += "const ";
 			out += type->name + " attribute";
 			return out;
+		}
+
+		std::string AttributeObject::GetExtraInfo() const
+		{
+			return " value: " + object->ToString();
 		}
 
 		std::string ToString(Type type)
@@ -298,6 +373,11 @@ namespace MSL
 		std::string ArrayObject::ToString() const
 		{
 			return "Array";
+		}
+
+		std::string ArrayObject::GetExtraInfo() const
+		{
+			return " array size: " + array.size();
 		}
 }
 }

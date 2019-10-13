@@ -88,3 +88,19 @@ int main()
     return 0;
 }
 ```
+
+## Writing Hello World in MSL
+First program that you usually want to write to test new language and its compiler is a simple "Hello World!" program. In MSL this program will look like:
+```cs
+// main.msl file
+namespace Program
+{	
+    internal class ProgramClass
+    {			
+        public static function Main()
+        {
+            System.Console.PrintLine("Hello World!");
+        }
+   }
+}
+```

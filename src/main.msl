@@ -102,7 +102,7 @@ namespace Program
 	using namespace Utils;
 	
 	internal class ProgramClass
-	{	
+	{			
 		public static function Main()
 		{
 			var array = Array();
@@ -113,7 +113,7 @@ namespace Program
 				inner[1] = i ** 2;
 				array.Append(inner);
 			}
-			while(array.Size() > 0)
+			while(!array.Empty())
 			{
 				Console.PrintLine(array.Pop());
 			}

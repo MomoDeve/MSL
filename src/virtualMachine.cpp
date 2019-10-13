@@ -253,16 +253,17 @@ namespace MSL
 						}
 						else if (classType->isAbstract()) // if class is abstract, constructor is not found too
 						{
-							DisplayError("cannot create instance of abstract class: " + GetFullClassType(classType));
 							errors |= ERROR::ABSTRACT_MEMBER_CALL;
+							DisplayError("cannot create instance of abstract class: " + GetFullClassType(classType));
 						}
 						else if (classType->isStatic())
 						{
-							DisplayError("cannot create instance of static class: " + GetFullClassType(classType));
 							errors |= ERROR::MEMBER_NOT_FOUND;
+							DisplayError("cannot create instance of static class: " + GetFullClassType(classType));
 						}
 						else // probably constructor is just missing
 						{
+							errors |= ERROR::INVALID_METHOD_CALL;
 							DisplayError("could not call class " + GetFullClassType(classType) + " constructor: " + methodName);
 							DisplayExtra("available constructors of this class:");
 							for (int i = 0; i < 17; i++) // find all possible class constructors (with less than 17 parameters, at least)
@@ -282,6 +283,7 @@ namespace MSL
 						DisplayError("could not find class `" + className + "` in namespace: " + frame->_namespace->name);
 					}
 				}
+				errors |= ERROR::MEMBER_NOT_FOUND;
 				DisplayError("method passed to frame was not found: " + *callStack.top().GetNamespace() + '.' + *callStack.top().GetClass() + '.' + *callStack.top().GetMethod());
 
 				// displaying caller frame for debug
@@ -334,6 +336,7 @@ namespace MSL
 				StartNewStackFrame();
 				if (errors != 0)
 				{
+					// error already occured
 					DisplayError("static constructor caused a fatal error: " + GetFullClassType(frame->_class) + '.' + GetMethodActualName(constructor) + "()");
 					return;
 				}
@@ -696,6 +699,7 @@ namespace MSL
 						InvokeObjectMethod("ToBoolean_1", reinterpret_cast<ClassObject*>(object));
 						if (errors != 0)
 						{
+							// error already occured
 							DisplayError("could not convert class object into boolean: " + GetFullClassType(reinterpret_cast<ClassObject*>(object)->type));
 							PRINTFRAME;
 							return;
@@ -707,6 +711,7 @@ namespace MSL
 						frame->offset = frame->_method->labels[label];
 					else if (object->type != Type::FALSE && object->type != Type::NULLPTR)
 					{
+						errors |= ERROR::INVALID_METHOD_CALL;
 						DisplayError("object cannot be implicitly converted to boolean");
 						PRINTFRAME;
 						return;
@@ -730,6 +735,7 @@ namespace MSL
 						InvokeObjectMethod("ToBoolean_1", reinterpret_cast<ClassObject*>(object));
 						if (errors != 0)
 						{
+							// error already occured
 							DisplayError("could not convert class object into boolean: " + GetFullClassType(reinterpret_cast<ClassObject*>(object)->type));
 							PRINTFRAME;
 							return;
@@ -741,11 +747,11 @@ namespace MSL
 						frame->offset = frame->_method->labels[label];
 					else if (object->type != Type::TRUE)
 					{
+						errors |= ERROR::INVALID_METHOD_CALL;
 						DisplayError("object cannot be implicitly converted to boolean");
 						PRINTFRAME;
 						return;
 					}
-					break;
 					break;
 				}
 				case (OPCODE::PUSH_STRING):
@@ -1168,6 +1174,7 @@ namespace MSL
 					objectStack.pop_back(); // pop array
 					if (iter->type != Type::INTEGER)
 					{
+						errors |= ERROR::INVALID_CALL_ARGUMENT;
 						DisplayError("Invalid iterator was passed to Array.Next(this, iter) method: " + iter->ToString());
 						PRINTFRAME_2(_class, _method);
 						return;
@@ -1177,6 +1184,7 @@ namespace MSL
 				}
 				else
 				{
+					errors |= ERROR::INVALID_METHOD_CALL;
 					DisplayError("Array class does not contains method: " + GetFullMethodType(_method));
 					PRINTFRAME_2(_class, _method);
 				}
@@ -1268,7 +1276,7 @@ namespace MSL
 				if (local->ref.isConst && local->ref.object->type != Type::NULLPTR)
 				{
 					errors |= ERROR::CONST_MEMBER_MODIFICATION;
-					DisplayError("trying to modify const local variable: " + local->ToString() + " = " + value->ToString());
+					DisplayError("trying to modify const local variable: " + local->ToString() + " = " + (value ? value->ToString() : "?"));
 					PRINTFRAME;
 					return;
 				}
@@ -1292,6 +1300,8 @@ namespace MSL
 			case Type::STRING:
 			case Type::FLOAT:
 			case Type::CLASS:
+			case Type::TRUE:
+			case Type::FALSE:
 				objectReference = &object;
 				break;
 			default:
@@ -1515,6 +1525,26 @@ namespace MSL
 				PerformALUcallClassTypes(classWrap, classType, op, frame);
 			}
 			break;
+			case Type::FALSE:
+			case Type::TRUE:
+			{
+				if (ALUinIncrMode)
+				{
+					errors |= ERROR::INVALID_OPCODE;
+					DisplayError("ALU increment mode cannot be used with bool primitives");
+					PRINTFRAME;
+					return;
+				}
+				bool b1 = (*objectReference)->type == Type::TRUE ? true : false;
+				bool b2 = parameters == 2 ? (value->type == Type::TRUE ? true : false) : false; // false by default
+				PerformALUcallBooleans(b1, b2, op, frame);
+			}
+			break;
+			default:
+				errors |= ERROR::INVALID_STACKOBJECT;
+				DisplayError("unexpected object type found in ALU call: " + (*objectReference)->ToString());
+				PRINTFRAME;
+				return;
 			}
 
 			if (ALUinIncrMode)
@@ -2043,6 +2073,48 @@ namespace MSL
 			}
 		}
 
+		void VirtualMachine::PerformALUcallBooleans(bool b1, bool b2, OPCODE op, Frame* frame)
+		{
+			switch (op)
+			{
+			case MSL::VM::NEGATION_OP:
+				if (!b1)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			case MSL::VM::CMP_EQ:
+				if (b1 == b2)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			case MSL::VM::CMP_NEQ:
+				if (b1 != b2)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			case MSL::VM::CMP_AND:
+				if (b1 && b2)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			case MSL::VM::CMP_OR:
+				if (b1 || b2)
+					objectStack.push_back(AllocTrue());
+				else
+					objectStack.push_back(AllocFalse());
+				break;
+			default:
+				errors |= ERROR::INVALID_OPCODE;
+				DisplayError("invalid opcode was passed to VM ALU: " + ToString(op));
+				PRINTFRAME;
+				break;
+			}
+		}
+
 		void VirtualMachine::PerformALUcallFloats(FloatObject* f1, const FloatObject::InnerType* f2, OPCODE op, Frame* frame)
 		{
 			FloatObject* result = reinterpret_cast<FloatObject*>(AllocFloat("0.0"));
@@ -2169,8 +2241,8 @@ namespace MSL
 				}
 				break;
 			default:
-				errors |= ERROR::INVALID_OPCODE;
 				objectStack.push_back(class1);
+				errors |= ERROR::INVALID_OPCODE;
 				DisplayError("invalid operation with two class types: " + ToString(op));
 				PRINTFRAME;
 				break;

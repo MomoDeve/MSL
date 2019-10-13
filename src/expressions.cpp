@@ -390,8 +390,8 @@ namespace MSL
 				code.write(OPCODE::MOD_OP);
 				break;
 			case Token::Type::DOT:
-				if (dynamic_cast<CallExpression*> (right.get()) == nullptr &&
-					dynamic_cast<IndexExpression*>(right.get()) == nullptr)
+				if (right.get()->type != ExpressionType::CALL &&
+					right.get()->type != ExpressionType::INDEX)
 				{
 					code.write(OPCODE::GET_MEMBER);
 				}

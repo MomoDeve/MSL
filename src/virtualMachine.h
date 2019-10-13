@@ -78,6 +78,7 @@ namespace MSL
 			void PerformALUcallFloats(FloatObject* f1, const FloatObject::InnerType* f2, OPCODE op, Frame* frame);
 			void PerformALUcallClassTypes(ClassWrapper* class1, const ClassType* class2, OPCODE op, Frame* frame);
 			void PerformALUcallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
+			void PerformALUcallBooleans(bool b1, bool b2, OPCODE op, Frame* frame);
 
 			UnknownObject* AllocUnknown(const std::string* value);
 			NullObject* AllocNull();

@@ -12,57 +12,11 @@
 
 using namespace std;
 
-void PrintErrors(uint32_t errors)
-{
-	if (errors == 0) return;
-
-	cout << "[[ VM ERRORS ]]:" << endl;
-	using ERROR = MSL::VM::VirtualMachine::ERROR;
-	if (errors & ERROR::CALLSTACK_EMPTY)
-		cout << STRING(ERROR::CALLSTACK_EMPTY) << endl; 
-	if (errors & ERROR::INVALID_CALL_ARGUMENT)
-		cout << STRING(ERROR::INVALID_CALL_ARGUMENT) << endl;
-	if (errors & ERROR::INVALID_METHOD_SIGNATURE)
-		cout << STRING(ERROR::INVALID_METHOD_SIGNATURE) << endl;
-	if (errors & ERROR::INVALID_OPCODE)
-		cout << STRING(ERROR::INVALID_OPCODE) << endl;
-	if (errors & ERROR::INVALID_STACKFRAME_OFFSET)
-		cout << STRING(ERROR::INVALID_STACKFRAME_OFFSET) << endl;
-	if (errors & ERROR::OBJECTSTACK_EMPTY)
-		cout << STRING(ERROR::OBJECTSTACK_EMPTY) << endl;
-	if (errors & ERROR::INVALID_OPCODE)
-		cout << STRING(ERROR::INVALID_OPCODE) << endl;
-	if (errors & ERROR::TERMINATE_ON_LAUNCH)
-		cout << STRING(ERROR::TERMINATE_ON_LAUNCH) << endl;
-	if (errors & ERROR::OBJECT_NOT_FOUND)
-		cout << STRING(ERROR::OBJECT_NOT_FOUND) << endl;
-	if (errors & ERROR::INVALID_METHOD_SIGNATURE)
-		cout << STRING(ERROR::INVALID_METHOD_SIGNATURE) << endl;
-	if (errors & ERROR::MEMBER_NOT_FOUND)
-		cout << STRING(ERROR::MEMBER_NOT_FOUND) << endl;
-	if (errors & ERROR::INVALID_STACKOBJECT)
-		cout << STRING(ERROR::INVALID_STACKOBJECT) << endl;
-	if (errors & ERROR::STACKOVERFLOW)
-		cout << STRING(ERROR::STACKOVERFLOW) << endl;
-	if (errors & ERROR::PRIVATE_MEMBER_ACCESS)
-		cout << STRING(ERROR::PRIVATE_MEMBER_ACCESS) << endl;
-	if (errors & ERROR::CALLSTACK_CORRUPTION)
-		cout << STRING(ERROR::CALLSTACK_CORRUPTION) << endl;
-	if (errors & ERROR::OBJECTSTACK_CORRUPTION)
-		cout << STRING(ERROR::OBJECTSTACK_CORRUPTION) << endl;
-	if (errors & ERROR::CONST_MEMBER_MODIFICATION)
-		cout << STRING(ERROR::CONST_MEMBER_MODIFICATION) << endl;
-	if (errors & ERROR::ABSTRACT_MEMBER_CALL)
-		cout << STRING(ERROR::ABSTRACT_MEMBER_CALL) << endl;
-	if (errors & ERROR::INVALID_METHOD_CALL)
-		cout << STRING(ERROR::INVALID_METHOD_CALL) << endl;
-}
-
 #undef SYNTAX_TREE
 
-bool createAssembly(string filePath)
+bool createAssembly(string fileName)
 {
-	ifstream file(filePath);
+	ifstream file(fileName + ".msl");
 	MSL::compiler::StreamReader reader;
 
 	reader.ReadToEnd(file);
@@ -79,7 +33,7 @@ bool createAssembly(string filePath)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-#ifdef SYNTAX_TREE
+#ifndef SYNTAX_TREE
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -93,32 +47,48 @@ bool createAssembly(string filePath)
 #endif
 
 	MSL::compiler::CodeGenerator generator(assembly);
-	generator.GenerateBytecode(filePath + ".emsl");
+	generator.GenerateBytecode();
+
+	ofstream binary(fileName + ".emsl", ios::binary);
+	auto contents = generator.GetBuffer();
+	binary.write(contents.c_str(), contents.size());
 
 	return true;
 }
 
 int main(int argc, char* argv[])
 {
-	string filePath = "main.msl";
-	if (argc == 2) filePath = argv[1];
-
-	if (createAssembly(filePath))
+	string fileName = "main";
+	if (argc == 2)
 	{
-		MSL::BytecodeReader reader(filePath + ".emsl");
-		std::ofstream binary(filePath + "_binary.bmsl");
+		fileName = argv[1];
+		fileName = fileName.substr(0, fileName.size() - 4); // delete .msl
+	}
+
+	if (createAssembly(fileName))
+	{
+		MSL::BytecodeReader reader(fileName + ".emsl");
+		std::ofstream binary(fileName + "_binary.bmsl");
 		reader.ReadToEnd(binary);
 		binary.close();
 
 		MSL::VM::Configuration config;
-		config.execution.allowDebug = true;
+		config.execution.allowDebug = false;
 		config.streams = { &std::cin, &std::cout, &std::cout };
 		MSL::VM::VirtualMachine VM(move(config));
-		std::ifstream executable(filePath + ".emsl", std::ios::binary);
+		std::ifstream executable(fileName + ".emsl", std::ios::binary);
 		if (VM.AddBytecodeFile(&executable))
 		{
 			VM.Run();
-			PrintErrors(VM.GetErrors());
+		}
+		auto errors = VM.GetErrorStrings(VM.GetErrors());
+		if (!errors.empty())
+		{
+			cout << "[VM ERRORS]:\n";
+			for (const auto& error : errors)
+			{
+				cout << error << std::endl;
+			}
 		}
 	}
 	int unused = getchar();

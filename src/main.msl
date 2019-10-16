@@ -33,7 +33,48 @@ namespace System
 }
 
 namespace Utils
-{
+{	
+	public class String
+	{		
+		public static function Find(string, stringToFind)
+		{
+			for(var i = 0; i < string.Size() - stringToFind.Size() + 1; i += 1)
+			{
+				var match = true;
+				for(var j = 0; j < stringToFind.Size(); j += 1)
+				{
+					if(string[i + j] != stringToFind[j])
+					{
+						match = false;
+					}
+				}
+				if(match)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		public static function Replace(string, symToReplace, replaceSym)
+		{
+			var result = "";
+			for(var i = 0; i < string.Size(); i += 1)
+			{
+				var sym = string[i];
+				if(sym == symToReplace)
+				{
+					result += replaceSym;
+				}
+				else
+				{
+					result += sym;
+				}
+			}
+			return result;
+		}
+	}
+	
 	public static class Type
 	{
 		public static function SameAs(object1, object2)
@@ -96,6 +137,42 @@ namespace Utils
 	}
 }
 
+namespace Math
+{
+	public class Vector2
+	{
+		public var x;
+		public var y;
+		
+		public function Vector2()
+		{
+			x = 0;
+			y = 0;
+		}
+		
+		public function Vector2(x, y)
+		{
+			this.x = x;
+			this.y = y;
+		}
+		
+		public function ToString()
+		{
+			return "[" + x + "; " + y + "]";
+		}
+		
+		public function SumOperator(vec)
+		{
+			return Vector2(x + vec.x, y + vec.y);
+		}
+		
+		public function SubOperator(vec)
+		{
+			return Vector2(x - vec.x, y - vec.y);
+		}
+	}
+}
+
 namespace Program
 {
 	using namespace System;
@@ -103,7 +180,16 @@ namespace Program
 	
 	internal class ProgramClass
 	{			
-		public static function Main()
+		public static function Fact(n)
+		{
+			if(n == 0)
+			{
+				return 1;
+			}
+			return n * Fact(n - 1);
+		}
+		
+		public static function Tests()
 		{
 			var array = Array();
 			foreach(var i in Range(1, 11))
@@ -115,8 +201,29 @@ namespace Program
 			}
 			while(!array.Empty())
 			{
-				Console.PrintLine(array.Pop());
+				Console.Print(array.Pop().ToString() + " ");
 			}
+			
+			const var n = 30;
+			Console.PrintLine("\nфакториал " + n + ": " + Fact(n));
+		}
+		
+		public static function Main()
+		{
+			Tests();
+		
+			var str1 = "hello world!";
+			var match = "hello";
+			var str2 = Utils.String.Replace(str1, "l", "7");
+			if(Utils.String.Find(str1, match))
+			{
+				Console.PrintLine("string \"" + str1 + "\" contains: \"" + match + "\"");
+			}
+			if(!Utils.String.Find(str2, match))
+			{
+				Console.PrintLine("string \"" + str2 + "\" does not contain: \"" + match + "\"");
+			}
+			return 0;
 		}
 	}
 }

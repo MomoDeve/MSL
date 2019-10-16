@@ -780,7 +780,7 @@ namespace MSL
 				Error("index expression cannot be empty");
 				return nullptr;
 			}
-			unique_ptr<BaseExpression> expr = ParseNextVariable(function);
+			unique_ptr<BaseExpression> expr = ParseRawExpression(function);
 			if (lexer->Peek().type != Token::Type::SQUARE_BRACKET_C)
 			{
 				Error("`]` exprected in index expression");
@@ -1154,7 +1154,7 @@ namespace MSL
 			return nullptr;
 		}
 
-		unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch)
+		unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch, bool fastReturn)
 		{
 			const Token& firstToken = lexer->Peek();
 			if (firstToken.type == Token::Type::LAMBDA) // lambda cannot be used, so going into this block will cause error while parsing
@@ -1171,7 +1171,7 @@ namespace MSL
 				unique_ptr<BinaryExpression> binExpr(std::make_unique<BinaryExpression>());
 				if (leftBranch == nullptr)
 				{
-					Error("value type before binary operand expected");
+					THROW("value type before binary operand expected");
 				}
 				binExpr->left = std::move(leftBranch);
 				binExpr->expressionType = firstToken.type;
@@ -1181,19 +1181,43 @@ namespace MSL
 				uint32_t nextPriority = lexer->Peek().type & Token::PRIORITY;
 				if (currentPriority < nextPriority)
 				{
-					binExpr->right = ParseRawExpression(function, std::move(rightExpr));
-					return TO_BASE(binExpr);
+					bool fastReturn =
+						binExpr->expressionType == Token::Type::SUB_OP  ||
+						binExpr->expressionType == Token::Type::SUM_OP  ||
+						binExpr->expressionType == Token::Type::MULT_OP ||
+						binExpr->expressionType == Token::Type::DIV_OP  ||
+						binExpr->expressionType == Token::Type::MOD_OP  ||
+						binExpr->expressionType == Token::Type::DOT;
+					binExpr->right = ParseRawExpression(function, std::move(rightExpr), fastReturn);
+					return ParseRawExpression(function, TO_BASE(binExpr));
 				}
-				else
+				else if (currentPriority == nextPriority)
 				{
-					CallExpression* call = dynamic_cast<CallExpression*>(rightExpr.get());
-					if (call != nullptr)
+					// need to specify parent of call expression to avoid inserting
+					// Class.Function() -> Class.[this].Function() because class was omitted
+					if (rightExpr->type == ExpressionType::CALL)
 					{
+						CallExpression* call = reinterpret_cast<CallExpression*>(rightExpr.get());
 						if (firstToken.type == Token::Type::DOT)
 							call->hasParent = true;
 					}
 					binExpr->right = std::move(rightExpr);
 					return ParseRawExpression(function, TO_BASE(binExpr));
+				}
+				else
+				{
+					// need to specify parent of call expression to avoid inserting
+					// Class.Function() -> Class.[this].Function() because class was omitted
+					if (rightExpr->type == ExpressionType::CALL)
+					{
+						CallExpression* call = reinterpret_cast<CallExpression*>(rightExpr.get());
+						if (firstToken.type == Token::Type::DOT)
+							call->hasParent = true;
+					}
+
+					binExpr->right = std::move(rightExpr);
+					if(fastReturn) return TO_BASE(binExpr);
+					else return ParseRawExpression(function, TO_BASE(binExpr));
 				}
 			}
 			if ((firstToken.type & Token::Type::VALUE_TYPE) || firstToken.type == Token::Type::ROUND_BRACKET_O)
@@ -1226,6 +1250,7 @@ namespace MSL
 				lexer->Next();
 
 				lexer->Next();
+				return nullptr;
 			}
 			return leftBranch;
 		}

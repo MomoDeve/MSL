@@ -6,12 +6,15 @@
 #include "namespaceType.h"
 #include "bigInteger.h"
 
+#undef TRUE
+#undef FALSE
+
 namespace MSL
 {
 	namespace VM
 	{
 		struct Local;
-		
+
 		enum class Type : uint8_t
 		{
 			CLASS_OBJECT,
@@ -36,7 +39,6 @@ namespace MSL
 			Type type = Type::BASE;
 
 			BaseObject(Type type);
-			virtual BaseObject* GetMember(const std::string& memberName) const = 0;
 			virtual const std::string* GetName() const = 0;
 			virtual std::string ToString() const  = 0;
 			virtual std::string GetExtraInfo() const = 0;
@@ -47,7 +49,6 @@ namespace MSL
 		{
 			NullObject();
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -57,7 +58,6 @@ namespace MSL
 		{
 			TrueObject();
 
-			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -67,7 +67,6 @@ namespace MSL
 		{
 			FalseObject();
 
-			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -79,7 +78,6 @@ namespace MSL
 
 			ClassWrapper(const ClassType* type);
 
-			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
@@ -91,7 +89,6 @@ namespace MSL
 
 			NamespaceWrapper(const NamespaceType* type);
 
-			virtual BaseObject* GetMember(const std::string & memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
@@ -104,7 +101,6 @@ namespace MSL
 
 			AttributeObject(const AttributeType* ref);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -119,7 +115,6 @@ namespace MSL
 
 			ClassObject(const ClassType* type);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -132,7 +127,6 @@ namespace MSL
 
 			IntegerObject(InnerType value);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -144,7 +138,7 @@ namespace MSL
 			InnerType value;
 			
 			FloatObject(InnerType value);
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
+
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -157,7 +151,6 @@ namespace MSL
 
 			StringObject(InnerType value);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -176,7 +169,6 @@ namespace MSL
 
 			LocalObject(Local& ref, const std::string& name);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -188,7 +180,6 @@ namespace MSL
 
 			UnknownObject(const std::string* ref);
 
-			virtual BaseObject * GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
@@ -202,7 +193,6 @@ namespace MSL
 
 			ArrayObject(Type type, size_t size);
 
-			virtual BaseObject* GetMember(const std::string& memberName) const override;
 			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;

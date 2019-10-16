@@ -48,8 +48,8 @@ namespace momo
 		big_integer& operator=(int value);
 		big_integer& operator=(const std::string& value);
 		big_integer& operator=(const char* value);
-		big_integer& operator=(const big_integer& other);
-		big_integer& operator=(big_integer&& other);
+		big_integer& operator=(const big_integer& other) = default;
+		big_integer& operator=(big_integer&& other) = default;
 
 		big_integer& operator+=(const big_integer& other);
 		big_integer& operator-=(const big_integer& other);

@@ -303,6 +303,7 @@ namespace MSL
 		UnaryExpression::UnaryExpression()
 		{
 			BaseExpression::type = ExpressionType::UNARY;
+			expressionType = Token::Type::ERROR;
 		}
 
 		void UnaryExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
@@ -340,6 +341,7 @@ namespace MSL
 		BinaryExpression::BinaryExpression()
 		{
 			BaseExpression::type = ExpressionType::BINARY;
+			expressionType = Token::Type::ERROR;
 		}
 
 		void BinaryExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const

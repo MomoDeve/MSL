@@ -187,7 +187,7 @@ namespace MSL
 			leftBranch parameter must be set only inside this function
 			if error was found, 'Parsed::success' = false
 			*/
-			unique_ptr<BaseExpression> ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch = nullptr);
+			unique_ptr<BaseExpression> ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch = nullptr, bool fastReturn = false);
 			/*
 			writes message contents to the stream provided to Parser
 			*/

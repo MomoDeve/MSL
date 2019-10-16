@@ -119,18 +119,20 @@ namespace MSL
 			write(OPCODE::STRING_DECL);
 			uint8_t stringSize = static_cast<uint8_t>(data.size()); // size cannot be more than 0xFF !
 			write(stringSize);
-			out.Write(data.c_str(), stringSize);
+			out.write(data.c_str(), stringSize);
 		}
 
 		CodeGenerator::CodeGenerator(const Assembly& assembly)
 			: assembly(assembly) { }
 
-		void CodeGenerator::GenerateBytecode(const std::string& outFileName)
+		void CodeGenerator::GenerateBytecode()
 		{
-			out.Open(outFileName, std::ios::binary | std::ios::out);
-			_ASSERTE(out.IsOpen()); // file must be opened
 			GenerateNamespacePool();
-			out.Close();
+		}
+
+		std::string CodeGenerator::GetBuffer() const
+		{
+			return out.str();
 		}
 	}
 }

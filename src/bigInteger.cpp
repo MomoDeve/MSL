@@ -251,22 +251,6 @@ namespace momo
 		return *this;
 	}
 
-	big_integer& big_integer::operator=(const big_integer& other)
-	{
-		_negative = other._negative;
-		_digits = other._digits;
-		_inf = other._inf;
-		return *this;
-	}
-
-	big_integer& big_integer::operator=(big_integer&& other)
-	{
-		_negative = other._negative;
-		_digits = std::move(other._digits);
-		_inf = other._inf;
-		return *this;
-	}
-
 	big_integer& big_integer::operator+=(const big_integer& other)
 	{
 		if (_negative == other._negative)
@@ -409,6 +393,7 @@ namespace momo
 			res *= _base;
 			res += _digits[i];
 		}
+		if (_negative) res *= -1.0;
 		return res;
 	}
 

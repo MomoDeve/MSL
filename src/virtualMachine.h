@@ -57,12 +57,16 @@ namespace MSL
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
+			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
+			ClassWrapper* GetPrimitiveClass(BaseObject* object);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;
 			void StartNewStackFrame();
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
+			bool AssertType(const BaseObject* object, Type type, const std::string& message, const Frame* frame = nullptr);
+			bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void DisplayError(std::string message) const;
 			void DisplayExtra(std::string message) const;
@@ -114,10 +118,12 @@ namespace MSL
 				ABSTRACT_MEMBER_CALL = 1 << 16,
 				INVALID_METHOD_CALL = 1 << 17,
 			};
+
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);
 			void Run();
 			uint32_t GetErrors() const;
+			std::vector<std::string> GetErrorStrings(uint32_t errors) const;
 		};
 
 		template<typename T>

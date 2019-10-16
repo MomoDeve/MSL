@@ -25,7 +25,7 @@ namespace MSL
 					if (prev.type == Token::Type::ROUND_BRACKET_O || prev.type == Token::Type::SQUARE_BRACKET_O ||
 						prev.type == Token::Type::BRACE_BRACKET_O || prev.type == EOFtoken.type ||
 						(prev.type & Token::Type::BINARY_OPERAND) || (prev.type & Token::Type::UNARY_OPERAND) ||
-						prev.type == Token::Type::SEMICOLON)
+						prev.type == Token::Type::SEMICOLON || prev.type == Token::Type::COMMA)
 					{
 						if (current.type == Token::Type::SUB_OP) current.type = Token::Type::NEGATIVE_OP;
 						else current.type = Token::Type::POSITIVE_OP;
@@ -66,7 +66,7 @@ namespace MSL
 		{
 			iteratorPos = 0;
 			lineCount = 0;
-			while (tokens[iteratorPos].type == Token::ENDLINE)
+			while (!tokens.empty() && tokens[iteratorPos].type == Token::ENDLINE)
 			{
 				iteratorPos++;
 				lineCount++;
@@ -151,7 +151,14 @@ namespace MSL
 				if (Peek().type == Token::Type::STRING_CONSTANT)
 				{
 					std::string stringConstant = Peek().value;
-					Peek().value = reversedMap.find(stringConstant)->second;
+					if (reversedMap.find(stringConstant) == reversedMap.end())
+					{
+						Peek().type = Token::Type::ERROR;
+						Peek().value = "<error> closing `\"` not found";
+						break;
+					}
+					else
+						Peek().value = reversedMap.find(stringConstant)->second;
 				}
 				Next();
 			}

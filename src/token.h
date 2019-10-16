@@ -24,6 +24,7 @@ namespace MSL
 			/*
 			enums of all token types and masks to simplify their parsing
 			*/
+
 			enum Type : uint32_t
 			{
 				BRACKET = 0x04000000,

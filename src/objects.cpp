@@ -10,11 +10,6 @@ namespace MSL
 		StringObject::StringObject(StringObject::InnerType value)
 			: value(value), BaseObject(Type::STRING) { }
 
-		BaseObject* StringObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
-
 		const std::string* StringObject::GetName() const
 		{
 			return nullptr;
@@ -33,11 +28,6 @@ namespace MSL
 		FloatObject::FloatObject(FloatObject::InnerType value)
 			: value((value)), BaseObject(Type::FLOAT) { }
 
-		BaseObject* FloatObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
-
 		const std::string* FloatObject::GetName() const
 		{
 			return nullptr;
@@ -54,16 +44,11 @@ namespace MSL
 
 		std::string FloatObject::GetExtraInfo() const
 		{
-			return "Double";
+			return "Float";
 		}
 
 		IntegerObject::IntegerObject(IntegerObject::InnerType value)
 			: value(value), BaseObject(Type::INTEGER) { }
-
-		BaseObject* IntegerObject::GetMember(const std::string & memberName) const
-		{
-			return nullptr;
-		}
 
 		const std::string* IntegerObject::GetName() const
 		{
@@ -83,24 +68,6 @@ namespace MSL
 		ClassObject::ClassObject(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS_OBJECT) { }
 
-		BaseObject* ClassObject::GetMember(const std::string& memberName) const
-		{
-			auto objectAttr = attributes.find(memberName);
-			if (objectAttr != attributes.end())
-			{
-				return objectAttr->second.get();
-			}
-			auto staticAttr = type->staticInstance->attributes.find(memberName);
-			if (staticAttr != type->staticInstance->attributes.end())
-			{
-				return staticAttr->second.get();
-			}
-			else
-			{
-				return nullptr;
-			}
-		}
-
 		const std::string* ClassObject::GetName() const
 		{
 			return nullptr;
@@ -118,11 +85,6 @@ namespace MSL
 			
 		NullObject::NullObject()
 			: BaseObject(Type::NULLPTR) { }
-
-		BaseObject* NullObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
 
 		const std::string* NullObject::GetName() const
 		{
@@ -142,11 +104,6 @@ namespace MSL
 		TrueObject::TrueObject()
 			: BaseObject(Type::TRUE) { }
 
-		BaseObject* TrueObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
-
 		const std::string* TrueObject::GetName() const
 		{
 			return nullptr;
@@ -165,11 +122,6 @@ namespace MSL
 		FalseObject::FalseObject()
 			: BaseObject(Type::FALSE) { }
 
-		BaseObject* FalseObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
-
 		const std::string* FalseObject::GetName() const
 		{
 			return nullptr;
@@ -187,13 +139,6 @@ namespace MSL
 
 		NamespaceWrapper::NamespaceWrapper(const NamespaceType* type)
 			: type(type), BaseObject(Type::NAMESPACE) { }
-
-		BaseObject* NamespaceWrapper::GetMember(const std::string& memberName) const
-		{
-			auto it = type->classes.find(memberName);
-			if (it == type->classes.end()) return nullptr;
-			else return it->second.wrapper;
-		}
 
 		const std::string* NamespaceWrapper::GetName() const
 		{
@@ -217,11 +162,6 @@ namespace MSL
 
 		ClassWrapper::ClassWrapper(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS) { }
-
-		BaseObject* ClassWrapper::GetMember(const std::string& memberName) const
-		{
-			return type->staticInstance->GetMember(memberName);
-		}
 
 		const std::string* ClassWrapper::GetName() const
 		{
@@ -251,11 +191,6 @@ namespace MSL
 		UnknownObject::UnknownObject(const std::string* ref)
 			: BaseObject(Type::UNKNOWN), ref(ref) { }
 
-		BaseObject* UnknownObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
-
 		const std::string* UnknownObject::GetName() const
 		{
 			return ref;
@@ -273,11 +208,6 @@ namespace MSL
 
 		LocalObject::LocalObject(Local& ref, const std::string& name)
 			: BaseObject(Type::LOCAL), ref(ref), name(name) { }
-
-		BaseObject* LocalObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
 
 		const std::string* LocalObject::GetName() const
 		{
@@ -297,10 +227,6 @@ namespace MSL
 		AttributeObject::AttributeObject(const AttributeType* type)
 			: BaseObject(Type::ATTRIBUTE), type(type) { }
 
-		BaseObject* AttributeObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
-		}
 		const std::string* AttributeObject::GetName() const
 		{
 			return nullptr;
@@ -358,11 +284,6 @@ namespace MSL
 			: BaseObject(type), array(size)
 		{
 
-		}
-
-		BaseObject* ArrayObject::GetMember(const std::string& memberName) const
-		{
-			return nullptr;
 		}
 
 		const std::string* ArrayObject::GetName() const

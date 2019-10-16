@@ -7,9 +7,6 @@
     <Filter Include="MSL\compiler">
       <UniqueIdentifier>{5bb03609-ba54-40e0-8ac8-63274bbfa7e5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MSL\bufferedFile">
-      <UniqueIdentifier>{58830eb2-3b18-4035-93bd-7389f64aca26}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MSL\VM">
       <UniqueIdentifier>{a032d2b9-87a3-4b52-926b-23fbe03cfc20}</UniqueIdentifier>
     </Filter>
@@ -126,9 +123,6 @@
     <ClInclude Include="codeGenerator.h">
       <Filter>MSL\compiler\codeGenerator</Filter>
     </ClInclude>
-    <ClInclude Include="bufferedFile.h">
-      <Filter>MSL\bufferedFile</Filter>
-    </ClInclude>
     <ClInclude Include="attribute.h">
       <Filter>MSL\compiler\objectHierarchy\attribute</Filter>
     </ClInclude>
@@ -202,9 +196,6 @@
     </ClCompile>
     <ClCompile Include="assembly.cpp">
       <Filter>MSL\compiler\objectHierarchy\assembly</Filter>
-    </ClCompile>
-    <ClCompile Include="bufferedFile.cpp">
-      <Filter>MSL\bufferedFile</Filter>
     </ClCompile>
     <ClCompile Include="codeGenerator.cpp">
       <Filter>MSL\compiler\codeGenerator</Filter>

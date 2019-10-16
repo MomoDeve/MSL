@@ -126,7 +126,6 @@
     <ClInclude Include="attributeType.h" />
     <ClInclude Include="baseExpression.h" />
     <ClInclude Include="bigInteger.h" />
-    <ClInclude Include="bufferedFile.h" />
     <ClInclude Include="bytecodeReader.h" />
     <ClInclude Include="callPath.h" />
     <ClInclude Include="codeGenerator.h" />
@@ -153,7 +152,6 @@
     <ClCompile Include="attribute.cpp" />
     <ClCompile Include="attributeType.cpp" />
     <ClCompile Include="bigInteger.cpp" />
-    <ClCompile Include="bufferedFile.cpp" />
     <ClCompile Include="bytecodeReader.cpp" />
     <ClCompile Include="callPath.cpp" />
     <ClCompile Include="classType.cpp" />

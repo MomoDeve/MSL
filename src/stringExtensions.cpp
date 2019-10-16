@@ -77,7 +77,7 @@ namespace MSL
 		std::stringstream out;
 		for (int i = 0; i < int(str.size()); i++)
 		{
-			if(i + 1 < str.size())
+			if(i + 1 < (int)str.size())
 			{
 				char cur = str[i];
 				char next = str[i + 1];

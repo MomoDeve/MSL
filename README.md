@@ -50,13 +50,19 @@ if (parser.ParsingSuccess() && parser.HasEntryPoint())
   // program assembly can be safely pulled
 }
 ```
-The last thing you need to do with your MSL code is to generate executable bytecode file. There is no way to directly pass Assembly from parser to the VM class (at least by now), so any program must first be sent to CodeGenerator class:
+The last thing you need to do with your MSL code is to generate executable bytecode file. There is no way to directly pass Assembly from parser to the VM class as it cannot directly work with AST representation, so the CodeGenerator should be created:
 ```cpp
+// generate bytecode from parsed assembly
 MSL::compiler::Assembly assembly = parser.PullAssembly();
 MSL::compiler::CodeGenerator generator(assembly);
-generator.GenerateBytecode("main.emsl");
+generator.GenerateBytecode();
+
+// write bytecode to the binary file
+ofstream binary(fileName + ".emsl", ios::binary);
+std::string bytecode = generator.GetBuffer();
+binary.write(bytecode.c_str(), bytecode.size());
 ```
-GenerateBytecode() method accepts path to the file which should be created. Note that VM can accept any amount of files if merge is allowed and validates any file contents only in runtime, so you can freely generate library programs containing only additional classes without providing main function or specifying dependencies.
+GenerateBytecode() writes MSL-bytecode to the CodeGenerator inner buffer in a binary format. This buffer is simply a string and can be easily written to a file (as in our example). If you have done all steps correctly and see no errors, this means that you have successfully compiled your MSL program to bytecode language.
 
 Full program (supposing that main.msl file located in the same folder with the program):
 ```cpp
@@ -81,9 +87,15 @@ int main()
     
     if (parser.ParsingSuccess() && parser.HasEntryPoint())
     {
+        // generate bytecode from parsed assembly
         MSL::compiler::Assembly assembly = parser.PullAssembly();
         MSL::compiler::CodeGenerator generator(assembly);
-        generator.GenerateBytecode("main.emsl");
+        generator.GenerateBytecode();
+
+        // write bytecode to the binary file
+        ofstream binary("main.emsl", ios::binary);
+        std::string bytecode = generator.GetBuffer();
+        binary.write(bytecode.c_str(), bytecode.size());
     }
     return 0;
 }

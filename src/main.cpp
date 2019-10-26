@@ -33,7 +33,7 @@ bool createAssembly(string fileName)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-#ifndef SYNTAX_TREE
+#ifdef MSL_VM_DEBUG
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -52,7 +52,6 @@ bool createAssembly(string fileName)
 	ofstream binary(fileName + ".emsl", ios::binary);
 	auto contents = generator.GetBuffer();
 	binary.write(contents.c_str(), contents.size());
-
 	return true;
 }
 
@@ -73,8 +72,8 @@ int main(int argc, char* argv[])
 		binary.close();
 
 		MSL::VM::Configuration config;
-		config.execution.allowDebug = false;
 		config.streams = { &std::cin, &std::cout, &std::cout };
+		config.GC.log = &std::cout;
 		MSL::VM::VirtualMachine VM(move(config));
 		std::ifstream executable(fileName + ".emsl", std::ios::binary);
 		if (VM.AddBytecodeFile(&executable))
@@ -91,5 +90,6 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
+
 	int unused = getchar();
 }

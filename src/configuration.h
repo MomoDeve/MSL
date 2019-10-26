@@ -6,8 +6,7 @@ namespace MSL
 	namespace VM
 	{
 		constexpr size_t KB = 1024;
-		constexpr size_t MB = KB * 1024;
-		constexpr size_t GB = MB * 1024;
+		constexpr size_t MB = 1024 * KB;
 
 		struct Configuration
 		{
@@ -19,9 +18,10 @@ namespace MSL
 			} streams;
 			struct
 			{
-				size_t initAllocBytes = 4 * KB;
-				size_t maxAllocBytes = 1 * GB;
-				size_t allocMultiplier = 2;
+				size_t msCollectInterval = 250;
+				std::ostream* log = nullptr;
+				size_t initCapacity = 1;
+				size_t initMemory = 4 * MB;
 			} GC;
 			struct
 			{
@@ -33,7 +33,6 @@ namespace MSL
 			{
 				size_t recursionLimit = 2000;
 				bool checkExitCode = true;
-				bool allowDebug = false;
 				bool useUnicode = true;
 			} execution;
 		};

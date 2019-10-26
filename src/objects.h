@@ -32,16 +32,24 @@ namespace MSL
 			BASE,
 		};
 
+		enum class GCstate : uint8_t
+		{
+			FREE = 0,
+			UNMARKED,
+			MARKED,
+		};
+
 		std::string ToString(Type type);
 
 		struct BaseObject
 		{
 			Type type = Type::BASE;
+			GCstate state = GCstate::UNMARKED;
 
 			BaseObject(Type type);
-			virtual const std::string* GetName() const = 0;
 			virtual std::string ToString() const  = 0;
 			virtual std::string GetExtraInfo() const = 0;
+			virtual void MarkMembers();
 			virtual ~BaseObject() = default;
 		};
 
@@ -49,7 +57,6 @@ namespace MSL
 		{
 			NullObject();
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -58,7 +65,6 @@ namespace MSL
 		{
 			TrueObject();
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -67,7 +73,6 @@ namespace MSL
 		{
 			FalseObject();
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -78,9 +83,9 @@ namespace MSL
 
 			ClassWrapper(const ClassType* type);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
+			virtual void MarkMembers() override;
 		};
 
 		struct NamespaceWrapper : BaseObject
@@ -89,9 +94,9 @@ namespace MSL
 
 			NamespaceWrapper(const NamespaceType* type);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
+			virtual void MarkMembers() override;
 		};
 
 		struct AttributeObject : BaseObject
@@ -101,23 +106,22 @@ namespace MSL
 
 			AttributeObject(const AttributeType* ref);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
-
+			virtual void MarkMembers() override;
 		};
 
 		struct ClassObject : BaseObject
 		{
-			using AttributeTable = std::unordered_map<std::string, std::unique_ptr<AttributeObject>>;
+			using AttributeTable = std::unordered_map<std::string, AttributeObject*>;
 			AttributeTable attributes;
 			const ClassType* type;
 
 			ClassObject(const ClassType* type);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual void MarkMembers() override;
 		};
 
 		struct IntegerObject : BaseObject
@@ -127,7 +131,6 @@ namespace MSL
 
 			IntegerObject(InnerType value);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -139,7 +142,6 @@ namespace MSL
 			
 			FloatObject(InnerType value);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -151,7 +153,6 @@ namespace MSL
 
 			StringObject(InnerType value);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 		};
@@ -169,9 +170,9 @@ namespace MSL
 
 			LocalObject(Local& ref, const std::string& name);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual void MarkMembers() override;
 		};
 
 		struct UnknownObject : BaseObject
@@ -180,10 +181,8 @@ namespace MSL
 
 			UnknownObject(const std::string* ref);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
-
 		};
 
 		struct ArrayObject : BaseObject
@@ -191,11 +190,11 @@ namespace MSL
 			using InnerType = std::vector<Local>;
 			InnerType array;
 
-			ArrayObject(Type type, size_t size);
+			ArrayObject(size_t size);
 
-			virtual const std::string* GetName() const override;
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
+			virtual void MarkMembers() override;
 		};
 	}
 }

@@ -33,5 +33,10 @@ namespace MSL
 		{
 			path[2] = method;
 		}
+
+		Frame* CallPath::GetFrame()
+		{
+			return frame.get();
+		}
 	}
 }

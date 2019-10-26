@@ -132,6 +132,7 @@
     <ClInclude Include="configuration.h" />
     <ClInclude Include="expressions.h" />
     <ClInclude Include="function.h" />
+    <ClInclude Include="garbageCollector.h" />
     <ClInclude Include="methodType.h" />
     <ClInclude Include="namespaceType.h" />
     <ClInclude Include="objects.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="namespace.h" />
     <ClInclude Include="class.h" />
     <ClInclude Include="parser.h" />
+    <ClInclude Include="SlabAllocator.h" />
     <ClInclude Include="streamReader.h" />
     <ClInclude Include="stringExtensions.h" />
     <ClInclude Include="token.h" />
@@ -158,6 +160,7 @@
     <ClCompile Include="codeGenerator.cpp" />
     <ClCompile Include="expressions.cpp" />
     <ClCompile Include="function.cpp" />
+    <ClCompile Include="garbageCollector.cpp" />
     <ClCompile Include="lexer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="methodType.cpp" />

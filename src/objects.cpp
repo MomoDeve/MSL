@@ -1,5 +1,7 @@
 #include "objects.h"
 
+#define RET_IF_MARKED if(state == GCstate::MARKED) return
+
 namespace MSL
 {
 	namespace VM
@@ -7,13 +9,13 @@ namespace MSL
 		BaseObject::BaseObject(Type type)
 			: type(type) { }
 
+		void BaseObject::MarkMembers()
+		{
+			state = GCstate::MARKED;
+		}
+
 		StringObject::StringObject(StringObject::InnerType value)
 			: value(value), BaseObject(Type::STRING) { }
-
-		const std::string* StringObject::GetName() const
-		{
-			return nullptr;
-		}
 
 		std::string StringObject::ToString() const
 		{
@@ -27,11 +29,6 @@ namespace MSL
 
 		FloatObject::FloatObject(FloatObject::InnerType value)
 			: value((value)), BaseObject(Type::FLOAT) { }
-
-		const std::string* FloatObject::GetName() const
-		{
-			return nullptr;
-		}
 
 		std::string FloatObject::ToString() const
 		{
@@ -50,11 +47,6 @@ namespace MSL
 		IntegerObject::IntegerObject(IntegerObject::InnerType value)
 			: value(value), BaseObject(Type::INTEGER) { }
 
-		const std::string* IntegerObject::GetName() const
-		{
-			return nullptr;
-		}
-
 		std::string IntegerObject::ToString() const
 		{
 			return value.to_string();
@@ -68,11 +60,6 @@ namespace MSL
 		ClassObject::ClassObject(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS_OBJECT) { }
 
-		const std::string* ClassObject::GetName() const
-		{
-			return nullptr;
-		}
-
 		std::string ClassObject::ToString() const
 		{
 			return type->namespaceName + '.' + type->name;
@@ -82,14 +69,20 @@ namespace MSL
 		{
 			return " class instance";
 		}
+
+		void ClassObject::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			for (auto it = attributes.begin(); it != attributes.end(); it++)
+			{
+				AttributeObject* attr = it->second;
+				attr->MarkMembers();
+			}
+		}
 			
 		NullObject::NullObject()
 			: BaseObject(Type::NULLPTR) { }
-
-		const std::string* NullObject::GetName() const
-		{
-			return nullptr;
-		}
 
 		std::string NullObject::ToString() const
 		{
@@ -104,11 +97,6 @@ namespace MSL
 		TrueObject::TrueObject()
 			: BaseObject(Type::TRUE) { }
 
-		const std::string* TrueObject::GetName() const
-		{
-			return nullptr;
-		}
-
 		std::string TrueObject::ToString() const
 		{
 			return "true";
@@ -121,11 +109,6 @@ namespace MSL
 
 		FalseObject::FalseObject()
 			: BaseObject(Type::FALSE) { }
-
-		const std::string* FalseObject::GetName() const
-		{
-			return nullptr;
-		}
 
 		std::string FalseObject::ToString() const
 		{
@@ -140,10 +123,6 @@ namespace MSL
 		NamespaceWrapper::NamespaceWrapper(const NamespaceType* type)
 			: type(type), BaseObject(Type::NAMESPACE) { }
 
-		const std::string* NamespaceWrapper::GetName() const
-		{
-			return &type->name;
-		}
 
 		std::string NamespaceWrapper::ToString() const
 		{
@@ -160,13 +139,19 @@ namespace MSL
 			return info;
 		}
 
+		void NamespaceWrapper::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			for (auto it = type->classes.begin(); it != type->classes.end(); it++)
+			{
+				ClassWrapper* wrapper = it->second.wrapper;
+				wrapper->MarkMembers();
+			}
+		}
+
 		ClassWrapper::ClassWrapper(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS) { }
-
-		const std::string* ClassWrapper::GetName() const
-		{
-			return &type->name;
-		}
 
 		std::string ClassWrapper::ToString() const
 		{
@@ -188,13 +173,15 @@ namespace MSL
 			return info;
 		}
 
+		void ClassWrapper::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			type->staticInstance->MarkMembers();
+		}
+
 		UnknownObject::UnknownObject(const std::string* ref)
 			: BaseObject(Type::UNKNOWN), ref(ref) { }
-
-		const std::string* UnknownObject::GetName() const
-		{
-			return ref;
-		}
 
 		std::string UnknownObject::ToString() const
 		{
@@ -209,11 +196,6 @@ namespace MSL
 		LocalObject::LocalObject(Local& ref, const std::string& name)
 			: BaseObject(Type::LOCAL), ref(ref), name(name) { }
 
-		const std::string* LocalObject::GetName() const
-		{
-			return &name;
-		}
-
 		std::string LocalObject::ToString() const
 		{
 			return name;
@@ -224,13 +206,15 @@ namespace MSL
 			return ref.object->ToString();
 		}
 
+		void LocalObject::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			ref.object->MarkMembers();
+		}
+
 		AttributeObject::AttributeObject(const AttributeType* type)
 			: BaseObject(Type::ATTRIBUTE), type(type) { }
-
-		const std::string* AttributeObject::GetName() const
-		{
-			return nullptr;
-		}
 
 		std::string AttributeObject::ToString() const
 		{
@@ -245,6 +229,13 @@ namespace MSL
 		std::string AttributeObject::GetExtraInfo() const
 		{
 			return " value: " + object->ToString();
+		}
+
+		void AttributeObject::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			object->MarkMembers();
 		}
 
 		std::string ToString(Type type)
@@ -280,15 +271,10 @@ namespace MSL
 			}
 		}
 
-		ArrayObject::ArrayObject(Type type, size_t size)
-			: BaseObject(type), array(size)
+		ArrayObject::ArrayObject(size_t size)
+			: BaseObject(Type::BASE), array(size)
 		{
 
-		}
-
-		const std::string* ArrayObject::GetName() const
-		{
-			return nullptr;
 		}
 
 		std::string ArrayObject::ToString() const
@@ -299,6 +285,16 @@ namespace MSL
 		std::string ArrayObject::GetExtraInfo() const
 		{
 			return " array size: " + array.size();
+		}
+
+		void ArrayObject::MarkMembers()
+		{
+			RET_IF_MARKED;
+			BaseObject::MarkMembers();
+			for (Local& member : array)
+			{
+				member.object->MarkMembers();
+			}
 		}
 }
 }

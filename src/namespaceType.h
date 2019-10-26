@@ -9,6 +9,8 @@ namespace MSL
 {
 	namespace VM
 	{
+		struct NamespaceWrapper;
+
 		struct NamespaceType
 		{
 			using HashTable = std::unordered_map<std::string, ClassType>;
@@ -16,6 +18,7 @@ namespace MSL
 			HashSet friendNamespaces;
 			HashTable classes;
 			std::string name;
+			NamespaceWrapper* wrapper = nullptr;
 
 			NamespaceType() = default;
 			NamespaceType(NamespaceType&&) = default;

@@ -85,6 +85,12 @@
     <Filter Include="MSL\VM\virtualMachine">
       <UniqueIdentifier>{15a62816-dd9b-4006-85cd-b602fa7b56ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="momo\SlabAllocator">
+      <UniqueIdentifier>{39af1b8b-2e35-4e66-a19d-76b7aa46ee68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\garbageCollector">
+      <UniqueIdentifier>{0ecc03a7-6d2f-441b-bb9d-9f30a183b1a9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -165,6 +171,12 @@
     <ClInclude Include="callPath.h">
       <Filter>MSL\VM\callPath</Filter>
     </ClInclude>
+    <ClInclude Include="SlabAllocator.h">
+      <Filter>momo\SlabAllocator</Filter>
+    </ClInclude>
+    <ClInclude Include="garbageCollector.h">
+      <Filter>MSL\VM\garbageCollector</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lexer.cpp">
@@ -233,6 +245,9 @@
     </ClCompile>
     <ClCompile Include="attributeType.cpp">
       <Filter>MSL\VM\types</Filter>
+    </ClCompile>
+    <ClCompile Include="garbageCollector.cpp">
+      <Filter>MSL\VM\garbageCollector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

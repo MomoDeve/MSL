@@ -34,6 +34,111 @@ namespace System
 
 namespace Utils
 {	
+	public class Array
+	{
+		var array;
+		
+		public function Size()
+		{
+			return array.Size();
+		}
+		
+		public function Array()
+		{
+			array = System.Array();
+		}
+		
+		public function Array(size)
+		{
+			array = System.Array(size);
+		}
+		
+		public function Append(object)
+		{
+			array.Append(object);
+		}
+		
+		public function Back()
+		{
+			return array[array.Size() - 1];
+		}
+		
+		public function Front()
+		{
+			return array[0];
+		}
+		
+		public function Cloned()
+		{
+			var result = Array(Size());
+			for(var i = 0; i < array.Size(); i += 1)
+			{
+				result[i] = array[i];
+			}
+			return result;
+		}
+		
+		public function Merged(array)
+		{
+			var result = this.Cloned();
+			for(var i = 0; i < array.Size(); i += 1)
+			{
+				result.Append(array[i]);
+			}
+			return result;
+		}
+		
+		public function Reversed()
+		{
+			var result = Array(Size());
+			for(var i = 0; i < Size(); i += 1)
+			{
+				result[i] = this[Size() - i - 1];
+			}
+			return result;
+		}
+		
+		public function Empty()
+		{
+			return array.Empty();
+		}
+		
+		public function Pop()
+		{
+			return array.Pop();
+		}
+		
+		public function Begin()
+		{
+			return array.Begin();
+		}
+		
+		public function End()
+		{
+			return array.End();
+		}
+		
+		public function GetByIter(iter)
+		{
+			return array.GetByIter(iter);
+		}
+		
+		public function Next(iter)
+		{
+			return array.Next(iter);
+		}
+		
+		public function ToString()
+		{
+			return array.ToString();
+		}
+		
+		public function GetByIndex(index)
+		{
+			return array[index];
+		}
+	}
+
 	public class String
 	{		
 		public static function Find(string, stringToFind)
@@ -70,6 +175,26 @@ namespace Utils
 				{
 					result += sym;
 				}
+			}
+			return result;
+		}
+		
+		public static function ToArray(string)
+		{
+			var result = Utils.Array(string.Size())
+			for(var i = 0; i < string.Size(); i += 1)
+			{
+				result[i] = string[i];
+			}
+			return result;
+		}
+		
+		public static function FromArray(array)
+		{
+			var result = "";
+			foreach(var element in array)
+			{
+				result += element;
 			}
 			return result;
 		}
@@ -177,6 +302,7 @@ namespace Program
 {
 	using namespace System;
 	using namespace Utils;
+	using namespace Math;
 	
 	internal class ProgramClass
 	{			
@@ -189,32 +315,47 @@ namespace Program
 			return n * Fact(n - 1);
 		}
 		
-		public static function Tests()
+		public static function ArrayTest()
 		{
-			var array = Array();
-			foreach(var i in Range(1, 11))
+			var array = Utils.Array();
+			array.Append(0);
+			array.Append(1);
+			foreach(var i in Range(2, 10))
 			{
-				var inner = Array(2);
-				inner[0] = i;
-				inner[1] = i ** 2;
-				array.Append(inner);
+				array.Append(array[array.Size() - 1] + array[array.Size() - 2]);
 			}
+			
+			array = array.Reversed();
+			Console.PrintLine("array of fibs from end: " + array);
+			Console.Print("array of fibs reversed: ");
+			
 			while(!array.Empty())
 			{
-				Console.Print(array.Pop().ToString() + " ");
+				Console.Print(array.Pop()).Print(" ");
 			}
 			
 			const var n = 30;
 			Console.PrintLine("\nфакториал " + n + ": " + Fact(n));
+			
+			Console.PrintLine("Filling array with even integers...");
+			foreach(var i in Range(0, 11, 2))
+			{
+				array.Append(i);
+			}
+			Console.PrintLine(array);
+			Console.PrintLine("Merging array with itself...");
+			Console.PrintLine(array.Merged(array));
 		}
 		
 		public static function Main()
 		{
-			Tests();
+			ArrayTest();
 		
 			var str1 = "hello world!";
 			var match = "hello";
+			Console.PrintLine("\nreplacing symbols in \"" + str1 + "\":");
 			var str2 = Utils.String.Replace(str1, "l", "7");
+			Console.PrintLine("\"" + str1 + "\" -> \"" + str2 + "\"");
 			if(Utils.String.Find(str1, match))
 			{
 				Console.PrintLine("string \"" + str1 + "\" contains: \"" + match + "\"");
@@ -223,26 +364,21 @@ namespace Program
 			{
 				Console.PrintLine("string \"" + str2 + "\" does not contain: \"" + match + "\"");
 			}
+			
+			Console.PrintLine("\nreplacing last symbol of \"" + str1 + "\" with '?' using array:");
+			var stringArray = Utils.String.ToArray(str1);
+			stringArray[stringArray.Size() - 1] = "?";
+			Console.PrintLine(stringArray);
+			var str3 = Utils.String.FromArray(stringArray);
+			Console.PrintLine(str3);
+			
+			Console.PrintLine("\nIterating over \"" + str2 + "\":");
+			foreach(var s in str2)
+			{
+				Console.Print(s + " ");
+			}
+
 			return 0;
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

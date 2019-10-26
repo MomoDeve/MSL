@@ -11,31 +11,23 @@
 #include "callPath.h"
 #include "assemblyEditor.h"
 #include "assemblyType.h"
+#include "garbageCollector.h"
+
+//#define MSL_VM_DEBUG
+#undef MSL_VM_DEBUG
 
 namespace MSL
 {
+
 	namespace VM
 	{
-		using LocalsTable = std::unordered_map<std::string, Local>;
-		using LocalStorage = std::vector<std::unique_ptr<std::string>>;
-
-		struct Frame
-		{
-			LocalsTable locals;
-			LocalStorage localStorage;
-			const NamespaceType* _namespace = nullptr;
-			const ClassType* _class = nullptr;
-			const MethodType* _method = nullptr;
-			BaseObject* classObject = nullptr;
-			size_t offset = 0;
-		};
-
 		class VirtualMachine
 		{
-			using CallStack = std::stack<CallPath>;
+			using CallStack = std::vector<CallPath>;
 			using ObjectStack = std::vector<BaseObject*>;
 			CallStack callStack;
 			ObjectStack objectStack;
+			GarbageCollector GC;
 
 			AssemblyType assembly;
 			Configuration config;
@@ -56,17 +48,19 @@ namespace MSL
 			const ClassType* GetClassOrNull(const std::string& _namespace, const std::string& _class) const;
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
-			BaseObject* SearchForObject(const std::string& objectName, const LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
+			BaseObject* ResolveReference(BaseObject* object, const Frame::LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
 			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
 			ClassWrapper* GetPrimitiveClass(BaseObject* object);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;
+			const std::string* GetObjectName(const BaseObject* object) const;
 			void StartNewStackFrame();
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
+			void CollectGarbage();
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 			bool AssertType(const BaseObject* object, Type type, const std::string& message, const Frame* frame = nullptr);
-			bool AssertType(const BaseObject* object, Type type);
+			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void DisplayError(std::string message) const;
 			void DisplayExtra(std::string message) const;
@@ -81,7 +75,7 @@ namespace MSL
 			void PerformALUcallStringInteger(StringObject* str, const IntegerObject::InnerType* integer, OPCODE op, Frame* frame);
 			void PerformALUcallFloats(FloatObject* f1, const FloatObject::InnerType* f2, OPCODE op, Frame* frame);
 			void PerformALUcallClassTypes(ClassWrapper* class1, const ClassType* class2, OPCODE op, Frame* frame);
-			void PerformALUcallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
+			void PerformALUCallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
 			void PerformALUcallBooleans(bool b1, bool b2, OPCODE op, Frame* frame);
 
 			UnknownObject* AllocUnknown(const std::string* value);
@@ -96,6 +90,7 @@ namespace MSL
 			ClassObject* AllocClassObject(const ClassType* _class);
 			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
 			LocalObject* AllocLocal(const std::string& localName, Local& local);
+
 		public:
 			enum ERROR
 			{
@@ -117,6 +112,7 @@ namespace MSL
 				CONST_MEMBER_MODIFICATION = 1 << 15,
 				ABSTRACT_MEMBER_CALL = 1 << 16,
 				INVALID_METHOD_CALL = 1 << 17,
+				MEMORY_ALLOC_FAILURE = 1 << 18,
 			};
 
 			VirtualMachine(Configuration config);

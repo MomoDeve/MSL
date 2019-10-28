@@ -3,7 +3,7 @@ MSL is a dynamic-type OOP general-purpose programming language
 
 This project is a pure-C/C++ compiler for MSL, and VM for running it
 
-## Compile your first program
+## Compiling your first program
 To compile yout first program, firstly you should pass source code to MSL::compiler::StreamReader class:
 ```cpp
 ifstream file("main.msl");
@@ -144,21 +144,25 @@ Notice that VM states that Main function returned 0 even if we did not specify r
 Any VM errors that have occured during the run of the program, can be retrieved as an array using GetErrors() and GetErrorStrings() methods after end of the execution.
 Full code for VM launch with error display:
 ```cpp
-std::ifstream fs("main.emsl", std::ios::binary);
-MSL::VM::Configuration config;
-MSL::VM::VirtualMachine VM(std::move(config));
-if (!VM.AddBytecodeFile(&fs))
+int main()
 {
-    VM.Run();
-}
-auto errors = VM.GetErrorStrings(VM.GetErrors());
-if (!errors.empty())
-{
-    std::cerr << "[VM ERRORS]:\n";
-    for (const std::string& error : errors)
+    std::ifstream fs("main.emsl", std::ios::binary);
+    MSL::VM::Configuration config;
+    MSL::VM::VirtualMachine VM(std::move(config));
+    if (!VM.AddBytecodeFile(&fs))
     {
-        std::cerr << error << std::endl;
+        VM.Run();
     }
+    auto errors = VM.GetErrorStrings(VM.GetErrors());
+    if (!errors.empty())
+    {
+        std::cerr << "[VM ERRORS]:\n";
+        for (const std::string& error : errors)
+        {
+            std::cerr << error << std::endl;
+        }
+    }
+    return 0;
 }
 ```
 Basically, that is the all code that you have to write to compile MSL source code and run it in VM. With this, now you can freely implement multiple file compilation or change output streams of the VM using Configuration class. For more additional info you can refer to full MSL documentation or ask *me* question personally.

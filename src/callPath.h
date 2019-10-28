@@ -21,6 +21,7 @@ namespace MSL
 			const MethodType* _method = nullptr;
 			BaseObject* classObject = nullptr;
 			size_t offset = 0;
+			GCstate state = GCstate::UNMARKED;
 
 			Frame() = default;
 			Frame(Frame&&) = default;
@@ -31,7 +32,7 @@ namespace MSL
 		{
 			using Path = std::vector<const std::string*>;
 			Path path = Path(3);
-			std::unique_ptr<Frame> frame = std::make_unique<Frame>();
+			Frame* frame = nullptr;
 		public:
 			const std::string* GetNamespace() const;
 			const std::string* GetClass() const;
@@ -42,6 +43,7 @@ namespace MSL
 			void SetMethod(const std::string* method);
 
 			Frame* GetFrame();
+			void SetFrame(Frame* frame);
 
 			CallPath() = default;
 			CallPath(CallPath&&) = default;

@@ -716,8 +716,8 @@ namespace MSL
 			ExpressionList block;
 			if (lexer->Peek().type != Token::Type::BRACE_BRACKET_O)
 			{
-				Error("`{` expected, found: " + lexer->Peek().value);
-				return ExpressionList(); // no `{` found
+				block.push_back(ParseExpression(function));
+				return block;
 			}
 			lexer->Next();
 			while (!lexer->End())

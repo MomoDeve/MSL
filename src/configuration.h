@@ -7,6 +7,7 @@ namespace MSL
 	{
 		constexpr size_t KB = 1024;
 		constexpr size_t MB = 1024 * KB;
+		constexpr size_t GB = 1024 * MB;
 
 		struct Configuration
 		{
@@ -22,6 +23,7 @@ namespace MSL
 				std::ostream* log = nullptr;
 				size_t initCapacity = 1;
 				size_t initMemory = 4 * MB;
+				size_t maxMemory = 2 * GB;
 			} GC;
 			struct
 			{

@@ -13,6 +13,7 @@ MSL::VM::GarbageCollector::GarbageCollector(std::ostream* log, size_t allocSize)
 	Init(this->stringAlloc, allocSize);
 	Init(this->unknownObjAlloc, allocSize);
 	Init(this->arrayAlloc, allocSize);
+	Init(this->frameAlloc, allocSize);
 }
 
 void MSL::VM::GarbageCollector::SetLogStream(std::ostream* log)
@@ -45,6 +46,7 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 	for (auto& call : callStack)
 	{
 		Frame* frame = call.GetFrame();
+		frame->state = GCstate::MARKED;
 		if(frame->classObject != nullptr) frame->classObject->MarkMembers();
 		for (auto& local : frame->locals)
 		{
@@ -56,7 +58,7 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 		object->MarkMembers();
 	}
 
-	managedObjects = clearedObjects = 0;
+	managedObjects = clearedObjects = clearedMemory = 0;
 
 	ClearSlabs(this->attributeAlloc);
 	ClearSlabs(this->classObjAlloc);
@@ -68,6 +70,7 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 	ClearSlabs(this->stringAlloc);
 	ClearSlabs(this->unknownObjAlloc);
 	ClearSlabs(this->arrayAlloc);
+	ClearSlabs(this->frameAlloc);
 
 	auto endTimePoint = std::chrono::system_clock::now();
 	auto elapsedTime = endTimePoint - lastIter;
@@ -82,11 +85,11 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 		*out << "[GC]: collected total of " << clearedObjects << " objects\n";
 		*out << "[GC]: still managing " << managedObjects << " objects\n";
 		*out << "[GC]: objects allocated:\n";
-		*out << "      since last iter: " << GetAllocSinceIter() << '\n';
-		*out << "      since start: " << GetTotalAllocCount() << '\n';
+		*out << "      since last iter: " << GetMemoryAllocSinceIter() << '\n';
+		*out << "      since start: " << GetTotalMemoryAlloc() << '\n';
 		*out << "------------------------------------------\n";
 	}
-	allocSinceIter = GetTotalAllocCount();
+	allocSinceIter = GetTotalMemoryAlloc();
 }
 
 void MSL::VM::GarbageCollector::ReleaseMemory()
@@ -101,6 +104,7 @@ void MSL::VM::GarbageCollector::ReleaseMemory()
 	localObjAlloc.reset();
 	attributeAlloc.reset();
 	arrayAlloc.reset();
+	frameAlloc.reset();
 }
 
 std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration() const
@@ -109,29 +113,36 @@ std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration()
 	return std::chrono::duration_cast<std::chrono::milliseconds>(diff);
 }
 
-size_t MSL::VM::GarbageCollector::GetTotalAllocCount() const
+uint64_t MSL::VM::GarbageCollector::GetTotalMemoryAlloc() const
 {
-	size_t total = 0;
-	total += this->arrayAlloc->GetAllocCount();
-	total += this->attributeAlloc->GetAllocCount();
-	total += this->classObjAlloc->GetAllocCount();
-	total += this->classWrapAlloc->GetAllocCount();
-	total += this->floatAlloc->GetAllocCount();
-	total += this->integerAlloc->GetAllocCount();
-	total += this->localObjAlloc->GetAllocCount();
-	total += this->nsWrapAlloc->GetAllocCount();
-	total += this->stringAlloc->GetAllocCount();
-	total += this->unknownObjAlloc->GetAllocCount();
+	uint64_t total = 0;
+	#define COUNT(x) (uint64_t)this->x->GetAllocCount() * this->x->GetObjectSize()
+	total += COUNT(arrayAlloc);
+	total += COUNT(attributeAlloc);
+	total += COUNT(classObjAlloc);
+	total += COUNT(classWrapAlloc);
+	total += COUNT(floatAlloc);
+	total += COUNT(integerAlloc);
+	total += COUNT(localObjAlloc);
+	total += COUNT(nsWrapAlloc);
+	total += COUNT(stringAlloc);
+	total += COUNT(unknownObjAlloc);
+	total += COUNT(frameAlloc);
 
 	return total;
 }
 
-size_t MSL::VM::GarbageCollector::GetAllocSinceIter() const
+uint64_t MSL::VM::GarbageCollector::GetMemoryAllocSinceIter() const
 {
-	return GetTotalAllocCount() - allocSinceIter;
+	return GetTotalMemoryAlloc() - allocSinceIter;
 }
 
-size_t MSL::VM::GarbageCollector::GetClearedObjectCount() const
+uint64_t MSL::VM::GarbageCollector::GetClearedMemorySinceIter() const
+{
+	return clearedMemory;
+}
+
+uint64_t MSL::VM::GarbageCollector::GetClearedObjectCount() const
 {
 	return clearedObjects;
 }

@@ -36,7 +36,11 @@ namespace MSL
 
 		Frame* CallPath::GetFrame()
 		{
-			return frame.get();
+			return frame;
+		}
+		void CallPath::SetFrame(Frame* frame)
+		{
+			this->frame = frame;
 		}
 	}
 }

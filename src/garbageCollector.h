@@ -25,9 +25,10 @@ namespace MSL
 			using Allocator = std::unique_ptr<momo::SlabAllocator<T>>;
 
 			std::ostream* out;
-			size_t clearedObjects;
-			size_t managedObjects;
-			size_t allocSinceIter = 0;
+			uint64_t clearedObjects;
+			uint64_t managedObjects;
+			uint64_t allocSinceIter = 0;
+			uint64_t clearedMemory;
 			std::chrono::time_point<std::chrono::system_clock> lastIter;
 
 			template<typename T>
@@ -52,6 +53,7 @@ namespace MSL
 			Allocator<LocalObject> localObjAlloc;
 			Allocator<AttributeObject> attributeAlloc;
 			Allocator<ArrayObject> arrayAlloc;
+			Allocator<Frame> frameAlloc;
 
 			GarbageCollector(std::ostream* log = nullptr, size_t allocSize = 1);
 			void SetLogStream(std::ostream* log);
@@ -59,9 +61,10 @@ namespace MSL
 			void Collect(AssemblyType& assembly, std::vector<CallPath>& callStack, std::vector<BaseObject*> objectStack);
 			void ReleaseMemory();
 			std::chrono::milliseconds GetTimeSinceLastIteration() const;
-			size_t GetTotalAllocCount() const;
-			size_t GetAllocSinceIter() const;
-			size_t GetClearedObjectCount() const;
+			uint64_t GetTotalMemoryAlloc() const;
+			uint64_t GetMemoryAllocSinceIter() const;
+			uint64_t GetClearedMemorySinceIter() const;
+			uint64_t GetClearedObjectCount() const;
 		};
 
 		template<typename T>
@@ -76,6 +79,7 @@ namespace MSL
 					slab.Free(objPtr);
 					objPtr->state = GCstate::FREE;
 					this->clearedObjects++;
+					this->clearedMemory += slab.GetObjectSize();
 					break;
 				case GCstate::MARKED:
 					objPtr->state = GCstate::UNMARKED;

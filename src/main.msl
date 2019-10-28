@@ -153,10 +153,7 @@ namespace Utils
 						match = false;
 					}
 				}
-				if(match)
-				{
-					return true;
-				}
+				if(match) return true;
 			}
 			return false;
 		}
@@ -168,13 +165,9 @@ namespace Utils
 			{
 				var sym = string[i];
 				if(sym == symToReplace)
-				{
 					result += replaceSym;
-				}
 				else
-				{
 					result += sym;
-				}
 			}
 			return result;
 		}
@@ -246,13 +239,9 @@ namespace Utils
 		{
 			iter += step;
 			if(iter > last)
-			{
 				return last;
-			}
 			else
-			{
 				return iter;
-			}
 		}
 		
 		public function GetByIter(iter)
@@ -309,10 +298,9 @@ namespace Program
 		public static function Fact(n)
 		{
 			if(n == 0)
-			{
 				return 1;
-			}
-			return n * Fact(n - 1);
+			else
+				return n * Fact(n - 1);
 		}
 		
 		public static function ArrayTest()
@@ -342,13 +330,14 @@ namespace Program
 			{
 				array.Append(i);
 			}
+				
 			Console.PrintLine(array);
 			Console.PrintLine("Merging array with itself...");
 			Console.PrintLine(array.Merged(array));
 		}
 		
 		public static function Main()
-		{
+		{				
 			ArrayTest();
 		
 			var str1 = "hello world!";
@@ -377,7 +366,6 @@ namespace Program
 			{
 				Console.Print(s + " ");
 			}
-
 			return 0;
 		}
 	}

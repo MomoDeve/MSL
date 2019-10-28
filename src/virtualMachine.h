@@ -78,6 +78,7 @@ namespace MSL
 			void PerformALUCallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
 			void PerformALUcallBooleans(bool b1, bool b2, OPCODE op, Frame* frame);
 
+			Frame* AllocFrame();
 			UnknownObject* AllocUnknown(const std::string* value);
 			NullObject* AllocNull();
 			TrueObject* AllocTrue();
@@ -90,7 +91,6 @@ namespace MSL
 			ClassObject* AllocClassObject(const ClassType* _class);
 			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
 			LocalObject* AllocLocal(const std::string& localName, Local& local);
-
 		public:
 			enum ERROR
 			{

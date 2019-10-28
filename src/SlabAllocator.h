@@ -7,13 +7,12 @@
 
 namespace momo
 {
-	#define MEMORY_CHECK
-
 	template<typename ElementT, typename IndexT>
 	class Slab
 	{
 	public:
 		static constexpr size_t maxSize = 1 << (sizeof(IndexT) * 8);
+		using ObjectType = ElementT;
 	private:
 		#ifdef MEMORY_CHECK
 		std::vector<bool> isFree;
@@ -31,6 +30,7 @@ namespace momo
 		template<typename... Args> ElementT* Alloc(Args&&... args);
 		void Free(ElementT* value);
 		size_t GetSize() const;
+		size_t GetObjectSize() const;
 		ElementT* GetNativePointer();
 	};
 
@@ -144,6 +144,12 @@ namespace momo
 	}
 
 	template<typename ElementT, typename IndexT>
+	inline size_t Slab<ElementT, IndexT>::GetObjectSize() const
+	{
+		return sizeof(ElementT);
+	}
+
+	template<typename ElementT, typename IndexT>
 	ElementT* Slab<ElementT, IndexT>::GetNativePointer()
 	{
 		return memory;
@@ -172,6 +178,7 @@ namespace momo
 		void Free(ElementT* value);
 		void ReallocateSlabs();
 		size_t GetAllocCount() const;
+		size_t GetObjectSize() const;
 
 		std::vector<Slab>& GetFreeSlabs();
 		std::vector<Slab>& GetPartialSlabs();
@@ -307,17 +314,18 @@ namespace momo
 			}
 			else it++;
 		}
-
-		if (freeSlabs.size() > 2 * busySlabs.size())
-		{
-			freeSlabs.clear();
-		}
 	}
 
 	template<typename ElementT, typename IndexT>
 	inline size_t SlabAllocator<ElementT, IndexT>::GetAllocCount() const
 	{
 		return allocCount;
+	}
+
+	template<typename ElementT, typename IndexT>
+	inline size_t SlabAllocator<ElementT, IndexT>::GetObjectSize() const
+	{
+		return sizeof(ElementT);
 	}
 
 	template<typename ElementT, typename IndexT>

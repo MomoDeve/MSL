@@ -55,8 +55,33 @@ bool createAssembly(string fileName)
 	return true;
 }
 
+void runBytecode()
+{
+	string fileName = "test.emsl";
+	std::ifstream fs(fileName, std::ios::binary);
+	MSL::VM::Configuration config;
+	config.streams = { &std::cin, &std::cout, &std::cout };
+	MSL::VM::VirtualMachine VM(move(config));
+	if (VM.AddBytecodeFile(&fs))
+	{
+		VM.Run();
+	}
+	auto errors = VM.GetErrorStrings(VM.GetErrors());
+	if (!errors.empty())
+	{
+		cout << "[VM ERRORS]:\n";
+		for (const auto& error : errors)
+		{
+			cout << error << std::endl;
+		}
+	}
+	int c = getchar();
+}
+
 int main(int argc, char* argv[])
 {
+	//runBytecode();
+	//return 0;
 	string fileName = "main";
 	if (argc == 2)
 	{
@@ -72,8 +97,8 @@ int main(int argc, char* argv[])
 		binary.close();
 
 		MSL::VM::Configuration config;
-		config.streams = { &std::cin, &std::cout, &std::cout };
-		config.GC.log = &std::cout;
+		config.streams = { &std::cin, &std::cout, &std::cerr };
+		config.GC.log = nullptr;
 		MSL::VM::VirtualMachine VM(move(config));
 		std::ifstream executable(fileName + ".emsl", std::ios::binary);
 		if (VM.AddBytecodeFile(&executable))

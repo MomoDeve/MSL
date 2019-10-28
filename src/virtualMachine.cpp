@@ -75,6 +75,11 @@ namespace MSL
 			return GC.localObjAlloc->Alloc(local, localName);
 		}
 
+		Frame* VirtualMachine::AllocFrame()
+		{
+			return GC.frameAlloc->Alloc();
+		}
+
 		OPCODE VirtualMachine::ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset)
 		{
 			return GenericRead<OPCODE>(bytes, offset);
@@ -335,7 +340,9 @@ namespace MSL
 				return;
 			}
 			// getting frame arguments
-			Frame* frame = callStack.back().GetFrame();
+			CallPath& top = callStack.back();
+			top.SetFrame(AllocFrame());
+			Frame* frame = top.GetFrame();
 			frame->_namespace = GetNamespaceOrNull(*callStack.back().GetNamespace());
 			frame->_class = GetClassOrNull(frame->_namespace, *callStack.back().GetClass());
 			frame->_method = GetMethodOrNull(frame->_class, *callStack.back().GetMethod());
@@ -527,9 +534,11 @@ namespace MSL
 				case (OPCODE::PUSH_OBJECT):
 				{
 					size_t hash = ReadHash(frame->_method->body, frame->offset);
-					const std::string* objectName = &frame->_method->dependencies[hash];
-					objectStack.push_back(AllocUnknown(objectName));
-						
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
+					{
+						const std::string* objectName = &frame->_method->dependencies[hash];
+						objectStack.push_back(AllocUnknown(objectName));
+					}
 					VM_DEBUG(ToString(op) << ' ' << *objectName);
 					break;
 				}
@@ -994,6 +1003,7 @@ namespace MSL
 				DisplayExtra("execution interrupted in method: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
 				return;
 			}
+
 			if (_class->name == "Console")
 			{
 				if (_method->name == "Print_1" || _method->name == "PrintLine_1")
@@ -1004,53 +1014,55 @@ namespace MSL
 					objectStack.pop_back();
 
 					if (!AssertType(object, Type::CLASS_OBJECT)) VM_TAG(OUTPUT);
-
-					switch (object->type)
+					if (config.streams.out != nullptr)
 					{
-					case Type::NAMESPACE:
-					{
-						out << "namespace " << *GetObjectName(object);
-						break;
-					}
-					case Type::CLASS:
-					{
-						ClassWrapper* c = reinterpret_cast<ClassWrapper*>(object);
-						out << "class " << GetFullClassType(c->type);
-						break;
-					}
-					case Type::ATTRIBUTE:
-					{
-						AttributeObject* attr = reinterpret_cast<AttributeObject*>(object);
-						objectStack.push_back(attr->object);
-						PerformSystemCall(_class, _method, frame);
-						return; // no PrintLine check, because it will happen inside recursion call
-					}
-					case Type::CLASS_OBJECT:
-					{
-						ClassObject* classObject = reinterpret_cast<ClassObject*>(object);
-						if (GetMethodOrNull(classObject->type, "ToString_1") != nullptr)
+						switch (object->type)
 						{
-							objectStack.push_back(object);
-							InvokeObjectMethod("ToString_1", classObject);
-							callStack.emplace_back(); // will be popped anyway
-							if (errors == 0) PerformSystemCall(_class, _method, frame);
-							return; // no PrintLine check, because it will happen inside recursion call
-						}
-						else
+						case Type::NAMESPACE:
 						{
-							out << GetFullClassType(classObject->type) << " instance";
+							out << "namespace " << *GetObjectName(object);
 							break;
 						}
-					}
-					default:
-					{
-						out << object->ToString();
-					}
-					break;
+						case Type::CLASS:
+						{
+							ClassWrapper* c = reinterpret_cast<ClassWrapper*>(object);
+							out << "class " << GetFullClassType(c->type);
+							break;
+						}
+						case Type::ATTRIBUTE:
+						{
+							AttributeObject* attr = reinterpret_cast<AttributeObject*>(object);
+							objectStack.push_back(attr->object);
+							PerformSystemCall(_class, _method, frame);
+							return; // no PrintLine check, because it will happen inside recursion call
+						}
+						case Type::CLASS_OBJECT:
+						{
+							ClassObject* classObject = reinterpret_cast<ClassObject*>(object);
+							if (GetMethodOrNull(classObject->type, "ToString_1") != nullptr)
+							{
+								objectStack.push_back(object);
+								InvokeObjectMethod("ToString_1", classObject);
+								callStack.emplace_back(); // will be popped anyway
+								if (errors == 0) PerformSystemCall(_class, _method, frame);
+								return; // no PrintLine check, because it will happen inside recursion call
+							}
+							else
+							{
+								out << GetFullClassType(classObject->type) << " instance";
+								break;
+							}
+						}
+						default:
+						{
+							out << object->ToString();
+						}
+						break;
+						}
 					}
 
 					#ifndef MSL_VM_DEBUG
-					if (_method->name == "PrintLine_1")
+					if (_method->name == "PrintLine_1" && config.streams.out != nullptr)
 					{
 						out << std::endl;
 					}			
@@ -1059,11 +1071,40 @@ namespace MSL
 					objectStack.pop_back();
 					objectStack.push_back(_class->wrapper);
 				}
+				else if (_method->name == "SetUnicode_1")
+				{
+					BaseObject* value = objectStack.back();
+					objectStack.pop_back(); // pop value
+					objectStack.pop_back(); // pop console reference
+					if (!AssertType(value, Type::TRUE) && !AssertType(value, Type::FALSE, "SetUnicode method accepts only Boolean as argument", frame))
+						return;
+					if (AssertType(value, Type::TRUE))
+					{
+						#ifdef _WINDOWS_
+						SetConsoleOutputCP(CP_UTF8);
+						objectStack.push_back(AllocTrue());
+						#else
+						if(config.streams.error != nullptr)
+							*config.streams.error << "[VM WARNING]: useUnicode parameter was enabled, but VM supports it only on Windows system" << std::endl;
+						objectStack.push_back(AllocFalse());
+						#endif
+					}
+					else
+					{
+						#ifdef _WINDOWS_
+						SetConsoleOutputCP(CP_ACP);
+						objectStack.push_back(AllocTrue());
+						#else
+						objectStack.push_back(AllocFalse());
+						#endif		
+					}
+				}
 				else if (_method->name == "Read_0")
 				{
 					objectStack.pop_back(); // delete console reference
 					StringObject::InnerType str;
-					*config.streams.in >> str;
+					if(config.streams.in != nullptr) 
+						*config.streams.in >> str;
 					StringObject* strObj = reinterpret_cast<StringObject*>(AllocString(""));
 					strObj->value = std::move(str);
 					objectStack.push_back(strObj);
@@ -1071,16 +1112,18 @@ namespace MSL
 				else if (_method->name == "ReadInt_0")
 				{
 					objectStack.pop_back(); // delete console reference
-					std::string str;
-					*config.streams.in >> str;
+					std::string str = "0";
+					if(config.streams.in != nullptr)
+						*config.streams.in >> str;
 					BaseObject* intObj = AllocInteger(str);
 					objectStack.push_back(intObj);
 				}
 				else if (_method->name == "ReadFloat_0")
 				{
 					objectStack.pop_back();  // delete console reference
-					std::string str;
-					*config.streams.in >> str;
+					std::string str = "0.0";
+					if (config.streams.in != nullptr)
+						*config.streams.in >> str;
 					BaseObject* floatObj = AllocFloat(str);
 					objectStack.push_back(floatObj);
 				}
@@ -1088,7 +1131,8 @@ namespace MSL
 				{
 					objectStack.pop_back();  // delete console reference
 					std::string str;
-					std::getline(*config.streams.in, str);
+					if (config.streams.in != nullptr)
+						std::getline(*config.streams.in, str);
 					StringObject* strObj = reinterpret_cast<StringObject*>(AllocString(""));
 					strObj->value = std::move(str);
 					objectStack.push_back(strObj);
@@ -1097,7 +1141,8 @@ namespace MSL
 				{
 					objectStack.pop_back();  // delete console reference
 					std::string str;
-					*config.streams.in >> str;
+					if (config.streams.in != nullptr)
+						*config.streams.in >> str;
 					if (str == "1" || str == "True" || str == "true")
 					{
 						objectStack.push_back(AllocTrue());
@@ -1932,7 +1977,8 @@ namespace MSL
 				auto name = it->second.name; \
 			    if(assemblyIt->second.classes.find(name) != assemblyIt->second.classes.end()) {\
 					assemblyIt->second.classes.erase(name);\
-				   *config.streams.error << "[VM WARNING]: user-defined System class was replaced by VM: `" << name << '`' << std::endl;}\
+				   if(config.streams.error != nullptr) \
+					*config.streams.error << "[VM WARNING]: user-defined System class was replaced by VM: `" << name << '`' << std::endl;}\
 				assemblyIt->second.classes.insert({std::move(name), std::move(it->second)}); } \
 			} \
 			else assembly.namespaces.insert({ #_name, std::move(_name) }); CURRENT_NAMESPACE = nullptr
@@ -1974,6 +2020,7 @@ namespace MSL
 				BEGIN_CLASS(Console);
 					STATIC_METHOD_1(Print, value); // outputs value to console
 					STATIC_METHOD_1(PrintLine, value); // outputs line and flushes out stream
+					STATIC_METHOD_1(SetUnicode, value); // sets console to output unicode or output ASCII
 					STATIC_METHOD_0(Read); // reads string from console
 					STATIC_METHOD_0(ReadInt); // reads integer from console
 					STATIC_METHOD_0(ReadFloat); // reads float from console
@@ -2026,9 +2073,9 @@ namespace MSL
 
 		void VirtualMachine::CollectGarbage()
 		{
-			if (GC.GetAllocSinceIter() > config.GC.initMemory && 
-				GC.GetAllocSinceIter() > 2 * GC.GetClearedObjectCount() ||
-				GC.GetTimeSinceLastIteration().count() > config.GC.msCollectInterval)
+			if (5 * GC.GetMemoryAllocSinceIter() > config.GC.initMemory && 
+			   (2 * GC.GetMemoryAllocSinceIter() > GC.GetClearedMemorySinceIter()  ||
+			   (5 * GC.GetMemoryAllocSinceIter() > config.GC.maxMemory)))
 			{
 				trueObject.MarkMembers();
 				falseObject.MarkMembers();
@@ -2046,7 +2093,7 @@ namespace MSL
 			else
 			{
 				errors |= ERROR::INVALID_HASH_VALUE;
-				DisplayError("hash value of dependency object is invalid");
+				DisplayError("hash value of dependency object was invalid: " + std::to_string(hashValue));
 				return false;
 			}
 		}
@@ -2102,18 +2149,21 @@ namespace MSL
 
 		void VirtualMachine::DisplayError(std::string message) const
 		{
+			if (config.streams.error == nullptr) return;
 			*config.streams.error << std::endl << "[VM ERROR]: " << message << std::endl;
 			PrintObjectStack();
 		}
 
 		void VirtualMachine::DisplayExtra(std::string message) const
 		{
+			if (config.streams.error == nullptr) return;
 			std::string tab(std::string("[VM ERROR]: ").size(), ' ');
 			*config.streams.error << tab << message << std::endl;
 		}
 
 		void VirtualMachine::PrintObjectStack() const
 		{
+			if (config.streams.error == nullptr) return;
 			std::string line = "-----------------------------------------------------------\n";
 			*config.streams.error << "---------------------------STACK---------------------------\n";
 			size_t count = 0;
@@ -2154,6 +2204,7 @@ namespace MSL
 			{
 				if (methodName[i] == '_') break;
 			}
+			if (i < 0) return "[err_sym " + methodName + ']';
 			return std::string(methodName.begin(), methodName.begin() + i);
 		}
 
@@ -2687,7 +2738,8 @@ namespace MSL
 				#ifdef _WINDOWS_
 				SetConsoleOutputCP(CP_UTF8);
 				#else
-				*config.streams.error << "[VM WARNING]: useUnicode parameter was enabled, but VM supports it only on Windows system" << std::endl;
+				if(config.streams.error != nullptr)
+					*config.streams.error << "[VM WARNING]: useUnicode parameter was enabled, but VM supports it only on Windows system" << std::endl;
 				#endif
 			}
 			if (errors != 0) return;
@@ -2748,26 +2800,32 @@ namespace MSL
 						DisplayError("no return value from entry point function provided");
 						return;
 					}
-					*config.streams.out << std::endl;
-					if (AssertType(objectStack.back(), Type::INTEGER))
+					if (config.streams.out != nullptr)
 					{
-						*config.streams.out << "[VM]: execution finished with exit code " << reinterpret_cast<IntegerObject*>(objectStack.back())->value << std::endl;
-					}
-					else if (AssertType(objectStack.back(), Type::NULLPTR))
-					{
-						*config.streams.out << "[VM]: execution finished with exit code 0" << std::endl;
-					}
-					else
-					{
-						errors |= ERROR::INVALID_STACKOBJECT;
-						DisplayError("return value from entry point function was neither integer nor null");
+						*config.streams.out << std::endl;
+						if (AssertType(objectStack.back(), Type::INTEGER))
+						{
+							*config.streams.out << "[VM]: execution finished with exit code " << reinterpret_cast<IntegerObject*>(objectStack.back())->value << std::endl;
+						}
+						else if (AssertType(objectStack.back(), Type::NULLPTR))
+						{
+							*config.streams.out << "[VM]: execution finished with exit code 0" << std::endl;
+						}
+						else
+						{
+							errors |= ERROR::INVALID_STACKOBJECT;
+							DisplayError("return value from entry point function was neither integer nor null");
+						}
 					}
 				}
 			}
 			GC.ReleaseMemory();
 
-			*config.streams.out << "[VM]: total code execution time: ";
-			*config.streams.out << std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count() << "ms" << std::endl;
+			if (config.streams.out != nullptr)
+			{
+				*config.streams.out << "[VM]: total code execution time: ";
+				*config.streams.out << std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count() << "ms" << std::endl;
+			}
 		}
 
 		uint32_t VirtualMachine::GetErrors() const
@@ -2811,6 +2869,8 @@ namespace MSL
 				errorList.push_back(STRING(ERROR::ABSTRACT_MEMBER_CALL));
 			if (errors & ERROR::INVALID_METHOD_CALL)
 				errorList.push_back(STRING(ERROR::INVALID_METHOD_CALL));
+			if (errors & ERROR::INVALID_HASH_VALUE)
+				errorList.push_back(STRING(ERROR::INVALID_HASH_VALUE));
 			if (errors & ERROR::MEMORY_ALLOC_FAILURE)
 				errorList.push_back(STRING(ERROR::MEMORY_ALLOC_FAILURE));
 

@@ -1,5 +1,5 @@
 # MSL
-MSL is a dynamic-type OOP programming language for personal usage
+MSL is a dynamic-type OOP general-purpose programming language
 
 This project is a pure-C/C++ compiler for MSL, and VM for running it
 
@@ -102,7 +102,7 @@ int main()
 ```
 
 ## Writing Hello World in MSL
-First program that you usually want to write to test new language and its compiler is a simple "Hello World!" program. In MSL this program will look like:
+First program that you usually want to write to test new language and its compiler is a simple "Hello World" program. In MSL language this program will look like this:
 ```cs
 // main.msl file
 namespace Program
@@ -111,8 +111,13 @@ namespace Program
     {			
         public static function Main()
         {
-            System.Console.PrintLine("Hello World!");
+            System.Console.PrintLine("Hello World");
         }
    }
 }
 ```
+Firstly, we declare namespace, in which our class will be located. Namespaces must be unique among program, but classes can have same names if they are located in different namespaces. We create Program.ProgramClass class and define one function in it - *Main*. It accepts zero parameters and is called by VM when the execution starts. As no instance of our class is implicitly created, entry-point function must be declared as *static*.
+
+MSL VM creates one namespace by default - System. All utility classes such as **IO**, **Reflection**, **Array** and etc. are located in it. For out program we need **Console** class with its method called *PrintLine*, which outputs argument to the standart console. For now, we can just pass string literal to it and see results of program on our screen:
+![Hello World](https://user-images.githubusercontent.com/40578274/67675950-81840d80-f991-11e9-8fa9-144b89b163df.png)
+Notice that VM states that Main function returned 0 even if we did not specify return value. Thats because all functions return null by default, which in this case can be interpreted as 0.

@@ -118,6 +118,47 @@ namespace Program
 ```
 Firstly, we declare namespace, in which our class will be located. Namespaces must be unique among program, but classes can have same names if they are located in different namespaces. We create Program.ProgramClass class and define one function in it - *Main*. It accepts zero parameters and is called by VM when the execution starts. As no instance of our class is implicitly created, entry-point function must be declared as *static*.
 
-MSL VM creates one namespace by default - System. All utility classes such as **IO**, **Reflection**, **Array** and etc. are located in it. For out program we need **Console** class with its method called *PrintLine*, which outputs argument to the standart console. For now, we can just pass string literal to it and see results of program on our screen:
+MSL VM creates one namespace by default - System. All utility classes such as **IO**, **Reflection**, **Array** and etc. are located in it. For our program we need **Console** class with its method called *PrintLine*, which outputs argument to the standart console. As we just want to output simple text, we can pass string literal as the method argument.
+
+## Running MSL bytecode in VM
+Right now we are one step away from displaying result in out console. We have main.emsl file which contains MSL bytecode for virtual machine, but we have not provided it to VM yet. Let's create an instance of MSL VM in our .cpp file:
+```cpp
+MSL::VM::Configuration config;
+MSL::VM::VirtualMachine VM(move(config));
+```
+VM constuctor accepts config as an argument, but for our purposes we do not have to change it in any way. For more info you can see full documentation. 
+
+Assuming that bytecode located in *main.emsl* file, we can open it with std::ifstream and pass it to AddBytecodeFile() method:
+```cpp
+std::ifstream fs("main.emsl", std::ios::binary);
+if (!VM.AddBytecodeFile(&fs))
+{
+   VM.Run();
+}
+```
+It returns true as success indicator, and that means that bytecode was loaded and can be executed. To do this, we simply need to call Run() method, and then wait for the result:
+
 ![Hello World](https://user-images.githubusercontent.com/40578274/67675950-81840d80-f991-11e9-8fa9-144b89b163df.png)
-Notice that VM states that Main function returned 0 even if we did not specify return value. Thats because all functions return null by default, which in this case can be interpreted as 0.
+Notice that VM states that Main function returned 0 even if we did not specify return value. Thats because all functions return null by default, which in this case can be interpreted as 0. 
+
+Any VM errors that have occured during the run of the program, can be retrieved as an array using GetErrors() and GetErrorStrings() methods after end of the execution.
+Full code for VM launch with error display:
+```cpp
+std::ifstream fs("main.emsl", std::ios::binary);
+MSL::VM::Configuration config;
+MSL::VM::VirtualMachine VM(std::move(config));
+if (!VM.AddBytecodeFile(&fs))
+{
+    VM.Run();
+}
+auto errors = VM.GetErrorStrings(VM.GetErrors());
+if (!errors.empty())
+{
+    std::cerr << "[VM ERRORS]:\n";
+    for (const std::string& error : errors)
+    {
+        std::cerr << error << std::endl;
+    }
+}
+```
+Basically, that is the all code that you have to write to compile MSL source code and run it in VM. With this, now you can freely implement multiple file compilation or change output streams of the VM using Configuration class. For more additional info you can refer to full MSL documentation or ask *me* question personally.

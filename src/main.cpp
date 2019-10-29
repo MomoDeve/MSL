@@ -12,8 +12,6 @@
 
 using namespace std;
 
-#undef SYNTAX_TREE
-
 bool createAssembly(string fileName)
 {
 	ifstream file(fileName + ".msl");
@@ -33,7 +31,8 @@ bool createAssembly(string fileName)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-#ifdef MSL_VM_DEBUG
+	
+	#ifdef MSL_VM_DEBUG
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -44,7 +43,7 @@ bool createAssembly(string fileName)
 			}
 		}
 	}
-#endif
+	#endif
 
 	MSL::compiler::CodeGenerator generator(assembly);
 	generator.GenerateBytecode();
@@ -55,38 +54,13 @@ bool createAssembly(string fileName)
 	return true;
 }
 
-void runBytecode()
-{
-	string fileName = "test.emsl";
-	std::ifstream fs(fileName, std::ios::binary);
-	MSL::VM::Configuration config;
-	config.streams = { &std::cin, &std::cout, &std::cout };
-	MSL::VM::VirtualMachine VM(move(config));
-	if (VM.AddBytecodeFile(&fs))
-	{
-		VM.Run();
-	}
-	auto errors = VM.GetErrorStrings(VM.GetErrors());
-	if (!errors.empty())
-	{
-		cout << "[VM ERRORS]:\n";
-		for (const auto& error : errors)
-		{
-			cout << error << std::endl;
-		}
-	}
-	int c = getchar();
-}
-
 int main(int argc, char* argv[])
 {
-	//runBytecode();
-	//return 0;
 	string fileName = "main";
 	if (argc == 2)
 	{
 		fileName = argv[1];
-		fileName = fileName.substr(0, fileName.size() - 4); // delete .msl
+		fileName = fileName.substr(0, fileName.size() - 4); // delete ".msl" from file name
 	}
 
 	if (createAssembly(fileName))
@@ -98,7 +72,6 @@ int main(int argc, char* argv[])
 
 		MSL::VM::Configuration config;
 		config.streams = { &std::cin, &std::cout, &std::cerr };
-		config.GC.log = nullptr;
 		MSL::VM::VirtualMachine VM(move(config));
 		std::ifstream executable(fileName + ".emsl", std::ios::binary);
 		if (VM.AddBytecodeFile(&executable))

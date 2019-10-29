@@ -39,7 +39,9 @@ namespace MSL
 	replaces tokens such as '\n', '\t' with two symbols as '\' 't' etc
 	*/
 	std::string replaceEscapeTokens(const std::string& str);
-
+	/*
+	erases extra spaces in line of code (for example: `Console . Print ( arg ) ;` becomes `Console.Print(arg);`)
+	*/
 	std::string beautify(const std::string& str);
 	/*
 	move offset of str parameter until pred is true and appends content to the resulting string

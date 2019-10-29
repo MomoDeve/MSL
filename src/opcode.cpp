@@ -60,9 +60,8 @@ namespace MSL
 			RETURN(JUMP);
 			RETURN(JUMP_IF_TRUE);
 			RETURN(JUMP_IF_FALSE);
-			RETURN(PUSH_STACKFRAME);
 			RETURN(POP_STACK_TOP);
-#undef RETURN
+			#undef RETURN
 			case RETURN:
 				return STRING(RETURN);
 			default:

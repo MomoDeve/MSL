@@ -57,13 +57,13 @@ namespace MSL
 			void StartNewStackFrame();
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
-			void CollectGarbage();
+			void CollectGarbage(bool forceCollection = false);
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 			bool AssertType(const BaseObject* object, Type type, const std::string& message, const Frame* frame = nullptr);
 			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void DisplayError(std::string message) const;
-			void DisplayExtra(std::string message) const;
+			void DisplayInfo(std::string message) const;
 			void PrintObjectStack() const;
 			std::string GetFullClassType(const ClassType* type) const;
 			std::string GetFullMethodType(const MethodType* type) const;
@@ -112,7 +112,7 @@ namespace MSL
 				CONST_MEMBER_MODIFICATION = 1 << 15,
 				ABSTRACT_MEMBER_CALL = 1 << 16,
 				INVALID_METHOD_CALL = 1 << 17,
-				MEMORY_ALLOC_FAILURE = 1 << 18,
+				OUT_OF_MEMORY = 1 << 18,
 			};
 
 			VirtualMachine(Configuration config);

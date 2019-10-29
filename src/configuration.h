@@ -5,31 +5,26 @@ namespace MSL
 {
 	namespace VM
 	{
-		constexpr size_t KB = 1024;
-		constexpr size_t MB = 1024 * KB;
-		constexpr size_t GB = 1024 * MB;
-
 		struct Configuration
 		{
 			struct
 			{
-				std::istream* in = nullptr;
-				std::ostream* out = nullptr;
-				std::ostream* error = nullptr;
+				std::istream* in = &std::cin;
+				std::ostream* out = &std::cout;
+				std::ostream* error = &std::cerr;
 			} streams;
 			struct
 			{
-				size_t msCollectInterval = 250;
+				uint64_t initCapacity = 1;
+				uint64_t initAlloc = 1024;
+				uint64_t maxAlloc = 512 * 1024 * 1024;
 				std::ostream* log = nullptr;
-				size_t initCapacity = 1;
-				size_t initMemory = 4 * MB;
-				size_t maxMemory = 2 * GB;
+				bool allowCollect = true;
 			} GC;
 			struct
 			{
 				bool varifyBytecode = true;
 				bool allowAssemblyMerge = true;
-				bool allowMemoryPreallocation = true;
 			} compilation;
 			struct
 			{

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <array>
-#include <limits>
-#include <algorithm>
 #include <vector>
+
+// #define MEMORY_CHECK
+// uncomment define statement to enable check for memory access
 
 namespace momo
 {
@@ -11,26 +11,41 @@ namespace momo
 	class Slab
 	{
 	public:
-		static constexpr size_t maxSize = 1 << (sizeof(IndexT) * 8);
+		static constexpr size_t maxSize = 1 << (sizeof(IndexT) * 8); // max indexing size and maximal amount of objects in slab
 		using ObjectType = ElementT;
 	private:
 		#ifdef MEMORY_CHECK
-		std::vector<bool> isFree;
+		std::vector<bool> isFree; // bit array to check if object was allocated in slab
 		#endif 
-		ElementT* memory;
-		IndexT* freeTable;
-		IndexT curFree;
-		size_t size;
+		ElementT* memory; // pointer to memory (list of slab blocks)
+		IndexT* freeTable; // pointer to table of free objects, such that `freeTable[current_free] = next_free`
+		IndexT curFree; // current free object ready for allocation. Must not be accessed if all objects has been allocated
+		size_t size; // current size (amount of objects allocated)
 	public:
 		Slab();
 		Slab(const Slab&) = delete;
 		Slab(Slab&& slab);
 		Slab& operator=(Slab&& slab);
 		~Slab();
+		/*
+		allocates object in slab and constructs it with arguments provided
+		*/
 		template<typename... Args> ElementT* Alloc(Args&&... args);
+		/*
+		frees object in slab. behavior is undefined if pointer does not belong to the slab. 
+		*/
 		void Free(ElementT* value);
+		/*
+		returns current amount of object being allocated
+		*/
 		size_t GetSize() const;
+		/*
+		returns size of object - sizeof(ElementT)
+		*/
 		size_t GetObjectSize() const;
+		/*
+		returns pointer to the beginning of memory. This pointer must not be deleted outside of class
+		*/
 		ElementT* GetNativePointer();
 	};
 
@@ -160,28 +175,61 @@ namespace momo
 	{
 		using Slab = Slab<ElementT, IndexT>;
 		using SlabIt = typename std::vector<Slab>::iterator;
-		std::vector<Slab> busySlabs, partialSlabs, freeSlabs;
-		size_t allocSize;
-		size_t allocCount = 0;
-		void MoveFreeToPartialIfNeed();
-		void AllocateFreeIfNeed();
-		void MovePartialToBusyIfNeed();
-		void MoveBusyToPartial(SlabIt slabIt);
-		void MovePartialToFreeIfNeed(SlabIt slabIt);
-		bool FreeIfInBusy(ElementT* value);
-		bool FreeIfInPartial(ElementT* value);
-		bool InRange(ElementT* begin, ElementT* value, ElementT* end) const;
+		std::vector<Slab> busySlabs, partialSlabs, freeSlabs; // lists of slabs
+		uint64_t allocSize; // amount of new slabs allocated in case that free list become empty
+		uint64_t allocCount = 0; // amount of objects allocated in slabs
+		void MoveFreeToPartialIfNeed(); // moves free slab to partial if there are no partial slabs available
+		void AllocateFreeIfNeed(); // allocated [allocSize] free slabs in case all free slabs were moved to partial list
+		void MovePartialToBusyIfNeed(); // moves partial slab to busy in case all objects in slab were allocated
+		void MoveBusyToPartial(SlabIt slabIt); // moves busy slab to partial by iterator in case any of busy objects was freed
+		void MovePartialToFreeIfNeed(SlabIt slabIt); // moves partial slab to free by iterator in case all objects in slab were freed
+		bool FreeIfInBusy(ElementT* value); // checks if pointer belongs to any of busy slabs and frees object if it was found
+		bool FreeIfInPartial(ElementT* value); // checks if pointer belongs to any of partial slabs and frees object if it was found
+		bool InRange(ElementT* begin, ElementT* value, ElementT* end) const; // checks if pointer belongs to [begin; end] interval
 	public:
+		/*
+		construct allocator object with [freeAllocCount] slabs in free list
+		*/
 		SlabAllocator(size_t freeAllocCount);
-		
+		/*
+		allocates object in slab. Object is being constructed using args provided. Returns nullptr on failure
+		*/
 		template<typename... Args> ElementT* Alloc(Args&&... args);
+		/*
+		frees object in slab. If pointer does not belong to any of the slabs, no action is performed
+		*/
 		void Free(ElementT* value);
+		/*
+		forces allocator to move slabs according to their busyness. Note that allocator automatically does that during Free() method
+		*/
 		void ReallocateSlabs();
-		size_t GetAllocCount() const;
+		/*
+		forces allocator to clear empty slab list and release all its memory. Calling this function can reduce performance
+		*/
+		void ReleaseFreeSlabs();
+		/*
+		returns total amount of allocated objects in slabs
+		*/
+		uint64_t GetAllocCount() const;
+		/*
+		returns object size in bytes - sizeof(ElementT)
+		*/
 		size_t GetObjectSize() const;
-
+		/*
+		returns total amount of memory occupied by allocator
+		*/
+		uint64_t GetTotalMemory() const;
+		/*
+		returns reference to free slab list
+		*/
 		std::vector<Slab>& GetFreeSlabs();
+		/*
+		returns reference to partial slab list
+		*/
 		std::vector<Slab>& GetPartialSlabs();
+		/*
+		returns reference to busy slab list
+		*/
 		std::vector<Slab>& GetBusySlabs();
 	};
 
@@ -201,7 +249,7 @@ namespace momo
 	{
 		if (freeSlabs.empty())
 		{
-			freeSlabs.resize(allocSize);
+			freeSlabs.resize((size_t)allocSize);
 		}
 	}
 
@@ -287,7 +335,7 @@ namespace momo
 	inline void SlabAllocator<ElementT, IndexT>::Free(ElementT* value)
 	{
 		if (!FreeIfInPartial(value))
-			FreeIfInBusy();
+			FreeIfInBusy(value);
 	}
 
 	template<typename ElementT, typename IndexT>
@@ -317,7 +365,14 @@ namespace momo
 	}
 
 	template<typename ElementT, typename IndexT>
-	inline size_t SlabAllocator<ElementT, IndexT>::GetAllocCount() const
+	inline void SlabAllocator<ElementT, IndexT>::ReleaseFreeSlabs()
+	{
+		freeSlabs.clear();
+		freeSlabs.shrink_to_fit();
+	}
+
+	template<typename ElementT, typename IndexT>
+	inline uint64_t SlabAllocator<ElementT, IndexT>::GetAllocCount() const
 	{
 		return allocCount;
 	}
@@ -326,6 +381,13 @@ namespace momo
 	inline size_t SlabAllocator<ElementT, IndexT>::GetObjectSize() const
 	{
 		return sizeof(ElementT);
+	}
+
+	template<typename ElementT, typename IndexT>
+	inline uint64_t SlabAllocator<ElementT, IndexT>::GetTotalMemory() const
+	{
+		return ((uint64_t)freeSlabs.capacity() + partialSlabs.capacity() + busySlabs.capacity()) *
+				sizeof(Slab) * Slab::maxSize * (sizeof(ElementT) + sizeof(IndexT));
 	}
 
 	template<typename ElementT, typename IndexT>

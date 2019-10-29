@@ -56,10 +56,6 @@ namespace MSL
 					if (lexer->Peek().type == Token::Type::OBJECT)
 					{
 						std::string namespaceName = lexer->Peek().value;
-						if (assembly.ContainsNamespace(namespaceName))
-						{
-							THROW("namespace already declared: " + namespaceName);
-						}
 						lexer->Next(); // skipping [namespace name] -> `{`
 						if (lexer->Peek().type != Token::Type::BRACE_BRACKET_O)
 						{
@@ -67,7 +63,17 @@ namespace MSL
 						}
 						lexer->Next(); // skipping `{`
 
-						Namespace _namespace(namespaceName);
+						Namespace* namespacePtr = nullptr;
+						Namespace namespaceInstance(namespaceName);
+						if (assembly.ContainsNamespace(namespaceName))
+						{
+							namespacePtr = &assembly.GetNamespaceByName(namespaceName);
+						}
+						else
+						{
+							namespacePtr = &namespaceInstance;
+						}
+						Namespace& _namespace = *namespacePtr;
 
 						if (!GenerateMembers(_namespace))
 						{
@@ -694,7 +700,7 @@ namespace MSL
 					THROW("invalid parameter name");
 				}
 
-				const std::string paramName = lexer->Peek().value;
+				std::string& paramName = lexer->Peek().value;
 				if (std::find(parameters.begin(), parameters.end(), paramName) != parameters.end())
 				{
 					THROW("function parameter duplicate");

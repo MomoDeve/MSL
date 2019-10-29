@@ -26,40 +26,27 @@ namespace MSL
 		AssemblyEditor::AssemblyEditor(std::istream* binaryFile, std::ostream* errorStream)
 			: file(*binaryFile), error(*errorStream), success(true) { }
 
-		bool AssemblyEditor::MergeAssemblies(AssemblyType& assembly, bool checkErrors, bool allowExtraAlloc, CallPath* callPath)
+		bool AssemblyEditor::MergeAssemblies(AssemblyType& assembly, bool checkErrors, CallPath* callPath)
 		{
 			performCheck = checkErrors;
-			extraAlloc = allowExtraAlloc;
 			entryPoint = callPath;
 			AssemblyType secondAssembly = ReadAssembly();
 
-			if (performCheck)
-			{
-				for (const auto& ns : secondAssembly.namespaces)
-				{
-					if (assembly.namespaces.find(ns.second.name) != assembly.namespaces.end())
-					{
-						DisplayError("Trying to add namespace dublicate: " + ns.second.name);
-						errors |= ERROR::DECLARATION_DUBLICATE;
-						success = false;
-						break;
-					}
-				}
-			}
 			std::string namespaceEntry;
 			if (callPath != nullptr && callPath->GetNamespace() != nullptr)
 			{
 				namespaceEntry = *callPath->GetNamespace();
 			}
-			if (extraAlloc)
-			{
-				ReserveExtraSpace(assembly.namespaces, secondAssembly.namespaces.size());
-			}
+			ReserveExtraSpace(assembly.namespaces, secondAssembly.namespaces.size());
 			if (success)
 			{
 				for (auto it = secondAssembly.namespaces.begin(); it != secondAssembly.namespaces.end(); it++)
 				{
-					assembly.namespaces.insert(std::move(*it));
+					auto nsIt = assembly.namespaces.find(it->second.name);
+					if (nsIt == assembly.namespaces.end())
+						assembly.namespaces.insert(std::move(*it));
+					else
+						MergeNamespaces(nsIt->second, it->second);
 				}
 			}
 			if (!namespaceEntry.empty())
@@ -80,7 +67,7 @@ namespace MSL
 			if (!ExpectOpcode(OPCODE::ASSEMBLY_BEGIN_DECL, ReadOPCode())) return assembly;
 			if (!ExpectOpcode(OPCODE::NAMESPACE_POOL_DECL_SIZE, ReadOPCode())) return assembly;
 			size_t namespacePoolSize = ReadSize();
-			if (extraAlloc) ReserveExtraSpace(assembly.namespaces, namespacePoolSize);
+			ReserveExtraSpace(assembly.namespaces, namespacePoolSize);
 			
 			for (size_t i = 0; i < namespacePoolSize; i++)
 			{
@@ -118,7 +105,7 @@ namespace MSL
 			}
 			if (!ExpectOpcode(OPCODE::CLASS_POOL_DECL_SIZE, ReadOPCode())) return ns;
 			size_t classPoolSize = ReadSize();
-			if (extraAlloc) ReserveExtraSpace(ns.classes, classPoolSize);
+			ReserveExtraSpace(ns.classes, classPoolSize);
 
 			for (size_t i = 0; i < classPoolSize; i++)
 			{
@@ -177,7 +164,7 @@ namespace MSL
 
 			if (!ExpectOpcode(OPCODE::METHOD_POOL_DECL_SIZE, ReadOPCode())) return c;
 			size_t methodPoolSize = ReadSize();
-			if (extraAlloc) ReserveExtraSpace(c.methods, methodPoolSize);
+			ReserveExtraSpace(c.methods, methodPoolSize);
 
 			for (size_t i = 0; i < methodPoolSize; i++)
 			{
@@ -212,7 +199,7 @@ namespace MSL
 				{
 					if (entryPoint->GetMethod() != nullptr)
 					{
-						DisplayError("Trying to add second entry-point to assembly: " + method.name);
+						DisplayError("Trying to add second entry-point to assembly: " + c.namespaceName + '.' + c.name + '.' + method.name);
 						errors |= ERROR::ENTRY_POINT_DUBLICATE;
 					}
 					else
@@ -268,7 +255,7 @@ namespace MSL
 
 			if (!ExpectOpcode(OPCODE::METHOD_BODY_BEGIN_DECL, ReadOPCode())) return method;
 			OPCODE op = OPCODE::METHOD_BODY_BEGIN_DECL;
-			if (extraAlloc) ReserveExtraSpace(method.body, dependencyPoolSize);
+			ReserveExtraSpace(method.body, dependencyPoolSize);
 
 			while (op != OPCODE::ERROR_SYMBOL)
 			{
@@ -403,9 +390,6 @@ namespace MSL
 					WRITE_OPCODE(OPCODE::JUMP_IF_FALSE);
 					WRITE_LABEL;
 					break;
-				case (OPCODE::PUSH_STACKFRAME):
-					WRITE_OPCODE(OPCODE::PUSH_STACKFRAME);
-					break;
 				case (OPCODE::POP_STACK_TOP):
 					WRITE_OPCODE(OPCODE::POP_STACK_TOP);
 					break;
@@ -421,6 +405,25 @@ namespace MSL
 			#undef WRITE_HASH
 			ExpectOpcode(OPCODE::METHOD_BODY_END_DECL, op); // reaches only if error occured
 			return method;
+		}
+
+		void AssemblyEditor::MergeNamespaces(NamespaceType& ns1, NamespaceType& ns2)
+		{
+			for (auto it = ns2.classes.begin(); it != ns2.classes.end(); it++)
+			{
+				if (ns1.classes.find(it->second.name) != ns1.classes.end())
+				{
+					DisplayError("Trying to add class dublicate: " + ns1.name + '.' + it->second.name);
+					errors |= ERROR::DECLARATION_DUBLICATE;
+					return;
+				}
+				ns1.friendNamespaces.insert(
+					std::make_move_iterator(ns2.friendNamespaces.begin()),
+					std::make_move_iterator(ns2.friendNamespaces.begin())
+				);
+				std::string className = it->second.name;
+				ns1.classes.insert(std::move(*it));
+			}
 		}
 
 		void AssemblyEditor::RegisterLabelInMethod(MethodType& method, uint16_t label)

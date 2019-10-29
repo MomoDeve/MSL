@@ -1,4 +1,4 @@
-namespace System
+/*namespace System
 {
 	public interface Console
 	{
@@ -30,7 +30,17 @@ namespace System
 		function GetByIter(iter);
 		function Next(iter);
 	}
-}
+	
+	public interface GC
+	{
+		function Collect();
+		function Disable();
+		function Enable();
+		function SetMinimalMemory(value);
+		function SetMaximalMemory(value);
+		function SetLogPermission(value);
+	}
+}*/
 
 namespace Utils
 {	
@@ -338,8 +348,6 @@ namespace Program
 		
 		public static function Main()
 		{				
-			ArrayTest();
-		
 			var str1 = "hello world!";
 			var match = "hello";
 			Console.PrintLine("\nreplacing symbols in \"" + str1 + "\":");

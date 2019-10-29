@@ -20,7 +20,6 @@ namespace MSL
 			CallPath* entryPoint = nullptr;
 			bool success = true;
 			bool performCheck = true;
-			bool extraAlloc = true;
 			uint8_t errors = 0;
 
 			OPCODE ReadOPCode();
@@ -33,6 +32,7 @@ namespace MSL
 			ClassType ReadClass();
 			AttributeType ReadAttribute();
 			MethodType ReadMethod();
+			void MergeNamespaces(NamespaceType& ns1, NamespaceType& ns2);
 			void RegisterLabelInMethod(MethodType& method, uint16_t label);
 			template<typename T> T GenericRead();
 			template<typename T> void AddIntegerToByteArray(std::vector<uint8_t>& bytes, T integer);
@@ -49,7 +49,7 @@ namespace MSL
 			};
 
 			AssemblyEditor(std::istream* binaryFile, std::ostream* errorStream);
-			bool MergeAssemblies(AssemblyType& assembly, bool checkErrors, bool allowExtraAlloc, CallPath* callPath);
+			bool MergeAssemblies(AssemblyType& assembly, bool checkErrors, CallPath* callPath);
 			uint8_t GetErrors() const;
 		};
 

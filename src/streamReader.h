@@ -11,8 +11,6 @@ namespace MSL
 {
 	namespace compiler
 	{
-		#define DOUBLE_OPERATORS "&|=<>%+-*/^!~"
-
 		/*
 		StreamReader class is used to edit source code of the MSL program: 
 		it deleted comments, replace strings with aliases and divide file content for lexer

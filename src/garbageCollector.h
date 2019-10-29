@@ -29,12 +29,13 @@ namespace MSL
 			uint64_t managedObjects;
 			uint64_t allocSinceIter = 0;
 			uint64_t clearedMemory;
+			uint64_t totalIters = 0;
 			std::chrono::time_point<std::chrono::system_clock> lastIter;
 
 			template<typename T>
-			inline void Init(Allocator<T>& allocator, size_t initSize)
+			inline void Init(Allocator<T>& allocator, uint64_t initSize)
 			{
-				allocator.reset(new momo::SlabAllocator<T>(initSize));
+				allocator.reset(new momo::SlabAllocator<T>((size_t)initSize));
 			}
 
 			template<typename T>
@@ -57,14 +58,17 @@ namespace MSL
 
 			GarbageCollector(std::ostream* log = nullptr, size_t allocSize = 1);
 			void SetLogStream(std::ostream* log);
-			void SetInitCapacity(size_t capacity);
+			void SetInitCapacity(uint64_t capacity);
 			void Collect(AssemblyType& assembly, std::vector<CallPath>& callStack, std::vector<BaseObject*> objectStack);
 			void ReleaseMemory();
+			void ReleaseFreeMemory();
 			std::chrono::milliseconds GetTimeSinceLastIteration() const;
 			uint64_t GetTotalMemoryAlloc() const;
 			uint64_t GetMemoryAllocSinceIter() const;
 			uint64_t GetClearedMemorySinceIter() const;
 			uint64_t GetClearedObjectCount() const;
+			uint64_t GetTotalIterations() const;
+			uint64_t GetTotalMemoryUsage() const;
 		};
 
 		template<typename T>

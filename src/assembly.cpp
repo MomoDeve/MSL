@@ -9,6 +9,11 @@ namespace MSL
 		{
 		}
 
+		Namespace& Assembly::GetNamespaceByName(const std::string& namespaceName)
+		{
+			return namespaces[table[namespaceName]];
+		}
+
 		void Assembly::InsertNamespace(const std::string& name, Namespace&& _namespace)
 		{
 			size_t index = namespaces.size();

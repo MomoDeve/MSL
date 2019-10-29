@@ -95,7 +95,6 @@ namespace MSL
 				writeString(variable);
 			}
 			write(OPCODE::METHOD_BODY_BEGIN_DECL);
-			write(OPCODE::PUSH_STACKFRAME);
 			method.GenerateBytecode(*this);
 			write(OPCODE::METHOD_BODY_END_DECL);
 		}

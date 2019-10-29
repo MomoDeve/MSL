@@ -38,6 +38,11 @@ namespace MSL
 			*/
 			Assembly(Assembly&& assembly);
 			/*
+			returns reference to namespace with name provided as argument. No check for existance is performed
+			Reference becomes not valid, if any new namespace was inserted to assembly
+			*/
+			Namespace& GetNamespaceByName(const std::string& namespaceName);
+			/*
 			moves namespace to NamespaceArray and adds its name to hash-table
 			if namespace name already existed in table, it will be overwriten in hash-table, but not deleted from NamespaceArray
 			*/

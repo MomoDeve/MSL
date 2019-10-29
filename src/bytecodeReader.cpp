@@ -58,8 +58,6 @@ namespace MSL
 					break;
 				OPCODE_CASE(RETURN)
 					break;
-				OPCODE_CASE(PUSH_STACKFRAME)
-					break;
 				OPCODE_CASE(ASSEMBLY_BEGIN_DECL)
 					break;
 				OPCODE_CASE(ASSEMBLY_END_DECL)

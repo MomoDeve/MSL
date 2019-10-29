@@ -4,6 +4,8 @@ namespace MSL
 {
 	namespace compiler
 	{
+		#define DOUBLE_OPERATORS "&|=<>%+-*/^!~"
+
 		std::string StreamReader::GetBuffer() const
 		{
 			return buffer.str();

@@ -131,7 +131,7 @@ VM constuctor accepts config as an argument, but for our purposes we do not have
 Assuming that bytecode located in *main.emsl* file, we can open it with std::ifstream and pass it to AddBytecodeFile() method:
 ```cpp
 std::ifstream fs("main.emsl", std::ios::binary);
-if (!VM.AddBytecodeFile(&fs))
+if (VM.AddBytecodeFile(&fs))
 {
    VM.Run();
 }

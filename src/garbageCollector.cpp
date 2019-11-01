@@ -1,4 +1,5 @@
 #include "garbageCollector.h"
+#include "stringExtensions.h"
 
 MSL::VM::GarbageCollector::GarbageCollector(std::ostream* log, size_t allocSize)
 {
@@ -33,6 +34,7 @@ void MSL::VM::GarbageCollector::SetInitCapacity(uint64_t allocSize)
 	Init(this->stringAlloc, allocSize);
 	Init(this->unknownObjAlloc, allocSize);
 	Init(this->arrayAlloc, allocSize);
+	Init(this->frameAlloc, allocSize);
 }
 
 void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<CallPath>& callStack, std::vector<BaseObject*> objectStack)
@@ -62,23 +64,16 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 	managedObjects = 0;
 	clearedObjects = 0;
 	clearedMemory = 0;
+	managedMemory = 0;
 
-	ClearSlabs(this->attributeAlloc);
-	ClearSlabs(this->classObjAlloc);
-	ClearSlabs(this->classWrapAlloc);
-	ClearSlabs(this->floatAlloc);
-	ClearSlabs(this->integerAlloc);
-	ClearSlabs(this->localObjAlloc);
-	ClearSlabs(this->nsWrapAlloc);
-	ClearSlabs(this->stringAlloc);
-	ClearSlabs(this->unknownObjAlloc);
-	ClearSlabs(this->arrayAlloc);
-	ClearSlabs(this->frameAlloc);
+	ReleaseMemory();
 
 	auto endTimePoint = std::chrono::system_clock::now();
 	auto elapsedTime = endTimePoint - lastIter;
 	lastIter = endTimePoint;
 	auto msTime = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+
+	uint64_t totalMemory = GetTotalMemoryAlloc();
 
 	if (out != nullptr)
 	{
@@ -88,27 +83,26 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 		*out << "[GC]: full garbage collection done in " << msTime << " ms\n";
 		*out << "[GC]: collected total of " << clearedObjects << " objects\n";
 		*out << "[GC]: still managing " << managedObjects << " objects\n";
-		*out << "[GC]: objects allocated:\n";
-		*out << "      since last iter: " << GetMemoryAllocSinceIter() << '\n';
-		*out << "      since start: " << GetTotalMemoryAlloc() << '\n';
+		*out << "[GC]: cleared memory: " << formatBytes(clearedMemory) << '\n';
+		*out << "[GC]: managed memory: " << formatBytes(totalMemory) << '\n';
 		*out << "------------------------------------------\n";
 	}
-	allocSinceIter = GetTotalMemoryAlloc();
+	allocSinceIter = totalMemory;
 }
 
 void MSL::VM::GarbageCollector::ReleaseMemory()
 {
-	classObjAlloc.reset();
-	classWrapAlloc.reset();
-	nsWrapAlloc.reset();
-	unknownObjAlloc.reset();
-	integerAlloc.reset();
-	floatAlloc.reset();
-	stringAlloc.reset();
-	localObjAlloc.reset();
-	attributeAlloc.reset();
-	arrayAlloc.reset();
-	frameAlloc.reset();
+	ClearSlabs(this->attributeAlloc);
+	ClearSlabs(this->classObjAlloc);
+	ClearSlabs(this->classWrapAlloc);
+	ClearSlabs(this->floatAlloc);
+	ClearSlabs(this->integerAlloc);
+	ClearSlabs(this->localObjAlloc);
+	ClearSlabs(this->nsWrapAlloc);
+	ClearSlabs(this->stringAlloc);
+	ClearSlabs(this->unknownObjAlloc);
+	ClearSlabs(this->frameAlloc);
+	ClearSlabs(this->arrayAlloc);
 }
 
 void MSL::VM::GarbageCollector::ReleaseFreeMemory()
@@ -134,8 +128,8 @@ std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration()
 
 uint64_t MSL::VM::GarbageCollector::GetTotalMemoryAlloc() const
 {
-	uint64_t total = 0;
-	#define COUNT(x) total += x->GetAllocCount() * x->GetObjectSize()
+	uint64_t total = this->managedMemory;
+	#define COUNT(x) total += x->GetAllocCount() * x->GetObjectSize() + x->managedMemory;
 	COUNT(classObjAlloc);
 	COUNT(classWrapAlloc);
 	COUNT(nsWrapAlloc);
@@ -147,6 +141,7 @@ uint64_t MSL::VM::GarbageCollector::GetTotalMemoryAlloc() const
 	COUNT(attributeAlloc);
 	COUNT(arrayAlloc);
 	COUNT(frameAlloc);
+	#undef COUNT
 
 	return total;
 }
@@ -171,21 +166,15 @@ uint64_t MSL::VM::GarbageCollector::GetTotalIterations() const
 	return totalIters;
 }
 
-uint64_t MSL::VM::GarbageCollector::GetTotalMemoryUsage() const
+void MSL::VM::GarbageCollector::PrintLog() const
 {
-	uint64_t total = 0;
-	#define COUNT(x) total += x->GetTotalMemory()
-	COUNT(classObjAlloc);
-	COUNT(classWrapAlloc);
-	COUNT(nsWrapAlloc);
-	COUNT(unknownObjAlloc);
-	COUNT(integerAlloc);
-	COUNT(floatAlloc);
-	COUNT(stringAlloc);
-	COUNT(localObjAlloc);
-	COUNT(attributeAlloc);
-	COUNT(arrayAlloc);
-	COUNT(frameAlloc);
-
-	return total;
+	if (out != nullptr)
+	{
+		*out << std::endl;
+		*out << "------------------------------------------\n";
+		*out << "[GC]: iterations finished: " << GetTotalIterations() << '\n';
+		*out << "[GC]: object managed " << managedObjects << " objects\n";
+		*out << "[GC]: managed memory: " << formatBytes(GetTotalMemoryAlloc()) << '\n';
+		*out << "------------------------------------------\n";
+	}
 }

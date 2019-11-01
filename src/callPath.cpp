@@ -42,5 +42,10 @@ namespace MSL
 		{
 			this->frame = frame;
 		}
+
+		size_t Frame::GetSize() const
+		{
+			return locals.size() * sizeof(std::pair<std::string, Local>);
+		}
 	}
 }

@@ -75,4 +75,8 @@ namespace MSL
 	checks if str is a valid variable name in MSL language
 	*/
 	bool isObject(const std::string& str);
+	/*
+	outputs amount of bytes with convertion to KB / MB / GB if nessasary
+	*/
+	std::string formatBytes(uint64_t bytes);
 }

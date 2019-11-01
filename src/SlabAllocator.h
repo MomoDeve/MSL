@@ -5,6 +5,7 @@
 // #define MEMORY_CHECK
 // uncomment define statement to enable check for memory access
 
+#pragma region Slab
 namespace momo
 {
 	template<typename ElementT, typename IndexT>
@@ -169,7 +170,7 @@ namespace momo
 	{
 		return memory;
 	}
-
+#pragma endregion
 	template<typename ElementT, typename IndexT = uint8_t>
 	class SlabAllocator
 	{
@@ -187,6 +188,7 @@ namespace momo
 		bool FreeIfInPartial(ElementT* value); // checks if pointer belongs to any of partial slabs and frees object if it was found
 		bool InRange(ElementT* begin, ElementT* value, ElementT* end) const; // checks if pointer belongs to [begin; end] interval
 	public:
+		uint64_t managedMemory = 0; // MSL GC derived. Count memory (in bytes), allocated by objects
 		/*
 		construct allocator object with [freeAllocCount] slabs in free list
 		*/
@@ -417,6 +419,7 @@ namespace momo
 		Slab& slab = partialSlabs.back();
 		ElementT* element = slab.Alloc(std::forward<Args>(args)...);
 		MovePartialToBusyIfNeed();
+		managedMemory += element->GetSize(); // MSL GC derived
 		return element;
 	}
 }

@@ -397,6 +397,11 @@ namespace momo
 		return res;
 	}
 
+	size_t big_integer::size_bytes() const
+	{
+		return sizeof(BigInteger) + _digits.capacity() * sizeof(int32_t);
+	}
+
 	std::ostream& operator<<(std::ostream& out, const big_integer& num)
 	{
 		out << num.to_string();

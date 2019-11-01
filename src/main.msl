@@ -347,7 +347,7 @@ namespace Program
 		}
 		
 		public static function Main()
-		{				
+		{		
 			var str1 = "hello world!";
 			var match = "hello";
 			Console.PrintLine("\nreplacing symbols in \"" + str1 + "\":");

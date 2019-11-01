@@ -50,6 +50,7 @@ namespace MSL
 			virtual std::string ToString() const  = 0;
 			virtual std::string GetExtraInfo() const = 0;
 			virtual void MarkMembers();
+			virtual size_t GetSize() const = 0;
 			virtual ~BaseObject() = default;
 		};
 
@@ -59,6 +60,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct TrueObject : BaseObject
@@ -67,6 +69,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct FalseObject : BaseObject
@@ -75,6 +78,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct ClassWrapper : BaseObject
@@ -86,6 +90,7 @@ namespace MSL
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct NamespaceWrapper : BaseObject
@@ -97,6 +102,7 @@ namespace MSL
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct AttributeObject : BaseObject
@@ -109,6 +115,7 @@ namespace MSL
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct ClassObject : BaseObject
@@ -122,6 +129,7 @@ namespace MSL
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct IntegerObject : BaseObject
@@ -133,6 +141,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct FloatObject : BaseObject
@@ -144,6 +153,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct StringObject : BaseObject
@@ -155,6 +165,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct Local
@@ -173,6 +184,7 @@ namespace MSL
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct UnknownObject : BaseObject
@@ -183,6 +195,7 @@ namespace MSL
 
 			virtual std::string ToString() const  override;
 			virtual std::string GetExtraInfo() const override;
+			virtual size_t GetSize() const override;
 		};
 
 		struct ArrayObject : BaseObject
@@ -195,6 +208,7 @@ namespace MSL
 			virtual std::string ToString() const override;
 			virtual std::string GetExtraInfo() const override;
 			virtual void MarkMembers() override;
+			virtual size_t GetSize() const override;
 		};
 	}
 }

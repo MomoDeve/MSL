@@ -26,6 +26,7 @@ namespace MSL
 			Frame() = default;
 			Frame(Frame&&) = default;
 			Frame& operator=(Frame&&) = default;
+			size_t GetSize() const;
 		};
 
 		class CallPath

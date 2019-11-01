@@ -184,4 +184,29 @@ namespace MSL
 	{
 		return std::regex_match(str, std::regex(R"(\w+)"));
 	}
+	std::string formatBytes(uint64_t bytes)
+	{
+		int KB = 1024;
+		int MB = 1024 * 1024;
+		int GB = 1024 * 1024 * 1024;
+		if (bytes / GB > 0)
+		{
+			int amount = bytes * 100 / GB;
+			return std::to_string(amount / 100) + '.' + std::to_string(amount % 100) + " GB";
+		}
+		else if (bytes / MB > 0)
+		{
+			int amount = bytes * 100 / MB;
+			return std::to_string(amount / 100) + '.' + std::to_string(amount % 100) + " MB";
+		}
+		else if (bytes / KB > 0)
+		{
+			int amount = bytes * 100 / KB;
+			return std::to_string(amount / 100) + '.' + std::to_string(amount % 100) + " KB";
+		}
+		else
+		{
+			return std::to_string(bytes) + " bytes";
+		}
+	}
 }

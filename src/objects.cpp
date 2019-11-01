@@ -27,6 +27,11 @@ namespace MSL
 			return "String";
 		}
 
+		size_t StringObject::GetSize() const
+		{
+			return value.capacity() < 16 ? 0 : value.capacity();
+		}
+
 		FloatObject::FloatObject(FloatObject::InnerType value)
 			: value((value)), BaseObject(Type::FLOAT) { }
 
@@ -44,6 +49,11 @@ namespace MSL
 			return "Float";
 		}
 
+		size_t FloatObject::GetSize() const
+		{
+			return 0;
+		}
+
 		IntegerObject::IntegerObject(IntegerObject::InnerType value)
 			: value(value), BaseObject(Type::INTEGER) { }
 
@@ -55,6 +65,11 @@ namespace MSL
 		std::string IntegerObject::GetExtraInfo() const
 		{
 			return "BigInteger";
+		}
+
+		size_t IntegerObject::GetSize() const
+		{
+			return value.size_bytes() - sizeof(value); // value counts twice because of size_bytes()
 		}
 
 		ClassObject::ClassObject(const ClassType* type)
@@ -80,6 +95,11 @@ namespace MSL
 				attr->MarkMembers();
 			}
 		}
+
+		size_t ClassObject::GetSize() const
+		{
+			return attributes.size() * sizeof(std::pair<std::string, AttributeObject*>);
+		}
 			
 		NullObject::NullObject()
 			: BaseObject(Type::NULLPTR) { }
@@ -92,6 +112,11 @@ namespace MSL
 		std::string NullObject::GetExtraInfo() const
 		{
 			return std::string();
+		}
+
+		size_t NullObject::GetSize() const
+		{
+			return 0;
 		}
 
 		TrueObject::TrueObject()
@@ -107,6 +132,11 @@ namespace MSL
 			return " Boolean";
 		}
 
+		size_t TrueObject::GetSize() const
+		{
+			return 0;
+		}
+
 		FalseObject::FalseObject()
 			: BaseObject(Type::FALSE) { }
 
@@ -118,6 +148,11 @@ namespace MSL
 		std::string FalseObject::GetExtraInfo() const
 		{
 			return " Boolean";
+		}
+
+		size_t FalseObject::GetSize() const
+		{
+			return 0;
 		}
 
 		NamespaceWrapper::NamespaceWrapper(const NamespaceType* type)
@@ -150,6 +185,11 @@ namespace MSL
 			}
 		}
 
+		size_t NamespaceWrapper::GetSize() const
+		{
+			return 0;
+		}
+
 		ClassWrapper::ClassWrapper(const ClassType* type)
 			: type(type), BaseObject(Type::CLASS) { }
 
@@ -180,6 +220,11 @@ namespace MSL
 			type->staticInstance->MarkMembers();
 		}
 
+		size_t ClassWrapper::GetSize() const
+		{
+			return 0;
+		}
+
 		UnknownObject::UnknownObject(const std::string* ref)
 			: BaseObject(Type::UNKNOWN), ref(ref) { }
 
@@ -191,6 +236,11 @@ namespace MSL
 		std::string UnknownObject::GetExtraInfo() const
 		{
 			return "unresolved reference";
+		}
+
+		size_t UnknownObject::GetSize() const
+		{
+			return 0;
 		}
 
 		LocalObject::LocalObject(Local& ref, const std::string& name)
@@ -211,6 +261,11 @@ namespace MSL
 			RET_IF_MARKED;
 			BaseObject::MarkMembers();
 			ref.object->MarkMembers();
+		}
+
+		size_t LocalObject::GetSize() const
+		{
+			return name.capacity() < 16 ? 0 : name.capacity();
 		}
 
 		AttributeObject::AttributeObject(const AttributeType* type)
@@ -236,6 +291,11 @@ namespace MSL
 			RET_IF_MARKED;
 			BaseObject::MarkMembers();
 			object->MarkMembers();
+		}
+
+		size_t AttributeObject::GetSize() const
+		{
+			return 0;
 		}
 
 		std::string ToString(Type type)
@@ -296,5 +356,9 @@ namespace MSL
 				member.object->MarkMembers();
 			}
 		}
-}
+		size_t ArrayObject::GetSize() const
+		{
+			return array.capacity() * sizeof(Local);
+		}
+	}
 }

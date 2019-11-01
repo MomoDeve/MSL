@@ -1622,7 +1622,7 @@ namespace MSL
 						return;
 					}
 					uint64_t val = std::stoull(memory.to_string());
-					config.GC.initAlloc = val;
+					config.GC.minMemory = val;
 					objectStack.push_back(AllocNull());
 				}
 				else if (_method->name == "SetMaximalMemory_1")
@@ -1639,7 +1639,7 @@ namespace MSL
 						return;
 					}
 					uint64_t val = std::stoull(memory.to_string());
-					config.GC.maxAlloc = val;
+					config.GC.maxMemory = val;
 					objectStack.push_back(AllocNull());
 				}
 				else if (_method->name == "SetLogPermission_1")
@@ -2165,9 +2165,9 @@ namespace MSL
 			uint64_t iterAlloc = GC.GetMemoryAllocSinceIter();
 
 			if (forceCollection ||
-			   (5 * iterAlloc > config.GC.initAlloc && 
-			   (2 * iterAlloc > GC.GetClearedMemorySinceIter()  || 
-			   (std::rand() % 32003 == 0))))
+			   (iterAlloc > config.GC.minMemory && 
+			   (iterAlloc > GC.GetClearedMemorySinceIter()  || 
+			   false)))//(std::rand() % 32003 == 0))))
 			{
 				trueObject.MarkMembers();
 				falseObject.MarkMembers();
@@ -2175,11 +2175,14 @@ namespace MSL
 				GC.Collect(this->assembly, this->callStack, this->objectStack);
 			}
 
-			uint64_t totalMemory = GC.GetTotalMemoryUsage();
-			if (totalMemory > config.GC.maxAlloc)
+			uint64_t totalMemory = GC.GetTotalMemoryAlloc();
+			if (totalMemory > config.GC.maxMemory)
 			{
 				if ((errors & ERROR::OUT_OF_MEMORY) == 0)
-					DisplayError("VM hit alloc limit, allocated more than: " + std::to_string(config.GC.maxAlloc) + " bytes");
+				{
+					DisplayError("VM hit alloc limit, allocated memory: " + formatBytes(totalMemory));
+					DisplayInfo("max memory of VM was set to: " + formatBytes(config.GC.maxMemory));
+				}
 				errors |= ERROR::OUT_OF_MEMORY;
 				return;
 			}
@@ -2879,19 +2882,26 @@ namespace MSL
 			{
 				errors |= ERROR::OUT_OF_MEMORY;
 				DisplayError("VM hit memory limit and fatal error accured. Execution cancelled");
+				if (config.streams.error != nullptr)
+					*config.streams.error << "GC log information:";
+				GC.SetLogStream(config.streams.error);
+				GC.PrintLog();
+				GC.ReleaseMemory();
 			}
-			catch (std::exception& e)
+			catch (std::exception & e)
 			{
 				DisplayError("an exception accured during VM execution: ");
 				if (config.streams.error != nullptr) *config.streams.error << e.what() << std::endl;
+				GC.ReleaseMemory();
 			}
 
 			auto endTimePoint = std::chrono::system_clock::now();
 			auto elapsedTime = endTimePoint - startTimePoint;
-			CollectGarbage(true);
 
 			if (errors == 0)
 			{
+				CollectGarbage(true);
+
 				if (objectStack.size() > 1)
 				{
 					errors |= ERROR::OBJECTSTACK_CORRUPTION;

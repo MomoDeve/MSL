@@ -30,6 +30,7 @@ namespace MSL
 			uint64_t allocSinceIter = 0;
 			uint64_t clearedMemory;
 			uint64_t totalIters = 0;
+			uint64_t managedMemory = 0;
 			std::chrono::time_point<std::chrono::system_clock> lastIter;
 
 			template<typename T>
@@ -68,7 +69,7 @@ namespace MSL
 			uint64_t GetClearedMemorySinceIter() const;
 			uint64_t GetClearedObjectCount() const;
 			uint64_t GetTotalIterations() const;
-			uint64_t GetTotalMemoryUsage() const;
+			void PrintLog() const;
 		};
 
 		template<typename T>
@@ -80,14 +81,15 @@ namespace MSL
 				switch (objPtr->state)
 				{
 				case GCstate::UNMARKED:
-					slab.Free(objPtr);
 					objPtr->state = GCstate::FREE;
 					this->clearedObjects++;
-					this->clearedMemory += slab.GetObjectSize();
+					this->clearedMemory += objPtr->GetSize();
+					slab.Free(objPtr);
 					break;
 				case GCstate::MARKED:
 					objPtr->state = GCstate::UNMARKED;
 					this->managedObjects++;
+					this->managedMemory += objPtr->GetSize();
 					break;
 				case GCstate::FREE:
 					// object already has been destroyed
@@ -99,6 +101,7 @@ namespace MSL
 		template<typename T>
 		inline void GarbageCollector::ClearSlabs(Allocator<T>& allocator)
 		{
+			allocator->managedMemory = 0;
 			for (auto& slab : allocator->GetBusySlabs())
 			{
 				ClearObjectsInSlab(slab);

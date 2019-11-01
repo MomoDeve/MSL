@@ -75,6 +75,7 @@ namespace momo
 
 		std::string to_string(std::string sep = "") const;
 		double to_double() const;
+		size_t size_bytes() const;
 
 		friend std::ostream& operator<<(std::ostream& out, const big_integer& num);
 		friend const big_integer& max(const big_integer& num1, const big_integer& num2);

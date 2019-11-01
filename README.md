@@ -149,7 +149,7 @@ int main()
     std::ifstream fs("main.emsl", std::ios::binary);
     MSL::VM::Configuration config;
     MSL::VM::VirtualMachine VM(std::move(config));
-    if (!VM.AddBytecodeFile(&fs))
+    if (VM.AddBytecodeFile(&fs))
     {
         VM.Run();
     }

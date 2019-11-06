@@ -1,11 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <istream>
-#include <stack>
-#include <chrono>
-#include <iomanip>
-
 #include "objects.h"
 #include "configuration.h"
 #include "callPath.h"
@@ -92,27 +86,30 @@ namespace MSL
 			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
 			LocalObject* AllocLocal(const std::string& localName, Local& local);
 		public:
-			enum ERROR
+			struct ERROR
 			{
-				CALLSTACK_EMPTY = 1,
-				INVALID_CALL_ARGUMENT = 1 << 1,
-				TERMINATE_ON_LAUNCH = 1 << 2,
-				INVALID_OPCODE = 1 << 3,
-				INVALID_STACKFRAME_OFFSET = 1 << 4,
-				OBJECTSTACK_CORRUPTION = 1 << 5,
-				INVALID_METHOD_SIGNATURE = 1 << 6,
-				OBJECTSTACK_EMPTY = 1 << 7,
-				INVALID_HASH_VALUE = 1 << 8,
-				OBJECT_NOT_FOUND = 1 << 9,
-				MEMBER_NOT_FOUND = 1 << 10,
-				INVALID_STACKOBJECT = 1 << 11,
-				STACKOVERFLOW = 1 << 12,
-				PRIVATE_MEMBER_ACCESS = 1 << 13,
-				CALLSTACK_CORRUPTION = 1 << 14,
-				CONST_MEMBER_MODIFICATION = 1 << 15,
-				ABSTRACT_MEMBER_CALL = 1 << 16,
-				INVALID_METHOD_CALL = 1 << 17,
-				OUT_OF_MEMORY = 1 << 18,
+				enum
+				{
+					CALLSTACK_EMPTY = 1,
+					INVALID_CALL_ARGUMENT = 1 << 1,
+					TERMINATE_ON_LAUNCH = 1 << 2,
+					INVALID_OPCODE = 1 << 3,
+					INVALID_STACKFRAME_OFFSET = 1 << 4,
+					OBJECTSTACK_CORRUPTION = 1 << 5,
+					INVALID_METHOD_SIGNATURE = 1 << 6,
+					OBJECTSTACK_EMPTY = 1 << 7,
+					INVALID_HASH_VALUE = 1 << 8,
+					OBJECT_NOT_FOUND = 1 << 9,
+					MEMBER_NOT_FOUND = 1 << 10,
+					INVALID_STACKOBJECT = 1 << 11,
+					STACKOVERFLOW = 1 << 12,
+					PRIVATE_MEMBER_ACCESS = 1 << 13,
+					CALLSTACK_CORRUPTION = 1 << 14,
+					CONST_MEMBER_MODIFICATION = 1 << 15,
+					ABSTRACT_MEMBER_CALL = 1 << 16,
+					INVALID_METHOD_CALL = 1 << 17,
+					OUT_OF_MEMORY = 1 << 18,
+				};
 			};
 
 			VirtualMachine(Configuration config);

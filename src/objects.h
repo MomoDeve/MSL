@@ -1,13 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-
 #include "namespaceType.h"
 #include "bigInteger.h"
-
-#undef TRUE
-#undef FALSE
 
 namespace MSL
 {

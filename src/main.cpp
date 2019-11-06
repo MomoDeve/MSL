@@ -1,14 +1,8 @@
-#include "streamReader.h"
 #include "lexer.h"
-#include "codeGenerator.h"
-#include "bytecodeReader.h"
+#include "streamReader.h"
 #include "parser.h"
 #include "virtualMachine.h"
-
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <string>
+#include "bytecodeReader.h"
 
 using namespace std;
 
@@ -23,7 +17,7 @@ bool createAssembly(string fileName)
 	MSL::compiler::Lexer lexer(reader.GetBuffer());
 	lexer.ReplaceStrings(reader.GetReplacedStrings());
 
-	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::Mode::ERROR_ONLY);
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::MODE::ERROR_ONLY);
 	parser.Parse();
 
 	if (!parser.ParsingSuccess())
@@ -54,30 +48,113 @@ bool createAssembly(string fileName)
 	return true;
 }
 
-int main(int argc, char* argv[])
+void compileCin(stringstream& ss)
 {
-	string fileName = "main";
-	if (argc == 2)
+	MSL::compiler::StreamReader reader;
+
+	reader.ReadToEnd(ss);
+
+	MSL::compiler::Lexer lexer(reader.GetBuffer());
+	lexer.ReplaceStrings(reader.GetReplacedStrings());
+
+	MSL::compiler::Parser parser(&lexer, &cout, MSL::compiler::Parser::MODE::ERROR_ONLY);
+	parser.Parse();
+
+	if (!parser.ParsingSuccess())
 	{
-		fileName = argv[1];
-		fileName = fileName.substr(0, fileName.size() - 4); // delete ".msl" from file name
+		return;
+	}
+	MSL::compiler::Assembly assembly = parser.PullAssembly();
+
+	MSL::compiler::CodeGenerator generator(assembly);
+	generator.GenerateBytecode();
+
+	stringstream bytecode;
+	bytecode << generator.GetBuffer();
+	MSL::VM::Configuration config;
+	config.streams = { &std::cin, &std::cout, &std::cout };
+	MSL::VM::VirtualMachine VM(move(config));
+	cout << endl;
+	if (VM.AddBytecodeFile(&bytecode))
+	{
+		VM.Run();
+	}
+	auto errors = VM.GetErrorStrings(VM.GetErrors());
+	if (!errors.empty())
+	{
+		cout << "[VM ERRORS]:\n";
+		for (const auto& error : errors)
+		{
+			cout << error << std::endl;
+		}
+	}
+}
+
+void compileFromArgs(int argc, char* argv[])
+{
+	if (argc == 1)
+	{
+		cout << "MSL compiler usage:" << endl;
+		cout << "> MSL compile [file1.msl] [file2.msl] ... - compiles source files to .emsl" << endl;
+		cout << "> MSL run [file1.emsl] [file2.emsl] ... - runs bytecode files in VM" << endl;
+		cout << "> MSL vm [file1.msl] [file2.msl] ... - compiles and runs files in VM" << endl;
+		return;
+	}
+	std::string command = argv[1];
+
+	if (command != "compile" && command != "vm" && command != "run")
+	{
+		cout << "invalid command: " << argv[1] << endl;
+		cout << "launch program with no args for full usage documentation" << endl;
+		return;
 	}
 
-	if (createAssembly(fileName))
-	{
-		MSL::BytecodeReader reader(fileName + ".emsl");
-		std::ofstream binary(fileName + "_binary.bmsl");
-		reader.ReadToEnd(binary);
-		binary.close();
+	std::vector<std::string> executables;
 
+	if (command == "compile" || command == "vm")
+	{
+		for (int i = 2; i < argc; i++)
+		{
+			std::string fileName = argv[i];
+			if (fileName.size() <= 4 || fileName.substr(fileName.size() - 4, fileName.size()) != ".msl")
+			{
+				cout << "invalid filename: " << fileName << endl;
+				return;
+			}
+			fileName = fileName.substr(0, fileName.size() - 4);
+			if (!createAssembly(fileName)) return;
+			cout << argv[i] << " compiled" << endl;
+			executables.push_back(fileName + ".emsl");
+		}
+	}
+	else if (command == "run")
+	{
+		for (int i = 2; i < argc; i++)
+		{
+			std::string fileName = argv[i];
+			if (fileName.size() <= 5 || fileName.substr(fileName.size() - 5, fileName.size()) != ".emsl")
+			{
+				cout << "invalid filename: " << fileName << endl;
+				return;
+			}
+			executables.push_back(fileName);
+		}
+	}
+
+	if (command == "vm" || command == "run")
+	{
 		MSL::VM::Configuration config;
 		config.streams = { &std::cin, &std::cout, &std::cerr };
 		MSL::VM::VirtualMachine VM(move(config));
-		std::ifstream executable(fileName + ".emsl", std::ios::binary);
-		if (VM.AddBytecodeFile(&executable))
+		for (string& file : executables)
 		{
-			VM.Run();
+			ifstream executable(file, ios::binary);
+			if (!VM.AddBytecodeFile(&executable)) return;
 		}
+		cout << "launching MSL VM...\n\n";
+
+		VM.Run();
+
 		auto errors = VM.GetErrorStrings(VM.GetErrors());
 		if (!errors.empty())
 		{
@@ -88,5 +165,19 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	int unused = getchar();
+}
+
+int main(int argc, char* argv[])
+{
+	compileFromArgs(argc, argv);
+	/*
+	stringstream ss;
+	std::string line;
+	while (std::getline(std::cin, line))
+	{
+		if (line == "MSL_END_FILEREAD") break;
+		ss << line << '\n';
+	}
+	compileCin(ss);*/
+	int c = getchar();
 }

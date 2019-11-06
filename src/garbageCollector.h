@@ -1,22 +1,13 @@
 #pragma once
 
-#include <chrono>
-
 #include "assemblyType.h"
 #include "objects.h"
 #include "SlabAllocator.h"
 #include "callPath.h"
+#include <chrono>
 
 namespace MSL
 {
-	enum class Type : uint8_t
-	{
-		INTEGER,
-		FLOAT,
-		STRING,
-		LOCAL,
-		ATTRIBUTE,
-	};
 	namespace VM
 	{
 		class GarbageCollector

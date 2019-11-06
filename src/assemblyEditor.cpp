@@ -1,5 +1,7 @@
 #include "assemblyEditor.h"
 
+using namespace MSL::utils;
+
 namespace MSL
 {
 	namespace VM

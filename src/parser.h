@@ -8,9 +8,6 @@
 #include "expressions.h"
 #include "assembly.h"
 
-#include <ostream>
-#include <memory>
-
 namespace MSL
 {
 	namespace compiler
@@ -187,7 +184,7 @@ namespace MSL
 			leftBranch parameter must be set only inside this function
 			if error was found, 'Parsed::success' = false
 			*/
-			unique_ptr<BaseExpression> ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch = nullptr, bool fastReturn = false);
+			unique_ptr<BaseExpression> ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch = nullptr, uint32_t returnPriority = 0);
 			/*
 			writes message contents to the stream provided to Parser
 			*/
@@ -214,20 +211,23 @@ namespace MSL
 			/*
 			bit-masks for which say which information parser will print to provided stream
 			*/
-			enum Mode : uint8_t
+			struct MODE
 			{
-				NO_OUTPUT = 0,
-				ERROR_ONLY = 1,
-				WARNING_ONLY = ERROR_ONLY << 1,
-				DEBUG_ONLY = WARNING_ONLY << 1,
-				NO_STACKTRACE = (DEBUG_ONLY << 1),
-				NO_DEBUG = ERROR_ONLY | WARNING_ONLY,
-				FULL_TRACE = DEBUG_ONLY | NO_DEBUG,
+				enum mode : uint8_t
+				{
+					NO_OUTPUT = 0,
+					ERROR_ONLY = 1,
+					WARNING_ONLY = ERROR_ONLY << 1,
+					DEBUG_ONLY = WARNING_ONLY << 1,
+					NO_STACKTRACE = (DEBUG_ONLY << 1),
+					NO_DEBUG = ERROR_ONLY | WARNING_ONLY,
+					FULL_TRACE = DEBUG_ONLY | NO_DEBUG,
+				};
 			};
 			/*
 			creates new parser object
 			*/
-			Parser(Lexer* lexer, std::ostream* errorStream, Mode mode);
+			Parser(Lexer* lexer, std::ostream* errorStream, MODE::mode mode);
 			/*
 			parses all lexer contents and creates assembly of MSL program
 			*/

@@ -1,15 +1,9 @@
 #pragma once
 
-#include <map>
-#include <string>
-#include <sstream>
-#include <typeinfo>
-#include <memory>
-#include <unordered_map>
-
 #include "function.h"
 #include "attribute.h"
 #include "stringExtensions.h"
+#include <unordered_map>
 
 namespace MSL
 {

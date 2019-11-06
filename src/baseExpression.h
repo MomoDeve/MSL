@@ -1,9 +1,8 @@
 #pragma once
 
+#include "opcode.h"
 #include <ostream>
 #include <vector>
-
-#include "opcode.h"
 
 namespace MSL
 {

@@ -1,16 +1,17 @@
+#include "virtualMachine.h"
 #include <Windows.h>
 #include <cstdlib>
+#include <iomanip>
 
 #undef ERROR
 #undef CONST
 #undef THIS
 #undef TRUE
+#undef FALSE
 #undef IN
 #undef OUT
 #undef min
 #undef max
-
-#include "virtualMachine.h"
 
 namespace MSL
 {
@@ -433,8 +434,8 @@ namespace MSL
 					DisplayInfo("available class methods: ");
 					for (const auto& method : frame->_class->methods)
 					{
-						if((frame->classObject != nullptr || method.second.isStatic()) && method.second.isPublic())
-							DisplayInfo('\t' + frame->_class->name + '.' + GetFullMethodType(&method.second));
+						if(method.second.isPublic())
+							DisplayInfo("\t" + ((method.second.isStatic() ? "static " : " ") + frame->_class->name + '.' + GetFullMethodType(&method.second)));
 					}
 					DisplayInfo("\n");
 				}
@@ -445,9 +446,10 @@ namespace MSL
 				return;
 			}
 			// if member if private, and it is called from another class, call is invalid
-			if (frame->_method->isPublic())
+			if (!frame->_method->isPublic() && callStack.size() > 1)
 			{
-				if (callStack.empty() || (*callStack.back().GetNamespace() != frame->_namespace->name || *callStack.back().GetClass() != frame->_class->name))
+				CallPath& prev = callStack[callStack.size() - 2];
+				if (*prev.GetNamespace() != frame->_namespace->name || *prev.GetClass() != frame->_class->name)
 				{
 					errors |= ERROR::PRIVATE_MEMBER_ACCESS;
 					DisplayError("trying to call private method: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
@@ -809,10 +811,14 @@ namespace MSL
 					if (AssertType(memberObject, Type::ATTRIBUTE))
 					{
 						const AttributeType* type = static_cast<AttributeObject*>(memberObject)->type;
-						if (!type->isPublic() && static_cast<ClassObject*>(calledObject)->type != frame->_class)
+						if (!AssertType(calledObject, Type::CLASS_OBJECT) &&
+							!AssertType(calledObject, Type::CLASS, "trying to get attribute from object which is neither class, nor class object", frame))
+							return;
+
+						if (!type->isPublic())
 						{
 							const ClassType* classType = nullptr;
-							if (type->isStatic())
+							if (AssertType(calledObject, Type::CLASS))
 							{
 								classType = static_cast<ClassWrapper*>(calledObject)->type;
 							}
@@ -820,10 +826,13 @@ namespace MSL
 							{
 								classType = static_cast<ClassObject*>(calledObject)->type;
 							}
-							errors |= ERROR::PRIVATE_MEMBER_ACCESS;
-							DisplayError("trying to access class private member: " + GetFullClassType(classType) + '.' + type->name);
-							PRINTFRAME;
-							return;
+							if (classType != frame->_class)
+							{
+								errors |= ERROR::PRIVATE_MEMBER_ACCESS;
+								DisplayError("trying to access class private member: " + GetFullClassType(classType) + '.' + type->name);
+								PRINTFRAME;
+								return;
+							}
 						}
 					}
 					objectStack.push_back(memberObject);
@@ -1760,7 +1769,7 @@ namespace MSL
 			if (parameters == 1)
 				VM_DEBUG(ToString(op) << " <" << object->ToString() << "> ");
 			else
-				VM_DEBUG('<' << object->ToString() << "> " << ToString(op) << " <" << originalValue->ToString() << "> [assign = " << BOOL(ALUinIncrMode) << ']');
+				VM_DEBUG('<' << object->ToString() << "> " << ToString(op) << " <" << originalValue->ToString() << "> [assign = " << STRBOOL(ALUinIncrMode) << ']');
 
 			if (op == OPCODE::ASSIGN_OP)
 			{
@@ -2160,31 +2169,30 @@ namespace MSL
 
 		void VirtualMachine::CollectGarbage(bool forceCollection)
 		{
-			if (!config.GC.allowCollect && !forceCollection) return;
-
-			uint64_t iterAlloc = GC.GetMemoryAllocSinceIter();
-
-			if (forceCollection ||
-			   (iterAlloc > config.GC.minMemory && 
-			   (iterAlloc > GC.GetClearedMemorySinceIter()  || 
-			   false)))//(std::rand() % 32003 == 0))))
-			{
-				trueObject.MarkMembers();
-				falseObject.MarkMembers();
-				nullObject.MarkMembers();
-				GC.Collect(this->assembly, this->callStack, this->objectStack);
-			}
-
 			uint64_t totalMemory = GC.GetTotalMemoryAlloc();
 			if (totalMemory > config.GC.maxMemory)
 			{
 				if ((errors & ERROR::OUT_OF_MEMORY) == 0)
 				{
-					DisplayError("VM hit alloc limit, allocated memory: " + formatBytes(totalMemory));
-					DisplayInfo("max memory of VM was set to: " + formatBytes(config.GC.maxMemory));
+					DisplayError("VM hit alloc limit, allocated memory: " + utils::formatBytes(totalMemory));
+					DisplayInfo("max memory of VM was set to: " + utils::formatBytes(config.GC.maxMemory));
 				}
 				errors |= ERROR::OUT_OF_MEMORY;
 				return;
+			}
+
+			if (!config.GC.allowCollect && !forceCollection) return;
+
+			uint64_t iterAlloc = GC.GetMemoryAllocSinceIter();
+
+			if (forceCollection ||
+			   iterAlloc > config.GC.minMemory && 
+			   iterAlloc > GC.GetClearedMemorySinceIter())
+			{
+				trueObject.MarkMembers();
+				falseObject.MarkMembers();
+				nullObject.MarkMembers();
+				GC.Collect(this->assembly, this->callStack, this->objectStack);
 			}
 		}
 
@@ -2821,11 +2829,10 @@ namespace MSL
 				callStack.emplace_back();
 				callPath = &callStack.back();
 			}
-			return editor.MergeAssemblies(
-				assembly,
-				config.compilation.varifyBytecode,
-				callPath
-			);
+			bool result = editor.MergeAssemblies(assembly, config.compilation.varifyBytecode, callPath);
+			if(callPath != nullptr && callPath->GetMethod() == nullptr)
+				callStack.pop_back();
+			return result;
 		}
 
 		void VirtualMachine::Run()
@@ -2850,6 +2857,7 @@ namespace MSL
 			{
 				errors |= ERROR::CALLSTACK_EMPTY | ERROR::TERMINATE_ON_LAUNCH;
 				DisplayError("call stack was empty on VM launch, terminating");
+				DisplayInfo("check if entry point (static Main function) is defined in MSL file");
 				return;
 			}
 
@@ -2881,16 +2889,16 @@ namespace MSL
 			catch (std::bad_alloc&)
 			{
 				errors |= ERROR::OUT_OF_MEMORY;
-				DisplayError("VM hit memory limit and fatal error accured. Execution cancelled");
+				DisplayError("VM hit memory limit and fatal error occured. Execution cancelled");
 				if (config.streams.error != nullptr)
 					*config.streams.error << "GC log information:";
 				GC.SetLogStream(config.streams.error);
 				GC.PrintLog();
 				GC.ReleaseMemory();
 			}
-			catch (std::exception & e)
+			catch (std::exception& e)
 			{
-				DisplayError("an exception accured during VM execution: ");
+				DisplayError("an exception occured during VM execution: ");
 				if (config.streams.error != nullptr) *config.streams.error << e.what() << std::endl;
 				GC.ReleaseMemory();
 			}

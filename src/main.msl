@@ -347,7 +347,8 @@ namespace Program
 		}
 		
 		public static function Main()
-		{		
+		{	
+			ArrayTest();
 			var str1 = "hello world!";
 			var match = "hello";
 			Console.PrintLine("\nreplacing symbols in \"" + str1 + "\":");
@@ -378,3 +379,17 @@ namespace Program
 		}
 	}
 }
+/*
+namespace Program
+{
+	class ProgramClass
+	{
+		static function Main()
+		{
+			a * b + c;
+			a * b + c * d;
+			a * b ** c * d + e * f;
+			v1.x * v2.x + v1.y * v2.y;
+		}
+	}
+}*/

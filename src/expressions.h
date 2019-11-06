@@ -4,11 +4,6 @@
 #include "token.h"
 #include "function.h"
 
-#include <vector>
-#include <memory>
-#include <stack>
-#include <ostream>
-
 namespace MSL
 {
 	namespace compiler

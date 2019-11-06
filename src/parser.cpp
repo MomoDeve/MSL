@@ -1,4 +1,5 @@
 #include "parser.h"
+using namespace MSL::utils;
 
 namespace MSL
 {
@@ -7,7 +8,7 @@ namespace MSL
 		#define THROW(message) Error(message); return false;
 		#define TO_BASE(derived_ptr) unique_ptr<BaseExpression>(derived_ptr.release())
 
-		Parser::Parser(Lexer* lexer, std::ostream* errorStream, Mode mode)
+		Parser::Parser(Lexer* lexer, std::ostream* errorStream, MODE::mode mode)
 			: lexer(lexer), stream(errorStream), mode(mode), hasEntryPoint(false), success(true) { }
 
 		bool Parser::Parse()
@@ -33,10 +34,6 @@ namespace MSL
 			}
 			lexer->SetIteratorPos(lexerPos);
 			GenerateAssembly();
-			if (!hasEntryPoint)
-			{
-				Notify("[WARNING]: entry point must be defined: no Main function found");
-			}
 			lexer->SetIteratorPos(lexerPos);
 			return success;
 		}
@@ -900,6 +897,13 @@ namespace MSL
 			lexer->Next(); // skipping `(`
 			if (lexer->Peek().type == Token::Type::VARIABLE) // for(var i = ...
 			{
+				lexer->Next();
+				std::string& objectName = lexer->Peek().value;
+				if (function.ContainsLocal(objectName))
+				{
+					function.RemoveLocal(objectName);
+				}
+				lexer->Prev();
 				forExpr->init = ParseVariableDecl(function);
 			}
 			else if (lexer->Peek().type != Token::Type::SEMICOLON) // has init expression
@@ -1160,7 +1164,7 @@ namespace MSL
 			return nullptr;
 		}
 
-		unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch, bool fastReturn)
+		unique_ptr<BaseExpression> Parser::ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch, uint32_t returnPriority)
 		{
 			const Token& firstToken = lexer->Peek();
 			if (firstToken.type == Token::Type::LAMBDA) // lambda cannot be used, so going into this block will cause error while parsing
@@ -1194,7 +1198,8 @@ namespace MSL
 						binExpr->expressionType == Token::Type::DIV_OP  ||
 						binExpr->expressionType == Token::Type::MOD_OP  ||
 						binExpr->expressionType == Token::Type::DOT;
-					binExpr->right = ParseRawExpression(function, std::move(rightExpr), fastReturn);
+					if (!fastReturn) currentPriority = 0;
+					binExpr->right = ParseRawExpression(function, std::move(rightExpr), currentPriority);
 					return ParseRawExpression(function, TO_BASE(binExpr));
 				}
 				else if (currentPriority == nextPriority)
@@ -1220,9 +1225,9 @@ namespace MSL
 						if (firstToken.type == Token::Type::DOT)
 							call->hasParent = true;
 					}
-
+					nextPriority = lexer->Peek().type & Token::Type::PRIORITY;
 					binExpr->right = std::move(rightExpr);
-					if(fastReturn) return TO_BASE(binExpr);
+					if(returnPriority >= nextPriority) return TO_BASE(binExpr);
 					else return ParseRawExpression(function, TO_BASE(binExpr));
 				}
 			}
@@ -1270,16 +1275,16 @@ namespace MSL
 		{
 			if (currentErrorCount < maxErrorCount)
 			{
-				if (mode & (Mode::ERROR_ONLY | Mode::NO_STACKTRACE))
+				if (mode & (MODE::ERROR_ONLY | MODE::NO_STACKTRACE))
 				{
 					message = "[ERROR]: " + message;
 					Notify(message);
 					Notify("\t on token: `" + lexer->Peek().value + "`");
 				}
 				if (success) ShowErrorLine(); // happens only on first call
-				if (mode & Mode::NO_STACKTRACE)
+				if (mode & MODE::NO_STACKTRACE)
 				{
-					mode &= Mode::NO_OUTPUT;
+					mode &= MODE::NO_OUTPUT;
 				}
 				currentErrorCount++;
 			}
@@ -1288,7 +1293,7 @@ namespace MSL
 
 		void Parser::Debug(std::string message)
 		{
-			if (mode & Mode::DEBUG_ONLY)
+			if (mode & MODE::DEBUG_ONLY)
 			{
 				message = "[DEBUG]: " + message;
 				Notify(message);
@@ -1297,7 +1302,7 @@ namespace MSL
 
 		void Parser::Warning(std::string message)
 		{
-			if (mode & Mode::WARNING_ONLY)
+			if (mode & MODE::WARNING_ONLY)
 			{
 				message = "[WARNING]: " + message;
 				Notify(message);

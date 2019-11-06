@@ -1,12 +1,6 @@
 #pragma once
-
 #include <vector>
-#include <string>
-#include <iostream>
-#include <cmath>
 #include <sstream>
-#include <algorithm>
-#include <exception>
 
 namespace momo
 {

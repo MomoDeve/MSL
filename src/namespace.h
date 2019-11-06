@@ -1,11 +1,7 @@
 #pragma once
 
-#include <string>
-#include <memory>
-#include <unordered_map>
-#include <unordered_set>
-
 #include "class.h"
+#include <unordered_set>
 
 namespace MSL
 {

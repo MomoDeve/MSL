@@ -1,5 +1,7 @@
 #include "Token.h"
 
+using namespace MSL::utils;
+
 namespace MSL
 {
 	namespace compiler

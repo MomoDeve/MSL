@@ -83,8 +83,8 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 		*out << "[GC]: full garbage collection done in " << msTime << " ms\n";
 		*out << "[GC]: collected total of " << clearedObjects << " objects\n";
 		*out << "[GC]: still managing " << managedObjects << " objects\n";
-		*out << "[GC]: cleared memory: " << formatBytes(clearedMemory) << '\n';
-		*out << "[GC]: managed memory: " << formatBytes(totalMemory) << '\n';
+		*out << "[GC]: cleared memory: " << utils::formatBytes(clearedMemory) << '\n';
+		*out << "[GC]: managed memory: " << utils::formatBytes(totalMemory) << '\n';
 		*out << "------------------------------------------\n";
 	}
 	allocSinceIter = totalMemory;
@@ -173,8 +173,8 @@ void MSL::VM::GarbageCollector::PrintLog() const
 		*out << std::endl;
 		*out << "------------------------------------------\n";
 		*out << "[GC]: iterations finished: " << GetTotalIterations() << '\n';
-		*out << "[GC]: object managed " << managedObjects << " objects\n";
-		*out << "[GC]: managed memory: " << formatBytes(GetTotalMemoryAlloc()) << '\n';
+		*out << "[GC]: managed objects: " << managedObjects << " objects\n";
+		*out << "[GC]: managed memory: " << utils::formatBytes(GetTotalMemoryAlloc()) << '\n';
 		*out << "------------------------------------------\n";
 	}
 }

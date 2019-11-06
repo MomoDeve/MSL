@@ -1,4 +1,7 @@
 #include "streamReader.h"
+#include <unordered_map>
+
+using namespace MSL::utils;
 
 namespace MSL
 {
@@ -163,12 +166,6 @@ namespace MSL
 				}
 			}
 			buffer.swap(tempBuffer);
-		}
-
-		StreamReader& StreamReader::operator<<(std::istream& stream)
-		{
-			ReadToEnd(stream);
-			return *this;
 		}
 	}
 }

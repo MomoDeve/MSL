@@ -1,4 +1,5 @@
 #include "function.h"
+#include <sstream>
 
 namespace MSL
 {
@@ -67,6 +68,11 @@ namespace MSL
 			size_t index = variables.size();
 			variables.push_back(localName);
 			locals.insert({ localName, index });
+		}
+
+		void Function::RemoveLocal(const std::string& localName)
+		{
+			locals.erase(localName);
 		}
 
 		void Function::InsertDependency(const std::string& dependencyName)

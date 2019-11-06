@@ -1,9 +1,4 @@
 #pragma once
-
-#include <istream>
-#include <vector>
-#include <string>
-
 #include "callPath.h"
 #include "assemblyType.h"
 #include "opcode.h"

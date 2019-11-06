@@ -1,4 +1,5 @@
 #include "bigInteger.h"
+#include <algorithm>
 
 #define NOEXCEPT
 

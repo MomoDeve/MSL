@@ -1,4 +1,6 @@
 #include "lexer.h"
+#include <sstream>
+using namespace MSL::utils;
 
 namespace MSL
 {
@@ -12,6 +14,17 @@ namespace MSL
 				std::string str = readIf(stream, i, [](char c) { return (c != TOKEN_SEPARATOR); });
 				i++;
 				tokens.emplace_back(Token::GetType(str), str);
+				// calling method from number literal recongnised as pure-formatted float value. check if
+				// user meant calling method and if so, add it as separated token from `DOT` token
+				if (tokens.back().type == Token::Type::ERROR && tokens.back().value.back() == '.')
+				{
+					std::string sliced = tokens.back().value.substr(0, tokens.back().value.size() - 1);
+					if (isInteger(sliced) || isFloat(sliced))
+					{
+						tokens.back() = { Token::GetType(sliced), sliced };
+						tokens.emplace_back(Token::Type::DOT, ".");
+					}
+				}
 			}
 
 			while (!End())

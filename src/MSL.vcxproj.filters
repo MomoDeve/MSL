@@ -28,9 +28,6 @@
     <Filter Include="MSL\compiler\codeGenerator">
       <UniqueIdentifier>{17d856af-e33c-4c7d-8711-38d0968ab745}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MSL\bytecodeReader">
-      <UniqueIdentifier>{86336589-605f-493a-9e97-60c8395a257d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MSL\compiler\objectHierarchy">
       <UniqueIdentifier>{c3dd7e86-0227-419a-ae4a-ec090352a781}</UniqueIdentifier>
     </Filter>
@@ -57,9 +54,6 @@
     </Filter>
     <Filter Include="MSL\compiler\token">
       <UniqueIdentifier>{61761eb2-5ea1-400f-ba93-1d8a9c13cf44}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MSL\stringExtensions">
-      <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
     </Filter>
     <Filter Include="MSL\VM\objects">
       <UniqueIdentifier>{82161cbb-f624-486b-a240-18449fea591e}</UniqueIdentifier>
@@ -91,6 +85,15 @@
     <Filter Include="MSL\VM\garbageCollector">
       <UniqueIdentifier>{0ecc03a7-6d2f-441b-bb9d-9f30a183b1a9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MSL\utils">
+      <UniqueIdentifier>{fc7213a9-69c2-4611-a3e3-957e89a19a6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\utils\bytecodeReader">
+      <UniqueIdentifier>{86336589-605f-493a-9e97-60c8395a257d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\utils\stringExtensions">
+      <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -100,7 +103,7 @@
       <Filter>MSL\compiler\streamReader</Filter>
     </ClInclude>
     <ClInclude Include="stringExtensions.h">
-      <Filter>MSL\stringExtensions</Filter>
+      <Filter>MSL\utils\stringExtensions</Filter>
     </ClInclude>
     <ClInclude Include="function.h">
       <Filter>MSL\compiler\objectHierarchy\function</Filter>
@@ -133,7 +136,7 @@
       <Filter>MSL\compiler\objectHierarchy\attribute</Filter>
     </ClInclude>
     <ClInclude Include="bytecodeReader.h">
-      <Filter>MSL\bytecodeReader</Filter>
+      <Filter>MSL\utils\bytecodeReader</Filter>
     </ClInclude>
     <ClInclude Include="opcode.h">
       <Filter>MSL\VM\opcode</Filter>
@@ -186,7 +189,7 @@
       <Filter>MSL\compiler\streamReader</Filter>
     </ClCompile>
     <ClCompile Include="stringExtensions.cpp">
-      <Filter>MSL\stringExtensions</Filter>
+      <Filter>MSL\utils\stringExtensions</Filter>
     </ClCompile>
     <ClCompile Include="token.cpp">
       <Filter>MSL\compiler\token</Filter>
@@ -216,7 +219,7 @@
       <Filter>MSL\compiler\objectHierarchy\attribute</Filter>
     </ClCompile>
     <ClCompile Include="bytecodeReader.cpp">
-      <Filter>MSL\bytecodeReader</Filter>
+      <Filter>MSL\utils\bytecodeReader</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="bigInteger.cpp">

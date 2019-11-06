@@ -1,10 +1,7 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <sstream>
-#include <unordered_map>
 #include "baseExpression.h"
+#include <unordered_map>
 
 namespace MSL
 {
@@ -119,6 +116,11 @@ namespace MSL
 			if variable name already existed in table, it will be overwriten in hash-table, but not deleted from VariableArray
 			*/
 			void InsertLocal(const std::string& localName);
+			/*
+			removes local entry from local table. local still stands in dependency array.
+			calling this method without checking for local with ContainsLocal() method is prohibited
+			*/
+			void RemoveLocal(const std::string& localName);
 			/*
 			moves outer variable name to VariableArray and adds its name to hash-table
 			if variable name already existed in table, it will be overwriten in hash-table, but not deleted from VariableArray

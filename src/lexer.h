@@ -1,13 +1,7 @@
 #pragma once
-
-#include <istream>
-#include <vector>
-#include <string>
-#include <set>
-#include <unordered_map>
-
 #include "stringExtensions.h"
 #include "token.h"
+#include <unordered_map>
 
 namespace MSL
 {

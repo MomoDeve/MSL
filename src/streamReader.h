@@ -1,11 +1,7 @@
 #pragma once
-
-#include <istream>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-
 #include "stringExtensions.h"
+#include <unordered_map>
+#include <sstream>
 
 namespace MSL
 {
@@ -53,10 +49,6 @@ namespace MSL
 			can be used more than once to read multiple files or input from console
 			*/
 			void ReadToEnd(std::istream& stream);
-			/*
-			performs same task as StreamReader::ReadToEnd() method
-			*/
-			StreamReader& operator<<(std::istream& stream);
 			/*
 			returns buffer object as a string which can be passed into lexer
 			*/

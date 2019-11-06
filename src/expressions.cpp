@@ -190,7 +190,7 @@ namespace MSL
 		void CallExpression::Print(std::ostream& out, int depth) const
 		{
 			out << std::string(depth, '\t');
-			out << ">> PARENT: " << BOOL(hasParent) << '\n';
+			out << ">> PARENT: " << STRBOOL(hasParent) << '\n';
 			out << std::string(depth, '\t');
 			out << functionName << '\n';
 			out << std::string(depth, '\t') << "(\n";

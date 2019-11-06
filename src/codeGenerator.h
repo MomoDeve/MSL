@@ -2,7 +2,6 @@
 
 #include "assembly.h"
 #include "opcode.h"
-
 #include <sstream>
 
 namespace MSL
@@ -46,15 +45,6 @@ namespace MSL
 			void GenerateMethod(const Function& method);
 		public:
 			/*
-			writes binary representation of data to the binary file
-			*/
-			template<typename T>
-			void write(T data);
-			/*
-			writes string object to the binary file in format [uint8_t size][char[] char_array]
-			*/
-			void writeString(const std::string& data);
-			/*
 			created CodeGenerator object. Assembly is used for code generation
 			*/
 			CodeGenerator(const Assembly& assembly);
@@ -66,6 +56,15 @@ namespace MSL
 			Returns contents of stream with assembly
 			*/
 			std::string GetBuffer() const;
+			/*
+			writes binary representation of data to the binary file
+			*/
+			template<typename T>
+			void write(T data);
+			/*
+			writes string object to the binary file in format [uint8_t size][char[] char_array]
+			*/
+			void writeString(const std::string& data);
 		};
 
 		/*

@@ -1,4 +1,5 @@
 #include "class.h"
+#include <sstream>
 
 namespace MSL
 {
@@ -82,7 +83,7 @@ namespace MSL
 			out << name << "\n{\n\t";
 
 			out << "modifiers: ";
-			#define PRINT(str, val) out << "\n\t\t" str ": " << BOOL(val)
+			#define PRINT(str, val) out << "\n\t\t" str ": " << STRBOOL(val)
 			PRINT("internal", IsInternal());
 			PRINT("static", IsStatic());
 			PRINT("abstract", IsAbstract());

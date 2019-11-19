@@ -31,7 +31,7 @@ namespace MSL
 			}
 
 			template<typename T>
-			inline void ClearObjectsInSlab(T& slab);
+			inline void ClearObjectsInSlab(Allocator<T>& allocator, momo::Slab<T, uint8_t>& slab);
 
 			template<typename T>
 			inline void ClearSlabs(Allocator<T>& allocator);
@@ -64,7 +64,7 @@ namespace MSL
 		};
 
 		template<typename T>
-		inline void GarbageCollector::ClearObjectsInSlab(T& slab)
+		inline void GarbageCollector::ClearObjectsInSlab(Allocator<T>& allocator, momo::Slab<T, uint8_t>& slab)
 		{
 			for (int i = 0; i < slab.maxSize; i++)
 			{
@@ -75,6 +75,7 @@ namespace MSL
 					objPtr->state = GCstate::FREE;
 					this->clearedObjects++;
 					this->clearedMemory += objPtr->GetSize();
+					allocator->allocCount--;
 					slab.Free(objPtr);
 					break;
 				case GCstate::MARKED:
@@ -95,11 +96,11 @@ namespace MSL
 			allocator->managedMemory = 0;
 			for (auto& slab : allocator->GetBusySlabs())
 			{
-				ClearObjectsInSlab(slab);
+				ClearObjectsInSlab(allocator, slab);
 			}
 			for (auto& slab : allocator->GetPartialSlabs())
 			{
-				ClearObjectsInSlab(slab);
+				ClearObjectsInSlab(allocator, slab);
 			}
 			allocator->ReallocateSlabs();
 		}

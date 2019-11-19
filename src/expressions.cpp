@@ -61,16 +61,8 @@ namespace MSL
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += (uint16_t)ifStatements.size();
 
-			uint16_t endIf = 0;
-			if (hasElseBlock())
-			{
-				endIf = function.labelInnerId;
-				function.labelInnerId++;
-			}
-			else
-			{
-				endIf = function.labelInnerId - 1;
-			}
+			uint16_t endIf = function.labelInnerId;
+			function.labelInnerId++;
 
 			for (size_t i = 0; i < ifStatements.size(); i++, labelId++)
 			{
@@ -87,9 +79,11 @@ namespace MSL
 			if (hasElseBlock())
 			{
 				GenerateExpressionListBytecode(bodies.back(), code, function);
-				code.write(OPCODE::SET_LABEL);
+				code.write(OPCODE::JUMP);
 				code.write(endIf);
 			}
+			code.write(OPCODE::SET_LABEL);
+			code.write(endIf);
 		}
 
 		ObjectDeclareExpression::ObjectDeclareExpression()

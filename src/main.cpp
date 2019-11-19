@@ -26,7 +26,7 @@ bool createAssembly(string fileName)
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
 	
-	#ifdef MSL_VM_DEBUG
+	#ifndef MSL_VM_DEBUG
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -48,7 +48,7 @@ bool createAssembly(string fileName)
 	return true;
 }
 
-void compileCin(stringstream& ss)
+void compileASC(stringstream& ss)
 {
 	MSL::compiler::StreamReader reader;
 
@@ -73,6 +73,8 @@ void compileCin(stringstream& ss)
 	bytecode << generator.GetBuffer();
 	MSL::VM::Configuration config;
 	config.streams = { &std::cin, &std::cout, &std::cout };
+	config.execution.safeMode = true;
+	config.GC.maxMemory = 128 * MSL::VM::MB;
 	MSL::VM::VirtualMachine VM(move(config));
 	cout << endl;
 	if (VM.AddBytecodeFile(&bytecode))
@@ -145,6 +147,7 @@ void compileFromArgs(int argc, char* argv[])
 	{
 		MSL::VM::Configuration config;
 		config.streams = { &std::cin, &std::cout, &std::cerr };
+		config.GC.maxMemory = 128 * MSL::VM::MB;
 		MSL::VM::VirtualMachine VM(move(config));
 		for (string& file : executables)
 		{
@@ -169,8 +172,8 @@ void compileFromArgs(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-	compileFromArgs(argc, argv);
-	/*
+	compileFromArgs(argc, argv); system("pause"); return 0;
+
 	stringstream ss;
 	std::string line;
 	while (std::getline(std::cin, line))
@@ -178,6 +181,5 @@ int main(int argc, char* argv[])
 		if (line == "MSL_END_FILEREAD") break;
 		ss << line << '\n';
 	}
-	compileCin(ss);*/
-	int c = getchar();
+	compileASC(ss);
 }

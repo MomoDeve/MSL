@@ -129,7 +129,7 @@ std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration()
 uint64_t MSL::VM::GarbageCollector::GetTotalMemoryAlloc() const
 {
 	uint64_t total = this->managedMemory;
-	#define COUNT(x) total += x->GetAllocCount() * x->GetObjectSize() + x->managedMemory;
+	#define COUNT(x) total += x->allocCount * x->GetObjectSize() + x->managedMemory;
 	COUNT(classObjAlloc);
 	COUNT(classWrapAlloc);
 	COUNT(nsWrapAlloc);

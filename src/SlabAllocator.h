@@ -178,7 +178,6 @@ namespace momo
 		using SlabIt = typename std::vector<Slab>::iterator;
 		std::vector<Slab> busySlabs, partialSlabs, freeSlabs; // lists of slabs
 		uint64_t allocSize; // amount of new slabs allocated in case that free list become empty
-		uint64_t allocCount = 0; // amount of objects allocated in slabs
 		void MoveFreeToPartialIfNeed(); // moves free slab to partial if there are no partial slabs available
 		void AllocateFreeIfNeed(); // allocated [allocSize] free slabs in case all free slabs were moved to partial list
 		void MovePartialToBusyIfNeed(); // moves partial slab to busy in case all objects in slab were allocated
@@ -188,6 +187,7 @@ namespace momo
 		bool FreeIfInPartial(ElementT* value); // checks if pointer belongs to any of partial slabs and frees object if it was found
 		bool InRange(ElementT* begin, ElementT* value, ElementT* end) const; // checks if pointer belongs to [begin; end] interval
 	public:
+		uint64_t allocCount = 0; // amount of objects allocated in slabs
 		uint64_t managedMemory = 0; // MSL GC derived. Count memory (in bytes), allocated by objects
 		/*
 		construct allocator object with [freeAllocCount] slabs in free list
@@ -338,6 +338,7 @@ namespace momo
 	{
 		if (!FreeIfInPartial(value))
 			FreeIfInBusy(value);
+		allocCount--;
 	}
 
 	template<typename ElementT, typename IndexT>

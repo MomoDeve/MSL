@@ -10,9 +10,15 @@
 //#define MSL_VM_DEBUG
 #undef MSL_VM_DEBUG
 
+#define MSL_C_INTERFACE
+//#undef MSL_C_INTERFACE
+
+#ifdef MSL_C_INTERFACE
+#include "DllLoader.h"
+#endif
+
 namespace MSL
 {
-
 	namespace VM
 	{
 		class VirtualMachine
@@ -22,6 +28,10 @@ namespace MSL
 			CallStack callStack;
 			ObjectStack objectStack;
 			GarbageCollector GC;
+
+			#ifdef MSL_C_INTERFACE
+			DllLoader dllLoader;
+			#endif
 
 			AssemblyType assembly;
 			Configuration config;
@@ -43,7 +53,7 @@ namespace MSL
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* ResolveReference(BaseObject* object, const Frame::LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
-			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
+			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName, bool printHelp = true);
 			ClassWrapper* GetPrimitiveClass(BaseObject* object);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;

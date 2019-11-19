@@ -1,53 +1,14 @@
-/*namespace System
-{
-	public interface Console
-	{
-		function Print(value);
-		function PrintLine(value);
-		function Read();
-		function ReadLine();
-		function ReadInt();
-		function ReadFloat();
-		function ReadBool();
-	}
-	
-	public interface Reflection
-	{
-		function GetType(object);
-		function CreateInstance(type);
-	}
-	
-	public interface Array
-	{
-		function Size();
-		function Empty();
-		function Pop();
-		function ToString();
-		function Begin();
-		function End();
-		function GetByIndex(index);
-		function Append(object);
-		function GetByIter(iter);
-		function Next(iter);
-	}
-	
-	public interface GC
-	{
-		function Collect();
-		function Disable();
-		function Enable();
-		function SetMinimalMemory(value);
-		function SetMaximalMemory(value);
-		function SetLogPermission(value);
-	}
-}*/
-
 namespace Utils
 {	
 	public class Array
 	{
 		var array;
 		
+        public function Inner()
+        {
+            return array;
+        }
+
 		public function Size()
 		{
 			return array.Size();
@@ -150,8 +111,33 @@ namespace Utils
 	}
 
 	public class String
-	{		
-		public static function Find(string, stringToFind)
+	{
+        public static function Split(string, delimiters)
+        {
+            var result = System.Array();
+            var current = "";
+            foreach (var c in string)
+            {
+                if (Find(delimiters, c))
+                {
+                    if(!current.Empty())
+                    {
+                        result.Append(current);
+                        current = "";
+                    }
+                }
+                else
+                {
+                    current += c;
+                }
+            }
+            if (!current.Empty())
+                result.Append(current);
+
+            return result;
+        }
+
+        public static function Find(string, stringToFind)
 		{
 			for(var i = 0; i < string.Size() - stringToFind.Size() + 1; i += 1)
 			{
@@ -210,6 +196,61 @@ namespace Utils
 			var R = System.Reflection;
 			return R.GetType(object1) == R.GetType(object2);
 		}
+
+        public static function GetClass(namespaceName, className)
+        {
+            var R = System.Reflection;
+            return R.GetMember(R.GetNamespace(namespaceName), className);
+        }
+
+        public static function Invoke(type, method, args)
+        {
+            return System.Reflection.Invoke(type, method, args);
+        }
+
+        public static function Invoke(type, method)
+        {
+            return System.Reflection.Invoke(type, method, System.Array(0));
+        }
+
+        public static function GetMember(signature)
+        {
+            var args = Utils.String.Split(signature, ".");
+            return GetClass(args[0], args[1]);
+        }
+
+        public static function GetMember(parent, child)
+        {
+            return System.Reflection.GetMember(parent, child);
+        }
+
+        public static function Create(namespaceName, className, args)
+        {
+            return System.Reflection.CreateInstance(GetClass(namespaceName, className), args);
+        }
+
+        public static function Create(namespaceName, className)
+        {
+            return System.Reflection.CreateInstance(GetClass(namespaceName, className), System.Array(0));
+        }
+
+        public static function Create(signature)
+        {
+            var names = Utils.String.Split(signature, ".");
+            return Create(names[0], names[1], System.Array(0));
+        }
+
+        public static function InvokeStatic(signature)
+        {
+            var names = Utils.String.Split(signature, ".");
+            return Invoke(GetClass(names[0], names[1]), names[2], System.Array(0));
+        }
+
+        public static function InvokeStatic(signature, args)
+        {
+            var names = Utils.String.Split(signature, ".");
+            return Invoke(GetClass(names[0], names[1]), names[2], args);
+        }
 	}
 
 	public class Range
@@ -299,83 +340,14 @@ namespace Math
 
 namespace Program
 {
-	using namespace System;
-	using namespace Utils;
-	using namespace Math;
-	
-	internal class ProgramClass
-	{			
-		public static function Fact(n)
-		{
-			if(n == 0)
-				return 1;
-			else
-				return n * Fact(n - 1);
-		}
-		
-		public static function ArrayTest()
-		{
-			var array = Utils.Array();
-			array.Append(0);
-			array.Append(1);
-			foreach(var i in Range(2, 10))
-			{
-				array.Append(array[array.Size() - 1] + array[array.Size() - 2]);
-			}
-			
-			array = array.Reversed();
-			Console.PrintLine("array of fibs from end: " + array);
-			Console.Print("array of fibs reversed: ");
-			
-			while(!array.Empty())
-			{
-				Console.Print(array.Pop()).Print(" ");
-			}
-			
-			const var n = 30;
-			Console.PrintLine("\nфакториал " + n + ": " + Fact(n));
-			
-			Console.PrintLine("Filling array with even integers...");
-			foreach(var i in Range(0, 11, 2))
-			{
-				array.Append(i);
-			}
-				
-			Console.PrintLine(array);
-			Console.PrintLine("Merging array with itself...");
-			Console.PrintLine(array.Merged(array));
-		}
-		
-		public static function Main()
-		{	
-			ArrayTest();
-			var str1 = "hello world!";
-			var match = "hello";
-			Console.PrintLine("\nreplacing symbols in \"" + str1 + "\":");
-			var str2 = Utils.String.Replace(str1, "l", "7");
-			Console.PrintLine("\"" + str1 + "\" -> \"" + str2 + "\"");
-			if(Utils.String.Find(str1, match))
-			{
-				Console.PrintLine("string \"" + str1 + "\" contains: \"" + match + "\"");
-			}
-			if(!Utils.String.Find(str2, match))
-			{
-				Console.PrintLine("string \"" + str2 + "\" does not contain: \"" + match + "\"");
-			}
-			
-			Console.PrintLine("\nreplacing last symbol of \"" + str1 + "\" with '?' using array:");
-			var stringArray = Utils.String.ToArray(str1);
-			stringArray[stringArray.Size() - 1] = "?";
-			Console.PrintLine(stringArray);
-			var str3 = Utils.String.FromArray(stringArray);
-			Console.PrintLine(str3);
-			
-			Console.PrintLine("\nIterating over \"" + str2 + "\":");
-			foreach(var s in str2)
-			{
-				Console.Print(s + " ");
-			}
-			return 0;
+    using namespace System;
+
+    class ProgramClass
+    {
+        public static function Main()
+        {
+            
+            return 0;
 		}
 	}
 }

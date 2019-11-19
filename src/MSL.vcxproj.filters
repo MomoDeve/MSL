@@ -94,6 +94,9 @@
     <Filter Include="MSL\utils\stringExtensions">
       <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MSL\VM\DllLoader">
+      <UniqueIdentifier>{43df85dc-3573-4f3e-9e2a-cf40d07e9d50}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -180,6 +183,9 @@
     <ClInclude Include="garbageCollector.h">
       <Filter>MSL\VM\garbageCollector</Filter>
     </ClInclude>
+    <ClInclude Include="DllLoader.h">
+      <Filter>MSL\VM\DllLoader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lexer.cpp">
@@ -251,6 +257,9 @@
     </ClCompile>
     <ClCompile Include="garbageCollector.cpp">
       <Filter>MSL\VM\garbageCollector</Filter>
+    </ClCompile>
+    <ClCompile Include="DllLoader.cpp">
+      <Filter>MSL\VM\DllLoader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

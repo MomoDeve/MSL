@@ -13,7 +13,6 @@ namespace MSL
 
 		bool Parser::Parse()
 		{
-			int lexerPos = lexer->GetIteratorPos();
 			while (!lexer->End())
 			{
 				Token::Type tokenType = lexer->Peek().type;
@@ -32,9 +31,9 @@ namespace MSL
 				}
 				lexer->Next();
 			}
-			lexer->SetIteratorPos(lexerPos);
+			lexer->ToBegin();
 			GenerateAssembly();
-			lexer->SetIteratorPos(lexerPos);
+			lexer->ToBegin();
 			return success;
 		}
 
@@ -109,7 +108,7 @@ namespace MSL
 				ModifierList modifiers;
 				if (!GetModifiers(modifiers, { Token::Type::CLASS, Token::Type::INTERFACE, Token::Type::USING }))
 				{
-					THROW("incorrect namespace member declaration"); // unknown modifier or no `class` / `interface`
+					THROW("incorrect namespace member declaration"); // unknown modifier or no `class`
 				}
 				if (lexer->Peek().type == Token::Type::CLASS)
 				{
@@ -127,24 +126,6 @@ namespace MSL
 					else
 					{
 						THROW("cannot process class in namespace: " + _namespace.getName());
-					}
-				}
-				else if (lexer->Peek().type == Token::Type::INTERFACE)
-				{
-					Class interfaceObject("unknown");
-					if (ProcessInterface(_namespace, interfaceObject, modifiers))
-					{
-						std::string interfaceName = interfaceObject.name;
-						if (_namespace.ContainsClass(interfaceName))
-						{
-							THROW("multiple class definition: interface " + interfaceName);
-						}
-						Debug("namespace: " + _namespace.getName() + ", interface added: " + interfaceName);
-						_namespace.InsertClass(interfaceName, std::move(interfaceObject));
-					}
-					else
-					{
-						THROW("cannot process interface in namespace: " + _namespace.getName());
 					}
 				}
 				else if (lexer->Peek().type == Token::Type::USING)
@@ -303,88 +284,6 @@ namespace MSL
 			return true; // class is parsed successfully
 		}
 
-		bool Parser::ProcessInterface(Namespace& _namespace, Class& interfaceObject, const ModifierList& modifiers)
-		{
-			if (lexer->Peek().type != Token::Type::INTERFACE)
-			{
-				THROW("interface declaration expected, found: " + lexer->Peek().value);
-			}
-			lexer->Next(); // skipping `interface` -> [interface name]
-			Token interfaceName = lexer->Peek();
-			if (interfaceName.type != Token::Type::OBJECT)
-			{
-				THROW("invalid interface name: " + interfaceName.value);
-			}
-			interfaceObject.name = interfaceName.value;
-			bool isPublic = find(modifiers, Token::Type::PUBLIC);
-
-			if (find(modifiers, Token::Type::ABSTRACT))
-			{
-				THROW("interfaces cannot be `abstract`: " + interfaceName.value);
-			}
-			if (find(modifiers, Token::Type::CONST))
-			{
-				THROW("interfaces cannot be `const`: " + interfaceName.value);
-			}
-			if (find(modifiers, Token::Type::INTERNAL) && find(modifiers, Token::Type::PUBLIC))
-			{
-				THROW("interfaces cannot be both `public` and `internal`: " + interfaceName.value);
-			}
-			if (!find(modifiers, Token::Type::INTERNAL) && !find(modifiers, Token::Type::PUBLIC))
-			{
-				Warning(interfaceName.value + ": no interface access modifiers provided, using `public` by default");
-				isPublic = true; // set default access value
-			}
-			if (find(modifiers, Token::Type::STATIC))
-			{
-				Warning("interfaces are always `static`, ignored: " + interfaceName.value);
-			}
-
-			if (!isPublic)
-			{
-				interfaceObject.modifiers |= Class::Modifiers::_INTERNAL;
-			}
-			interfaceObject.modifiers |= (Class::Modifiers::_CONST | Class::Modifiers::_ABSTRACT | Class::Modifiers::_INTERFACE);
-
-			lexer->Next(); // skipping [interface name] -> `{`
-			if (lexer->Peek().type != Token::Type::BRACE_BRACKET_O)
-			{
-				THROW("open bracket not found in declaration of interface: " + interfaceName.value);
-			}
-			lexer->Next(); // skipping `{` -> [member declaration]
-			while (lexer->Peek().type != Token::Type::BRACE_BRACKET_C)
-			{
-				if (lexer->End()) // `}` expected
-				{
-					THROW("closing bracket not found in interface: " + interfaceName.value);
-				}
-
-				ModifierList memberModifiers;
-				if (!GetModifiers(memberModifiers, { Token::Type::VARIABLE, Token::Type::FUNCTION, Token::Type::BRACE_BRACKET_C }))
-				{
-					THROW("cannot process member in interface: " + interfaceName.value);
-				}
-				if (lexer->Peek().type == Token::Type::VARIABLE) // variables are not allowed
-				{
-					THROW("interfaces cannot contain variables: " + interfaceName.value);
-				}
-				else if (lexer->Peek().type == Token::Type::FUNCTION)
-				{
-					if (!ProcessMethod(_namespace, interfaceObject, memberModifiers))
-					{
-						THROW("cannot process method in interface: " + interfaceName.value);
-					}
-				}
-			}
-			lexer->Next(); // skipping `}` -> [next unit]
-
-			if (interfaceObject.GetMethods().empty())
-			{
-				Warning(interfaceName.value + ": interface declared empty");
-			}
-			return true; // interface is parsed successfully
-		}
-
 		bool Parser::ProcessAttribute(Namespace& _namespace, Class& classObject, const ModifierList& modifiers)
 		{
 			if (lexer->Peek().type != Token::Type::VARIABLE)
@@ -473,29 +372,6 @@ namespace MSL
 			bool isPublic = find(modifiers, Token::Type::PUBLIC);
 			bool isAbstract = find(modifiers, Token::Type::ABSTRACT);
 			bool isStatic = find(modifiers, Token::Type::STATIC);
-
-			if (classObject.IsInterface())
-			{
-				if (find(modifiers, Token::Type::PRIVATE))
-				{
-					THROW("interface methods cannot be `private`: " + memberName);
-				}
-				if (isStatic)
-				{
-					THROW("interface methods cannot be `static`: " + memberName);
-				}
-				if (isAbstract)
-				{
-					THROW("interface methods cannot be `abstract`: " + memberName);
-				}
-				if (isPublic)
-				{
-					Warning("interface methods are `public` by default: " + memberName);
-				}
-				isPublic = true;
-				isAbstract = true;
-				isStatic = true;
-			}
 
 			if (find(modifiers, Token::Type::PUBLIC) && find(modifiers, Token::Type::PRIVATE))
 			{
@@ -594,18 +470,12 @@ namespace MSL
 			lexer->Next(); // skipping `)` -> `{` 
 			if (lexer->Peek().type == Token::Type::BRACE_BRACKET_O)
 			{
-				if (classObject.IsInterface())
-				{
-					lexer->Prev();
-					THROW("interface method cannot contain body: " + memberName);
-				}
 				auto body = std::make_unique<ExpressionList>(ParseExpressionBlock(functionObject));
 				if (body->empty() || dynamic_cast<ReturnExpression*>(body->back().get()) == nullptr) // if no return, return void
 				{
 					body->push_back(std::make_unique<ReturnExpression>());
 				}
 				functionObject.body = std::move(body);
-				lexer->Next(); // skipping `}`
 			}
 			else if (!isAbstract)
 			{
@@ -720,6 +590,7 @@ namespace MSL
 			if (lexer->Peek().type != Token::Type::BRACE_BRACKET_O)
 			{
 				block.push_back(ParseExpression(function));
+				if (lexer->Peek().type == Token::Type::SEMICOLON) lexer->Next();
 				return block;
 			}
 			lexer->Next();
@@ -727,9 +598,15 @@ namespace MSL
 			{
 				if (lexer->Peek().type == Token::Type::BRACE_BRACKET_C)
 				{
+					lexer->Next();
 					return block;
 				}
 				unique_ptr<BaseExpression> expr = ParseExpression(function);
+				if (expr == nullptr)
+				{
+					Error("parser hit fatal error, aborting...");
+					return ExpressionList();
+				}
 				block.push_back(std::move(expr));
 				if (lexer->Peek().type == Token::Type::SEMICOLON)
 				{
@@ -878,7 +755,6 @@ namespace MSL
 			}
 			lexer->Next(); // skipping `)` -> `{`
 			lambdaExpr->body = ParseExpressionBlock(function);
-			lexer->Next(); // skipping `}`
 			return TO_BASE(lambdaExpr);
 		}
 
@@ -937,7 +813,6 @@ namespace MSL
 			}
 			lexer->Next(); // skipping `)` -> `{`
 			forExpr->body = ParseExpressionBlock(function);
-			lexer->Next(); // skipping `}`
 			return TO_BASE(forExpr);
 		}
 
@@ -999,7 +874,6 @@ namespace MSL
 			}
 			lexer->Next();
 			foreachExpr->body = ParseExpressionBlock(function);
-			lexer->Next(); // skipping `}`
 			return TO_BASE(foreachExpr);
 		}
 
@@ -1014,7 +888,6 @@ namespace MSL
 			whileExpr->predicate = ParseStatementInBrackets(function);
 			lexer->Next(); // skipping `)` -> `{`
 			whileExpr->body = ParseExpressionBlock(function);
-			lexer->Next(); // skipping `}`
 			return TO_BASE(whileExpr);
 		}
 
@@ -1030,7 +903,6 @@ namespace MSL
 			ifExpr->ifStatements.push_back(ParseStatementInBrackets(function));
 			lexer->Next(); // skipping `)` -> `{`
 			ifExpr->bodies.push_back(ParseExpressionBlock(function));
-			lexer->Next(); // skipping `}`
 
 			while (lexer->Peek().type == Token::Type::ELIF)
 			{
@@ -1038,14 +910,12 @@ namespace MSL
 				ifExpr->ifStatements.push_back(ParseStatementInBrackets(function));
 				lexer->Next(); // skipping `)` -> `{`
 				ifExpr->bodies.push_back(ParseExpressionBlock(function));
-				lexer->Next(); // skipping `}`
 			}
 
 			if (lexer->Peek().type == Token::Type::ELSE)
 			{
 				lexer->Next(); // skipping `else` -> `{`
 				ifExpr->bodies.push_back(ParseExpressionBlock(function));
-				lexer->Next(); // skipping `}`
 			}
 			return TO_BASE(ifExpr);
 		}
@@ -1119,8 +989,7 @@ namespace MSL
 				}
 				else
 				{
-					Error("another unary operand or value expected after unary operand");
-					return nullptr;
+					THROW("another unary operand or value expected after unary operand");
 				}
 			}
 			if (lexer->Peek().type & Token::Type::VALUE_TYPE)
@@ -1188,6 +1057,11 @@ namespace MSL
 				uint32_t currentPriority = firstToken.type & Token::PRIORITY;
 				lexer->Next(); // skipping `BINARY_OP`
 				unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function);
+				if (rightExpr == nullptr)
+				{
+					THROW("expression was not parsed, aborting...");
+				}
+
 				uint32_t nextPriority = lexer->Peek().type & Token::PRIORITY;
 				if (currentPriority < nextPriority)
 				{

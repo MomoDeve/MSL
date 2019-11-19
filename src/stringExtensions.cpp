@@ -119,7 +119,7 @@ namespace MSL
 
 		bool validNumberCharacter(char c)
 		{
-			return isdigit(c) || contains("+-eE.", c);
+			return isdigit(c) || c == '.';
 		}
 
 		std::string readIf(const std::string& str, int& offset, std::function<bool(char)> pred)
@@ -176,7 +176,7 @@ namespace MSL
 
 		bool isFloat(const std::string& str)
 		{
-			return std::regex_match(str, std::regex(R"(\d+\.\d+([eE][+-]?\d+)?)"));
+			return std::regex_match(str, std::regex(R"(\d+\.\d+)"));
 		}
 
 		bool isString(const std::string& str)

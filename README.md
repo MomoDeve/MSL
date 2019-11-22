@@ -120,7 +120,7 @@ Firstly, we declare namespace, in which our class will be located. Namespaces mu
 
 MSL VM creates one namespace by default - System. All utility classes such as **IO**, **Reflection**, **Array** and etc. are located in it. For our program we need **Console** class with its method called *PrintLine*, which outputs argument to the standart console. As we just want to output simple text, we can pass string literal as the method argument.
 
-The new major feauture of MSL is modularity. VM supports C-language interface, so dll calls can be executed to add reproduce missing in-built functional. If we are planning to use standart console,we need dll file **msl_console.dll** which can be found in /bin directory. Just put it inside our output folder and other work will be performed by VM itself. Unluckly, only Windows system is supported for now.
+The new major feauture of MSL is the modularity. By default, MSL VM supports C-language interface, so dll calls can be executed to add missing in-built functional. If we are planning to use standart console, we need to add dll file **msl_console.dll** which can be found in /bin directory. Just put it inside our output folder and other work will be performed by VM itself. Unluckly, only Windows system is supported for now.
 
 ## Running MSL bytecode in VM
 Right now we are one step away from displaying result in out console. We have main.emsl file which contains MSL bytecode for virtual machine, but we have not provided it to VM yet. Let's create an instance of MSL VM in our .cpp file:

@@ -389,10 +389,11 @@ namespace momo
 	double big_integer::to_double() const
 	{
 		double res = 0.0;
+		double base = 1.0;
 		for (size_t i = 0; i < _digits.size(); i++)
 		{
-			res *= _base;
-			res += _digits[i];
+			res += _digits[i] * base;
+			base *= _base;
 		}
 		if (_negative) res *= -1.0;
 		return res;

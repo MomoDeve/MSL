@@ -665,6 +665,7 @@ namespace MSL
 			{
 				Error("`]` exprected in index expression");
 			}
+			lexer->Next(); // skipping `]`
 			return expr;
 		}
 
@@ -994,10 +995,10 @@ namespace MSL
 			}
 			if (lexer->Peek().type & Token::Type::VALUE_TYPE)
 			{
+
 				Token& object = lexer->Peek();
 				lexer->Next(); // skipping [var] -> `(` / `[`
-				Token& nextToken = lexer->Peek();
-				if (nextToken.type == Token::Type::ROUND_BRACKET_O)
+				if (lexer->Peek().type == Token::Type::ROUND_BRACKET_O)
 				{
 					unique_ptr<CallExpression> callExpr(std::make_unique<CallExpression>());
 					callExpr->parameters = ParseFunctionArguments(function);
@@ -1006,27 +1007,33 @@ namespace MSL
 					lexer->Next(); // skipping `)`
 					return TO_BASE(callExpr);
 				}
-				else if (nextToken.type == Token::Type::SQUARE_BRACKET_O)
+				else if (lexer->Peek().type == Token::Type::SQUARE_BRACKET_O)
 				{
-					unique_ptr<IndexExpression> indexExpr(std::make_unique<IndexExpression>());
+					function.InsertDependency(object.value);
 					auto objectExpr = std::make_unique<ObjectExpression>();
 					objectExpr->object = object;
-					indexExpr->caller = TO_BASE(objectExpr);
-					function.InsertDependency(object.value);
-					indexExpr->parameter = ParseIndexArgument(function);
-					lexer->Next(); // skipping `]`
-					return TO_BASE(indexExpr);
+					auto expr = TO_BASE(objectExpr);
+
+					auto indexExpr = std::make_unique<IndexExpression>();
+					while (lexer->Peek().type == Token::Type::SQUARE_BRACKET_O)
+					{
+						indexExpr->caller = std::move(expr);
+						indexExpr->parameter = ParseIndexArgument(function);
+						expr = TO_BASE(indexExpr);
+						indexExpr = std::make_unique<IndexExpression>();
+					}
+					return std::move(expr);
 				}
 				else
 				{
-					unique_ptr<ObjectExpression> expr(std::make_unique<ObjectExpression>());
+					unique_ptr<ObjectExpression> ObjectExpr(std::make_unique<ObjectExpression>());
 					if (object.type == Token::Type::THIS && (function.isStatic()))
 					{
 						Error("`this` reference inside a static function: " + function.name);
 					}
-					expr->object = object;
+					ObjectExpr->object = object;
 					function.InsertDependency(object.value);
-					return TO_BASE(expr);
+					return TO_BASE(ObjectExpr);
 				}
 			}
 			Error("value or round brackets expression expected");
@@ -1057,6 +1064,7 @@ namespace MSL
 				uint32_t currentPriority = firstToken.type & Token::PRIORITY;
 				lexer->Next(); // skipping `BINARY_OP`
 				unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function);
+				// TO DO fix here
 				if (rightExpr == nullptr)
 				{
 					THROW("expression was not parsed, aborting...");
@@ -1100,6 +1108,9 @@ namespace MSL
 							call->hasParent = true;
 					}
 					nextPriority = lexer->Peek().type & Token::Type::PRIORITY;
+					if (lexer->Peek().type == Token::Type::SQUARE_BRACKET_O) 
+						nextPriority = Token::Type::PRIORITY + 1; // Index operator force binExpr to be forwarded
+
 					binExpr->right = std::move(rightExpr);
 					if(returnPriority >= nextPriority) return TO_BASE(binExpr);
 					else return ParseRawExpression(function, TO_BASE(binExpr));
@@ -1125,7 +1136,6 @@ namespace MSL
 				auto expr = std::make_unique<IndexExpression>();
 				expr->caller = std::move(leftBranch);
 				expr->parameter = ParseIndexArgument(function);
-				lexer->Next(); // skipping `]`
 				return ParseRawExpression(function, TO_BASE(expr));
 			}
 			if (leftBranch == nullptr)

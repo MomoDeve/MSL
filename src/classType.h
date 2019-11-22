@@ -1,9 +1,10 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "attributeType.h"
 #include "methodType.h"
+
+#include <unordered_map>
+#include <string>
 
 namespace MSL
 {

@@ -15,6 +15,7 @@
 
 #ifdef MSL_C_INTERFACE
 #include "DllLoader.h"
+#undef ERROR
 #endif
 
 namespace MSL
@@ -64,6 +65,7 @@ namespace MSL
 			void CollectGarbage(bool forceCollection = false);
 			bool ValidateHashValue(size_t hashValue, size_t maxHashValue);
 			bool AssertType(const BaseObject* object, Type type, const std::string& message, const Frame* frame = nullptr);
+			bool LoadDll(const std::string& libName);
 			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void DisplayError(std::string message) const;
@@ -98,7 +100,7 @@ namespace MSL
 		public:
 			struct ERROR
 			{
-				enum
+				enum : uint32_t
 				{
 					CALLSTACK_EMPTY = 1,
 					INVALID_CALL_ARGUMENT = 1 << 1,
@@ -119,6 +121,7 @@ namespace MSL
 					ABSTRACT_MEMBER_CALL = 1 << 16,
 					INVALID_METHOD_CALL = 1 << 17,
 					OUT_OF_MEMORY = 1 << 18,
+					DLL_NOT_FOUND = 1 << 19,
 				};
 			};
 

@@ -12,6 +12,8 @@
 #undef OUT
 #undef min
 #undef max
+#undef LoadLibrary
+#undef FreeLibrary
 
 namespace MSL
 {
@@ -1042,128 +1044,6 @@ namespace MSL
 				DisplayInfo("execution interrupted in method: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
 				return;
 			}
-
-			if (_class->name == "Console")
-			{
-				if (_method->name == "Print_1" || _method->name == "PrintLine_1")
-				{
-					std::ostream& out = *config.streams.out;
-					BaseObject* object = objectStack.back();
-					object = GetUnderlyingObject(object);
-					objectStack.pop_back();
-
-					if (!AssertType(object, Type::CLASS_OBJECT)) VM_TAG(OUTPUT);
-					if (config.streams.out != nullptr)
-					{
-						switch (object->type)
-						{
-						case Type::NAMESPACE:
-						{
-							out << "namespace " << *GetObjectName(object);
-							break;
-						}
-						case Type::CLASS:
-						{
-							ClassWrapper* c = static_cast<ClassWrapper*>(object);
-							out << "class " << GetFullClassType(c->type);
-							break;
-						}
-						case Type::ATTRIBUTE:
-						{
-							AttributeObject* attr = static_cast<AttributeObject*>(object);
-							objectStack.push_back(attr->object);
-							PerformSystemCall(_class, _method, frame);
-							return; // no PrintLine check, because it will happen inside recursion call
-						}
-						case Type::CLASS_OBJECT:
-						{
-							ClassObject* classObject = static_cast<ClassObject*>(object);
-							if (GetMethodOrNull(classObject->type, "ToString_1") != nullptr)
-							{
-								objectStack.push_back(object);
-								InvokeObjectMethod("ToString_1", classObject);
-								callStack.emplace_back(); // will be popped anyway
-								if (errors == 0) PerformSystemCall(_class, _method, frame);
-								return; // no PrintLine check, because it will happen inside recursion call
-							}
-							else
-							{
-								out << GetFullClassType(classObject->type) << " instance";
-								break;
-							}
-						}
-						default:
-						{
-							out << object->ToString();
-						}
-						break;
-						}
-					}
-
-					#ifndef MSL_VM_DEBUG
-					if (_method->name == "PrintLine_1" && config.streams.out != nullptr)
-					{
-						out << std::endl;
-					}			
-					#endif
-
-					objectStack.pop_back();
-					objectStack.push_back(_class->wrapper);
-				}
-				else if (_method->name == "Read_0")
-				{
-					objectStack.pop_back(); // delete console reference
-					StringObject::InnerType str;
-					if(config.streams.in != nullptr) 
-						*config.streams.in >> str;
-					StringObject* strObj = static_cast<StringObject*>(AllocString(""));
-					strObj->value = std::move(str);
-					objectStack.push_back(strObj);
-				}
-				else if (_method->name == "ReadInt_0")
-				{
-					objectStack.pop_back(); // delete console reference
-					std::string str = "0";
-					if(config.streams.in != nullptr)
-						*config.streams.in >> str;
-					BaseObject* intObj = AllocInteger(str);
-					objectStack.push_back(intObj);
-				}
-				else if (_method->name == "ReadFloat_0")
-				{
-					objectStack.pop_back();  // delete console reference
-					std::string str = "0.0";
-					if (config.streams.in != nullptr)
-						*config.streams.in >> str;
-					BaseObject* floatObj = AllocFloat(str);
-					objectStack.push_back(floatObj);
-				}
-				else if (_method->name == "ReadLine_0")
-				{
-					objectStack.pop_back();  // delete console reference
-					std::string str;
-					if (config.streams.in != nullptr)
-						std::getline(*config.streams.in, str);
-					StringObject* strObj = static_cast<StringObject*>(AllocString(""));
-					strObj->value = std::move(str);
-					objectStack.push_back(strObj);
-				}
-				else if (_method->name == "ReadBool_0")
-				{
-					objectStack.pop_back();  // delete console reference
-					std::string str;
-					if (config.streams.in != nullptr)
-						*config.streams.in >> str;
-					if (str == "1" || str == "True" || str == "true")
-					{
-						objectStack.push_back(AllocTrue());
-					}
-					else
-					{
-						objectStack.push_back(AllocFalse());
-					}
-				}
-			}
 			else if (_class->name == "Reflection")
 			{
 				if (_method->name == "GetType_1")
@@ -1589,6 +1469,77 @@ namespace MSL
 					errors |= ERROR::INVALID_METHOD_CALL;
 					DisplayError("Array class does not contains method: " + GetFullMethodType(_method));
 					PRINTFRAME_2(_class, _method);
+				}
+			}
+			else if (_class->name == "Dll")
+			{
+				if (_method->name.substr(0, 5) == "Call_") // Call with any parameters (see declaration in AddSystemNamespace)
+				{
+					#ifndef MSL_C_INTERFACE
+					errors |= ERROR::INVALID_METHOD_CALL;
+					DisplayError("Dll.Call method is not defined in MSL VM");
+					return;
+					#else
+					int argCount = std::stoi(_method->name.substr(5, _method->name.size())) + 1; // class as extra parameter
+					if (argCount > (int)objectStack.size())
+					{
+						errors |= ERROR::OBJECTSTACK_EMPTY;
+						DisplayError("not enough arguments to call Dll.Call() method");
+						return;
+					}
+					auto argBegin = objectStack.end() - argCount;
+					BaseObject* module = GetUnderlyingObject(*(argBegin + 1));
+					BaseObject* function = GetUnderlyingObject(*(argBegin + 2));
+					objectStack.erase(argBegin, argBegin + 3);
+					if (!AssertType(function, Type::STRING, "function argument must be a string object", frame)) return;
+					if (!AssertType(function, Type::STRING, "module argument must be a string object", frame)) return;
+
+					StringObject::InnerType& moduleName = static_cast<StringObject*>(module)->value;
+					StringObject::InnerType& functionName = static_cast<StringObject*>(function)->value;
+
+					using MSLFunction = void(*)(ObjectStack*, AssemblyType*, uint32_t*, Configuration*);
+					auto func = (MSLFunction)dllLoader.GetFunctionPointer(moduleName, functionName);
+					if (func == NULL) 
+					{
+						errors |= ERROR::INVALID_METHOD_SIGNATURE;
+						DisplayError("method " + functionName + " was not found in module: " + moduleName); 
+						return; 
+					}
+					// DLL call
+					func(&objectStack, &assembly, &errors, &config);
+					#endif
+				}
+				else if (_method->name == "LoadLibrary_1")
+				{
+					#ifndef MSL_C_INTERFACE
+					errors |= ERROR::INVALID_METHOD_CALL;
+					DisplayError("Dll.LoadLibrary method is not defined in MSL VM");
+					return;
+					#else
+					BaseObject* lib = GetUnderlyingObject(objectStack.back());
+					objectStack.pop_back();
+					objectStack.pop_back();
+					if (!AssertType(lib, Type::STRING, "dll library name must be a string", frame)) return;
+					if (LoadDll(static_cast<StringObject*>(lib)->value))
+						objectStack.push_back(AllocTrue());
+					else
+						objectStack.push_back(AllocFalse());
+					#endif
+				}
+				else if (_method->name == "FreeLibrary_1")
+				{
+					#ifndef MSL_C_INTERFACE
+					errors |= ERROR::INVALID_METHOD_CALL;
+					DisplayError("Dll.LoadLibrary method is not defined in MSL VM");
+					return;
+					#else
+					BaseObject* lib = GetUnderlyingObject(objectStack.back());
+					objectStack.pop_back();
+					objectStack.pop_back();
+					if (!AssertType(lib, Type::STRING, "dll library name must be a string", frame)) return;
+					dllLoader.FreeLibrary(static_cast<StringObject*>(lib)->value);
+					objectStack.push_back(AllocNull());
+					#endif
 				}
 			}
 			else if (_class->name == "Integer")
@@ -2341,23 +2292,54 @@ namespace MSL
 			} \
 			else assembly.namespaces.insert({ #_name, std::move(_name) }); CURRENT_NAMESPACE = nullptr
 
-			#define STATIC_METHOD_0(_name) STATIC_METHOD(_name, CONCAT(_name, __LINE__), 0); \
+			#define STATIC_METHOD_0(_name) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 0); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 0)
 
-			#define STATIC_METHOD_1(_name, param1) STATIC_METHOD(_name, CONCAT(_name, __LINE__), 1); \
+			#define STATIC_METHOD_1(_name, param1) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 1); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 1)
 
-			#define STATIC_METHOD_2(_name, param1, param2) STATIC_METHOD(_name, CONCAT(_name, __LINE__), 2); \
+			#define STATIC_METHOD_2(_name, param1, param2) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 2); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 2)
 
-			#define STATIC_METHOD_3(_name, param1, param2, param3) STATIC_METHOD(_name, CONCAT(_name, __LINE__), 3); \
+			#define STATIC_METHOD_3(_name, param1, param2, param3) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 3); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param3); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 3)
+
+			#define STATIC_METHOD_4(_name, param1, param2, param3, param4) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 4); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param3); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param4); \
+			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 4)
+
+			#define STATIC_METHOD_5(_name, param1, param2, param3, param4, param5) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 5); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param3); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param4); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param5); \
+			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 5)
+
+			#define STATIC_METHOD_6(_name, param1, param2, param3, param4, param5, param6) \
+			STATIC_METHOD(_name, CONCAT(_name, __LINE__), 6); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param3); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param4); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param5); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param6); \
+			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 6)
 
 			#define METHOD_0(_name) METHOD(_name, CONCAT(_name, __LINE__), 0); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 0)
@@ -2380,16 +2362,6 @@ namespace MSL
 
 			BEGIN_NAMESPACE(System);
 
-				BEGIN_CLASS(Console);
-					STATIC_METHOD_1(Print, value); // outputs value to console
-					STATIC_METHOD_1(PrintLine, value); // outputs line and flushes out stream
-					STATIC_METHOD_0(Read); // reads string from console
-					STATIC_METHOD_0(ReadInt); // reads integer from console
-					STATIC_METHOD_0(ReadFloat); // reads float from console
-					STATIC_METHOD_0(ReadBool); // reads bool from console (as True/true/1 and False/false/0)
-					STATIC_METHOD_0(ReadLine); // reads line as string from console
-				END_CLASS(Console);
-
 				BEGIN_CLASS(Reflection);
 					STATIC_METHOD_1(GetType, object); // gets object type
 					STATIC_METHOD_1(GetNamespace, name); // returns namespace with provided name
@@ -2400,6 +2372,16 @@ namespace MSL
 					STATIC_METHOD_2(GetMember, parent, child); // perform access to parent's child
 					STATIC_METHOD_2(ContainsMember, object, member); // returns true if object has attribute member
 				END_CLASS(Reflection);
+
+				BEGIN_CLASS(Dll);
+					STATIC_METHOD_2(Call, module, function);
+					STATIC_METHOD_3(Call, module, function, arg1);
+					STATIC_METHOD_4(Call, module, function, arg1, arg2);
+					STATIC_METHOD_5(Call, module, function, arg1, arg2, arg3);
+					STATIC_METHOD_6(Call, module, function, arg1, arg2, arg3, arg4);
+					STATIC_METHOD_1(LoadLibrary, path);
+					STATIC_METHOD_1(FreeLibrary, path);
+				END_CLASS(Dll);
 
 				PRIMITIVE_CLASS(Integer);
 					STATIC_METHOD_1(Integer, value);
@@ -2467,6 +2449,16 @@ namespace MSL
 				END_CLASS(GC);
 
 			END_NAMESPACE(System);
+		}
+
+		bool VirtualMachine::LoadDll(const std::string& libName)
+		{
+			#ifdef MSL_C_INTERFACE
+			dllLoader.AddLibrary(libName.c_str());
+			return dllLoader.GetLastError() == NO_ERROR;
+			#else
+			return false;
+			#endif
 		}
 
 		void VirtualMachine::CollectGarbage(bool forceCollection)
@@ -3277,8 +3269,6 @@ namespace MSL
 			std::vector<std::string> errorList;
 			if (errors & ERROR::INVALID_CALL_ARGUMENT)
 				errorList.push_back(STRING(ERROR::INVALID_CALL_ARGUMENT));
-			if (errors & ERROR::INVALID_METHOD_SIGNATURE)
-				errorList.push_back(STRING(ERROR::INVALID_METHOD_SIGNATURE));
 			if (errors & ERROR::INVALID_OPCODE)
 				errorList.push_back(STRING(ERROR::INVALID_OPCODE));
 			if (errors & ERROR::INVALID_STACKFRAME_OFFSET)
@@ -3313,6 +3303,8 @@ namespace MSL
 				errorList.push_back(STRING(ERROR::INVALID_HASH_VALUE));
 			if (errors & ERROR::OUT_OF_MEMORY)
 				errorList.push_back(STRING(ERROR::OUT_OF_MEMORY));
+			if (errors & ERROR::DLL_NOT_FOUND)
+				errorList.push_back(STRING(ERROR::DLL_NOT_FOUND));
 
 			return errorList;
 		}

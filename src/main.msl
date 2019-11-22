@@ -338,16 +338,140 @@ namespace Math
 	}
 }
 
+namespace System
+{
+    public static class Console
+    {
+        private static var dll;
+
+        public static function Console()
+        {
+            dll = "msl_console.dll";
+            Dll.LoadLibrary(dll);
+        }
+
+        public static function Print(object)
+        {
+            if (Reflection.ContainsMethod(object, "ToString", 0))
+                object = object.ToString();
+            return Dll.Call(dll, "Print", object);
+        }
+
+        public static function PrintLine(object)
+        {
+            if (Reflection.ContainsMethod(object, "ToString", 0))
+                object = object.ToString();
+            return Dll.Call(dll, "PrintLine", object);
+        }
+
+        public static function Read()
+        {
+            return Dll.Call(dll, "Read", "");
+        }
+
+        public static function ReadLine()
+        {
+            return Dll.Call(dll, "ReadLine", "");
+        }
+
+        public static function ReadBool()
+        {
+            return Dll.Call(dll, "ReadBool", false, true);
+        }
+
+        public static function ReadFloat()
+        {
+            return Dll.Call(dll, "ReadFloat", 0.0);
+        }
+
+        public static function ReadInt()
+        {
+            return Dll.Call(dll, "ReadInt", 0);
+        }
+    }
+
+    public static class Math
+    {
+        private static var dll;
+
+        public static function Math()
+        {
+            dll = "msl_math.dll";
+            Dll.LoadLibrary(dll);
+        }
+
+        public static function Sqrt(value)
+        {
+            return Dll.Call(dll, "FloatSqrt", value);
+        }
+
+        public static function Abs(value)
+        {
+            return Dll.Call(dll, "FloatAbs", value);
+        }
+
+        public static function Sin(value)
+        {
+            return Dll.Call(dll, "FloatSin", value);
+        }
+
+        public static function Cos(value)
+        {
+            return Dll.Call(dll, "FloatCos", value);
+        }
+
+        public static function Tan(value)
+        {
+            return Dll.Call(dll, "FloatTan", value);
+        }
+
+        public static function Exp(value)
+        {
+            return Dll.Call(dll, "FloatExp", value);
+        }
+
+        public static function Asin(value)
+        {
+            return Dll.Call(dll, "FloatAsin", value);
+        }
+
+        public static function Acos(value)
+        {
+            return Dll.Call(dll, "FloatAcos", value);
+        }
+
+        public static function Atan(value)
+        {
+            return Dll.Call(dll, "FloatAtan", value);
+        }
+
+        public static function Log10(value)
+        {
+            return Dll.Call(dll, "FloatLog10", value);
+        }
+
+        public static function Log2(value)
+        {
+            return Dll.Call(dll, "FloatLog2", value);
+        }
+
+        public static function Log(value)
+        {
+            return Dll.Call(dll, "FloatLog", value);
+        }
+    }
+}
+
 namespace Program
 {
     using namespace System;
 
     class ProgramClass
     {
+
         public static function Main()
         {
             
-            return 0;
 		}
 	}
 }

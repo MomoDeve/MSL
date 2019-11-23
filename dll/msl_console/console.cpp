@@ -78,8 +78,6 @@ void ReadFloat(VM_ATTRIBUTES)
 
 void ReadLine(VM_ATTRIBUTES)
 {
-	if (!AssertType(stack->back(), Type::STRING, errors, config)) return;
-
 	StringObject::InnerType str;
 	if (config->streams.in != nullptr)
 		std::getline(*config->streams.in, str);

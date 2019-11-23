@@ -42,6 +42,10 @@ void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<Call
 	totalIters++;
 	lastIter = std::chrono::system_clock::now();
 
+	trueObject.MarkMembers();
+	falseObject.MarkMembers();
+	nullObject.MarkMembers();
+
 	for (auto& ns : assembly.namespaces)
 	{
 		ns.second.wrapper->MarkMembers();

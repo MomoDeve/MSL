@@ -366,27 +366,27 @@ namespace System
 
         public static function Read()
         {
-            return Dll.Call(dll, "Read", "");
+            return Dll.Call(dll, "Read");
         }
 
         public static function ReadLine()
         {
-            return Dll.Call(dll, "ReadLine", "");
+            return Dll.Call(dll, "ReadLine");
         }
 
         public static function ReadBool()
         {
-            return Dll.Call(dll, "ReadBool", false, true);
+            return Dll.Call(dll, "ReadBool");
         }
 
         public static function ReadFloat()
         {
-            return Dll.Call(dll, "ReadFloat", 0.0);
+            return Dll.Call(dll, "ReadFloat");
         }
 
         public static function ReadInt()
         {
-            return Dll.Call(dll, "ReadInt", 0);
+            return Dll.Call(dll, "ReadInt");
         }
     }
 
@@ -471,8 +471,8 @@ namespace Program
 
         public static function Main()
         {
-            
-		}
+            Console.PrintLine("Hello world!");
+        }
 	}
 }
 /*

@@ -36,6 +36,10 @@ namespace MSL
 			template<typename T>
 			inline void ClearSlabs(Allocator<T>& allocator);
 		public:
+			NullObject nullObject;
+			TrueObject trueObject;
+			FalseObject falseObject;
+
 			Allocator<ClassObject> classObjAlloc;
 			Allocator<ClassWrapper> classWrapAlloc;
 			Allocator<NamespaceWrapper> nsWrapAlloc;

@@ -39,10 +39,6 @@ namespace MSL
 			uint32_t errors;
 			bool ALUinIncrMode;
 
-			NullObject nullObject;
-			TrueObject trueObject;
-			FalseObject falseObject;
-
 			OPCODE ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset);
 			uint16_t ReadLabel(const std::vector<uint8_t>& bytes, size_t& offset);
 			size_t ReadHash(const std::vector<uint8_t>& bytes, size_t& offset);

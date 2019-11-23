@@ -39,51 +39,6 @@ namespace MSL
 
 	namespace VM
 	{
-		ClassWrapper* VirtualMachine::AllocClassWrapper(const ClassType* _class)
-		{
-			return _class->wrapper;
-		}
-
-		ClassObject* VirtualMachine::AllocClassObject(const ClassType* _class)
-		{
-			if (!_class->staticConstructorCalled && _class->hasStaticConstructor())
-			{
-				std::string staticConstructor = _class->name + "_0_static";
-				CallPath newFrame;
-				newFrame.SetNamespace(&_class->namespaceName);
-				newFrame.SetClass(&_class->name);
-				newFrame.SetMethod(&staticConstructor);
-				callStack.push_back(std::move(newFrame));
-				objectStack.push_back(_class->wrapper);
-				StartNewStackFrame();
-				objectStack.pop_back();
-			}
-			ClassObject* object = GC.classObjAlloc->Alloc(_class);
-			object->attributes.reserve(_class->objectAttributes.size());
-			for (const auto& attr : _class->objectAttributes)
-			{
-				AttributeObject* objectAttr = GC.attributeAlloc->Alloc(&attr.second);
-				objectAttr->object = AllocNull();
-				object->attributes[attr.second.name] = objectAttr;
-			}
-			return object;
-		}
-
-		NamespaceWrapper* VirtualMachine::AllocNamespaceWrapper(const NamespaceType* _namespace)
-		{
-			return _namespace->wrapper;
-		}
-
-		LocalObject* VirtualMachine::AllocLocal(const std::string& localName, Local& local)
-		{
-			return GC.localObjAlloc->Alloc(local, localName);
-		}
-
-		Frame* VirtualMachine::AllocFrame()
-		{
-			return GC.frameAlloc->Alloc();
-		}
-
 		OPCODE VirtualMachine::ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset)
 		{
 			return GenericRead<OPCODE>(bytes, offset);
@@ -1497,7 +1452,7 @@ namespace MSL
 					StringObject::InnerType& moduleName = static_cast<StringObject*>(module)->value;
 					StringObject::InnerType& functionName = static_cast<StringObject*>(function)->value;
 
-					using MSLFunction = void(*)(ObjectStack*, AssemblyType*, uint32_t*, Configuration*);
+					using MSLFunction = void(*)(ObjectStack*, AssemblyType*, uint32_t*, Configuration*, GarbageCollector*);
 					auto func = (MSLFunction)dllLoader.GetFunctionPointer(moduleName, functionName);
 					if (func == NULL) 
 					{
@@ -1506,7 +1461,7 @@ namespace MSL
 						return; 
 					}
 					// DLL call
-					func(&objectStack, &assembly, &errors, &config);
+					func(&objectStack, &assembly, &errors, &config, &GC);
 					#endif
 				}
 				else if (_method->name == "LoadLibrary_1")
@@ -2483,9 +2438,6 @@ namespace MSL
 			   iterAlloc > config.GC.minMemory && 
 			   iterAlloc > GC.GetClearedMemorySinceIter())
 			{
-				trueObject.MarkMembers();
-				falseObject.MarkMembers();
-				nullObject.MarkMembers();
 				GC.Collect(this->assembly, this->callStack, this->objectStack);
 			}
 		}
@@ -3066,6 +3018,51 @@ namespace MSL
 			}
 		}
 
+		ClassWrapper* VirtualMachine::AllocClassWrapper(const ClassType* _class)
+		{
+			return _class->wrapper;
+		}
+
+		ClassObject* VirtualMachine::AllocClassObject(const ClassType* _class)
+		{
+			if (!_class->staticConstructorCalled && _class->hasStaticConstructor())
+			{
+				std::string staticConstructor = _class->name + "_0_static";
+				CallPath newFrame;
+				newFrame.SetNamespace(&_class->namespaceName);
+				newFrame.SetClass(&_class->name);
+				newFrame.SetMethod(&staticConstructor);
+				callStack.push_back(std::move(newFrame));
+				objectStack.push_back(_class->wrapper);
+				StartNewStackFrame();
+				objectStack.pop_back();
+			}
+			ClassObject* object = GC.classObjAlloc->Alloc(_class);
+			object->attributes.reserve(_class->objectAttributes.size());
+			for (const auto& attr : _class->objectAttributes)
+			{
+				AttributeObject* objectAttr = GC.attributeAlloc->Alloc(&attr.second);
+				objectAttr->object = AllocNull();
+				object->attributes[attr.second.name] = objectAttr;
+			}
+			return object;
+		}
+
+		NamespaceWrapper* VirtualMachine::AllocNamespaceWrapper(const NamespaceType* _namespace)
+		{
+			return _namespace->wrapper;
+		}
+
+		LocalObject* VirtualMachine::AllocLocal(const std::string& localName, Local& local)
+		{
+			return GC.localObjAlloc->Alloc(local, localName);
+		}
+
+		Frame* VirtualMachine::AllocFrame()
+		{
+			return GC.frameAlloc->Alloc();
+		}
+
 		UnknownObject* VirtualMachine::AllocUnknown(const std::string* value)
 		{
 			return GC.unknownObjAlloc->Alloc(value);
@@ -3073,22 +3070,22 @@ namespace MSL
 
 		NullObject* VirtualMachine::AllocNull()
 		{
-			return &nullObject;
+			return &GC.nullObject;
 		}
 
 		TrueObject* VirtualMachine::AllocTrue()
 		{
-			return &trueObject;
+			return &GC.trueObject;
 		}
 
 		FalseObject* VirtualMachine::AllocFalse()
 		{
-			return &falseObject;
+			return &GC.falseObject;
 		}
 
 		ArrayObject* VirtualMachine::AllocArray(size_t size)
 		{
-			if (size * sizeof(NullObject) > config.GC.maxMemory)
+			if ((uint32_t)size * sizeof(NullObject) > config.GC.maxMemory)
 			{
 				errors |= ERROR::OUT_OF_MEMORY;
 				DisplayError("cannot allocate array with too big size = " + std::to_string(size) + " (" + MSL::utils::formatBytes(size) + ')');

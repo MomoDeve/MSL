@@ -45,6 +45,7 @@ bool createAssembly(string fileName)
 	ofstream binary(fileName + ".emsl", ios::binary);
 	auto contents = generator.GetBuffer();
 	binary.write(contents.c_str(), contents.size());
+
 	return true;
 }
 

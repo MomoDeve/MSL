@@ -3085,7 +3085,7 @@ namespace MSL
 
 		ArrayObject* VirtualMachine::AllocArray(size_t size)
 		{
-			if ((uint32_t)size * sizeof(NullObject) > config.GC.maxMemory)
+			if ((uint64_t)size * sizeof(NullObject) > config.GC.maxMemory)
 			{
 				errors |= ERROR::OUT_OF_MEMORY;
 				DisplayError("cannot allocate array with too big size = " + std::to_string(size) + " (" + MSL::utils::formatBytes(size) + ')');

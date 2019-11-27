@@ -24,7 +24,7 @@ namespace MSL
 			/*
 			size of any constant in source code (integer / float / string) must not be more than constantMaxSize
 			*/
-			static const size_t constantMaxSize = UINT8_MAX;
+			static const size_t constantMaxSize = std::numeric_limits<uint16_t>::max();
 			/*
 			assembly object which is generated after successful parsing (can be get by Parser::GetAssembly() method)
 			*/

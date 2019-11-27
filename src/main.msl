@@ -471,7 +471,7 @@ namespace Program
 
         public static function Main()
         {
-            Console.PrintLine("Hello world!");
+            Console.PrintLine("hello world!");
         }
 	}
 }

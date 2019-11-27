@@ -459,7 +459,8 @@ namespace MSL
 
 		std::string AssemblyEditor::ReadString()
 		{
-			uint8_t size = GenericRead<uint8_t>();
+			using StringSize = uint16_t;
+			StringSize size = GenericRead<StringSize>();
 			std::string res(size, '?');
 			file.read(&res[0], size);
 			return res;

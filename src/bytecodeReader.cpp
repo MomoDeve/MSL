@@ -165,8 +165,8 @@ namespace MSL
 					out << tmp;
 				}
 				out << STRING(STRING_DECL) << ' ';
-				stringSize = GenericRead<uint8_t>();
-				out << (size_t)stringSize << ' ';
+				stringSize = GenericRead<uint16_t>();
+				out << stringSize << ' ';
 				out << ReadString(stringSize);
 				break;
 				OPCODE_CASE(MODIFIERS_DECL)

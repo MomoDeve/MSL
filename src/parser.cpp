@@ -8,7 +8,7 @@ namespace MSL
 		#define THROW(message) Error(message); return false;
 		#define TO_BASE(derived_ptr) unique_ptr<BaseExpression>(derived_ptr.release())
 
-		Parser::Parser(Lexer* lexer, std::ostream* errorStream, MODE::mode mode)
+		Parser::Parser(Lexer* lexer, std::ostream* errorStream, Parser::MODE::mode mode)
 			: lexer(lexer), stream(errorStream), mode(mode), hasEntryPoint(false), success(true) { }
 
 		bool Parser::Parse()

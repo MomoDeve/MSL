@@ -67,23 +67,23 @@ namespace MSL
 			for (size_t i = 0; i < ifStatements.size(); i++, labelId++)
 			{
 				ifStatements[i]->GenerateBytecode(code, function);
-				code.write(OPCODE::JUMP_IF_FALSE);
-				code.write(labelId);
+				code.Write(OPCODE::JUMP_IF_FALSE);
+				code.Write(labelId);
 				GenerateExpressionListBytecode(bodies[i], code, function);
-				code.write(OPCODE::JUMP);
-				code.write(endIf);
-				code.write(OPCODE::SET_LABEL);
-				code.write(labelId);
+				code.Write(OPCODE::JUMP);
+				code.Write(endIf);
+				code.Write(OPCODE::SET_LABEL);
+				code.Write(labelId);
 			}
 
 			if (hasElseBlock())
 			{
 				GenerateExpressionListBytecode(bodies.back(), code, function);
-				code.write(OPCODE::JUMP);
-				code.write(endIf);
+				code.Write(OPCODE::JUMP);
+				code.Write(endIf);
 			}
-			code.write(OPCODE::SET_LABEL);
-			code.write(endIf);
+			code.Write(OPCODE::SET_LABEL);
+			code.Write(endIf);
 		}
 
 		ObjectDeclareExpression::ObjectDeclareExpression()
@@ -112,22 +112,22 @@ namespace MSL
 		{
 			if (isConst)
 			{
-				code.write(OPCODE::ALLOC_CONST_VAR);
+				code.Write(OPCODE::ALLOC_CONST_VAR);
 			}
 			else
 			{
-				code.write(OPCODE::ALLOC_VAR);
+				code.Write(OPCODE::ALLOC_VAR);
 			}
-			code.write(function.GetHash(objectName));
+			code.Write(function.GetHash(objectName));
 			if (hasAssignment())
 			{
 				assignment->GenerateBytecode(code, function);
 			}
 			else
 			{
-				code.write(OPCODE::PUSH_NULL);
+				code.Write(OPCODE::PUSH_NULL);
 			}
-			code.write(OPCODE::ASSIGN_OP);
+			code.Write(OPCODE::ASSIGN_OP);
 		}
 
 #undef TO_BASE
@@ -148,35 +148,35 @@ namespace MSL
 			switch (object.type)
 			{
 			case Token::Type::STRING_CONSTANT:
-				code.write(OPCODE::PUSH_STRING);
-				code.write(function.GetHash(object.value));
+				code.Write(OPCODE::PUSH_STRING);
+				code.Write(function.GetHash(object.value));
 				break;
 			case Token::Type::INTEGER_CONSTANT:
-				code.write(OPCODE::PUSH_INTEGER);
-				code.write(function.GetHash(object.value));
+				code.Write(OPCODE::PUSH_INTEGER);
+				code.Write(function.GetHash(object.value));
 				break;
 			case Token::Type::FLOAT_CONSTANT:
-				code.write(OPCODE::PUSH_FLOAT);
-				code.write(function.GetHash(object.value));
+				code.Write(OPCODE::PUSH_FLOAT);
+				code.Write(function.GetHash(object.value));
 				break;
 			case Token::Type::OBJECT:
-				code.write(OPCODE::PUSH_OBJECT);
-				code.write(function.GetHash(object.value));
+				code.Write(OPCODE::PUSH_OBJECT);
+				code.Write(function.GetHash(object.value));
 				break;
 			case Token::Type::TRUE_CONSTANT:
-				code.write(OPCODE::PUSH_TRUE);
+				code.Write(OPCODE::PUSH_TRUE);
 				break;
 			case Token::Type::FALSE_CONSTANT:
-				code.write(OPCODE::PUSH_FALSE);
+				code.Write(OPCODE::PUSH_FALSE);
 				break;
 			case Token::Type::THIS:
-				code.write(OPCODE::PUSH_THIS);
+				code.Write(OPCODE::PUSH_THIS);
 				break;
 			case Token::Type::NULLPTR:
-				code.write(OPCODE::PUSH_NULL);
+				code.Write(OPCODE::PUSH_NULL);
 				break;
 			default:
-				code.write(OPCODE::ERROR_SYMBOL);
+				code.Write(OPCODE::ERROR_SYMBOL);
 				break;
 			}
 		}
@@ -204,17 +204,17 @@ namespace MSL
 		{
 			if (!hasParent)
 			{
-				code.write(OPCODE::PUSH_THIS);
+				code.Write(OPCODE::PUSH_THIS);
 			}
 			for (const auto& param : parameters)
 			{
 				param->GenerateBytecode(code, function);
 			}
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(functionName));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(functionName));
 
-			code.write(OPCODE::CALL_FUNCTION);
-			code.write(static_cast<uint8_t>(parameters.size()));
+			code.Write(OPCODE::CALL_FUNCTION);
+			code.Write(static_cast<uint8_t>(parameters.size()));
 		}
 
 
@@ -260,29 +260,29 @@ namespace MSL
 			if (hasInitStatement())
 			{
 				init->GenerateBytecode(code, function);
-				code.write(OPCODE::POP_STACK_TOP);
+				code.Write(OPCODE::POP_STACK_TOP);
 			}
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += 2; // predicate and end-for label
 
-			code.write(OPCODE::SET_LABEL); // predicate
-			code.write(labelId);
+			code.Write(OPCODE::SET_LABEL); // predicate
+			code.Write(labelId);
 
 			predicate->GenerateBytecode(code, function);
-			code.write(OPCODE::JUMP_IF_FALSE);
-			code.write<uint16_t>(labelId + 1); // to end-for
+			code.Write(OPCODE::JUMP_IF_FALSE);
+			code.Write<uint16_t>(labelId + 1); // to end-for
 
 			GenerateExpressionListBytecode(body, code, function);
 			if (hasIterationStatement())
 			{
 				iteration->GenerateBytecode(code, function);
-				code.write(OPCODE::POP_STACK_TOP);
+				code.Write(OPCODE::POP_STACK_TOP);
 			}
 
-			code.write(OPCODE::JUMP);
-			code.write(labelId); // to predicate
-			code.write(OPCODE::SET_LABEL);
-			code.write<uint16_t>(labelId + 1); // end-for
+			code.Write(OPCODE::JUMP);
+			code.Write(labelId); // to predicate
+			code.Write(OPCODE::SET_LABEL);
+			code.Write<uint16_t>(labelId + 1); // end-for
 		}
 
 
@@ -306,16 +306,16 @@ namespace MSL
 			switch (expressionType)
 			{
 			case Token::Type::NEGATION_OP:
-				code.write(OPCODE::NEGATION_OP);
+				code.Write(OPCODE::NEGATION_OP);
 				break;
 			case Token::Type::NEGATIVE_OP:
-				code.write(OPCODE::NEGATIVE_OP);
+				code.Write(OPCODE::NEGATIVE_OP);
 				break;
 			case Token::Type::POSITIVE_OP:
-				code.write(OPCODE::POSITIVE_OP);
+				code.Write(OPCODE::POSITIVE_OP);
 				break;
 			default:
-				code.write(OPCODE::ERROR_SYMBOL);
+				code.Write(OPCODE::ERROR_SYMBOL);
 				break;
 			}
 		}
@@ -345,79 +345,79 @@ namespace MSL
 			switch (expressionType)
 			{
 			case Token::Type::SUM_OP:
-				code.write(OPCODE::SUM_OP);
+				code.Write(OPCODE::SUM_OP);
 				break;
 			case Token::Type::SUB_OP:
-				code.write(OPCODE::SUB_OP);
+				code.Write(OPCODE::SUB_OP);
 				break;
 			case Token::Type::MULT_OP:
-				code.write(OPCODE::MULT_OP);
+				code.Write(OPCODE::MULT_OP);
 				break;
 			case Token::Type::DIV_OP:
-				code.write(OPCODE::DIV_OP);
+				code.Write(OPCODE::DIV_OP);
 				break;
 			case Token::Type::MOD_OP:
-				code.write(OPCODE::MOD_OP);
+				code.Write(OPCODE::MOD_OP);
 				break;
 			case Token::Type::POWER_OP:
-				code.write(OPCODE::POWER_OP);
+				code.Write(OPCODE::POWER_OP);
 				break;
 			case Token::Type::ASSIGN_OP:
-				code.write(OPCODE::ASSIGN_OP);
+				code.Write(OPCODE::ASSIGN_OP);
 				break;
 			case Token::Type::SUM_ASSIGN_OP:
-				code.write(OPCODE::SET_ALU_INCR);
-				code.write(OPCODE::SUM_OP);
+				code.Write(OPCODE::SET_ALU_INCR);
+				code.Write(OPCODE::SUM_OP);
 				break;
 			case Token::Type::SUB_ASSIGN_OP:
-				code.write(OPCODE::SET_ALU_INCR);
-				code.write(OPCODE::SUB_OP);
+				code.Write(OPCODE::SET_ALU_INCR);
+				code.Write(OPCODE::SUB_OP);
 				break;
 			case Token::Type::MULT_ASSIGN_OP:
-				code.write(OPCODE::SET_ALU_INCR);
-				code.write(OPCODE::MULT_OP);
+				code.Write(OPCODE::SET_ALU_INCR);
+				code.Write(OPCODE::MULT_OP);
 				break;
 			case Token::Type::DIV_ASSIGN_OP:
-				code.write(OPCODE::SET_ALU_INCR);
-				code.write(OPCODE::DIV_OP);
+				code.Write(OPCODE::SET_ALU_INCR);
+				code.Write(OPCODE::DIV_OP);
 				break;
 			case Token::Type::MOD_ASSIGN_OP:
-				code.write(OPCODE::SET_ALU_INCR);
-				code.write(OPCODE::MOD_OP);
+				code.Write(OPCODE::SET_ALU_INCR);
+				code.Write(OPCODE::MOD_OP);
 				break;
 			case Token::Type::DOT:
 				if (right.get()->type != ExpressionType::CALL &&
 					right.get()->type != ExpressionType::INDEX)
 				{
-					code.write(OPCODE::GET_MEMBER);
+					code.Write(OPCODE::GET_MEMBER);
 				}
 				break;
 			case Token::Type::LOGIC_EQUALS:
-				code.write(OPCODE::CMP_EQ);
+				code.Write(OPCODE::CMP_EQ);
 				break;
 			case Token::Type::LOGIC_NOT_EQUALS:
-				code.write(OPCODE::CMP_NEQ);
+				code.Write(OPCODE::CMP_NEQ);
 				break;
 			case Token::Type::LOGIC_LESS:
-				code.write(OPCODE::CMP_L);
+				code.Write(OPCODE::CMP_L);
 				break;
 			case Token::Type::LOGIC_GREATER:
-				code.write(OPCODE::CMP_G);
+				code.Write(OPCODE::CMP_G);
 				break;
 			case Token::Type::LOGIC_LESS_EQUALS:
-				code.write(OPCODE::CMP_LE);
+				code.Write(OPCODE::CMP_LE);
 				break;
 			case Token::Type::LOGIC_GREATER_EQUALS:
-				code.write(OPCODE::CMP_GE);
+				code.Write(OPCODE::CMP_GE);
 				break;
 			case Token::Type::LOGIC_OR:
-				code.write(OPCODE::CMP_OR);
+				code.Write(OPCODE::CMP_OR);
 				break;
 			case Token::Type::LOGIC_AND:
-				code.write(OPCODE::CMP_AND);
+				code.Write(OPCODE::CMP_AND);
 				break;
 			default:
-				code.write(OPCODE::ERROR_SYMBOL);
+				code.Write(OPCODE::ERROR_SYMBOL);
 				break;
 			}
 		}
@@ -441,7 +441,7 @@ namespace MSL
 		{
 			parameter->GenerateBytecode(code, function);
 			caller->GenerateBytecode(code, function);
-			code.write(OPCODE::GET_INDEX);
+			code.Write(OPCODE::GET_INDEX);
 		}
 
 
@@ -469,19 +469,19 @@ namespace MSL
 		{
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += 2; // for init check and end-while jump
-			code.write(OPCODE::SET_LABEL); // predicate
-			code.write(labelId);
+			code.Write(OPCODE::SET_LABEL); // predicate
+			code.Write(labelId);
 
 			predicate->GenerateBytecode(code, function);
-			code.write(OPCODE::JUMP_IF_FALSE);
-			code.write<uint16_t>(labelId + 1); // to end-while
+			code.Write(OPCODE::JUMP_IF_FALSE);
+			code.Write<uint16_t>(labelId + 1); // to end-while
 
 			GenerateExpressionListBytecode(body, code, function);
 
-			code.write(OPCODE::JUMP);
-			code.write(labelId); // to predicate
-			code.write(OPCODE::SET_LABEL);
-			code.write<uint16_t>(labelId + 1); // end-while
+			code.Write(OPCODE::JUMP);
+			code.Write(labelId); // to predicate
+			code.Write(OPCODE::SET_LABEL);
+			code.Write<uint16_t>(labelId + 1); // end-while
 		}
 
 		void LambdaExpression::Print(std::ostream& out, int depth) const
@@ -536,91 +536,91 @@ namespace MSL
 
 		void ForeachExpression::GenerateBytecode(CodeGenerator& code, const Function& function) const
 		{
-			code.write(OPCODE::ALLOC_VAR);
-			code.write(function.GetHash(iterator));
-			code.write(OPCODE::POP_STACK_TOP);
+			code.Write(OPCODE::ALLOC_VAR);
+			code.Write(function.GetHash(iterator));
+			code.Write(OPCODE::POP_STACK_TOP);
 
 			// var iteratorIndex = container.Begin();
-			code.write(OPCODE::ALLOC_VAR);
-			code.write(function.GetHash(iteratorIndex));
+			code.Write(OPCODE::ALLOC_VAR);
+			code.Write(function.GetHash(iteratorIndex));
 
 			auto containerDeclare = reinterpret_cast<ObjectDeclareExpression*>(container.get());
 			containerDeclare->GenerateBytecode(code, function);
 
 			// call of .Begin(this);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash("Begin_0"));
-			code.write(OPCODE::CALL_FUNCTION);
-			code.write((uint8_t)0);
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash("Begin_0"));
+			code.Write(OPCODE::CALL_FUNCTION);
+			code.Write((uint8_t)0);
 
-			code.write(OPCODE::ASSIGN_OP); // init iterator with begin of container
-			code.write(OPCODE::POP_STACK_TOP);
+			code.Write(OPCODE::ASSIGN_OP); // init iterator with begin of container
+			code.Write(OPCODE::POP_STACK_TOP);
 
 
 			uint16_t labelId = function.labelInnerId;
 			function.labelInnerId += 2; // predicate and end-foreach label
 
-			code.write(OPCODE::SET_LABEL); // predicate
-			code.write(labelId);
+			code.Write(OPCODE::SET_LABEL); // predicate
+			code.Write(labelId);
 
 			// if(iteratorIndex == container.End()) jump_end;
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iteratorIndex));
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(containerDeclare->objectName));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(iteratorIndex));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(containerDeclare->objectName));
 
 			// call of .End(this);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash("End_0"));
-			code.write(OPCODE::CALL_FUNCTION);
-			code.write((uint8_t)0);
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash("End_0"));
+			code.Write(OPCODE::CALL_FUNCTION);
+			code.Write((uint8_t)0);
 
-			code.write(OPCODE::CMP_EQ);
-			code.write(OPCODE::JUMP_IF_TRUE);
-			code.write<uint16_t>(labelId + 1); // to end-foreach
+			code.Write(OPCODE::CMP_EQ);
+			code.Write(OPCODE::JUMP_IF_TRUE);
+			code.Write<uint16_t>(labelId + 1); // to end-foreach
 
 			// iterator = container.GetByIter(iteratorIndex);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iterator));
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(containerDeclare->objectName));
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iteratorIndex));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(iterator));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(containerDeclare->objectName));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(iteratorIndex));
 
 			// call of .GetByIter(this, iter);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash("GetByIter_1"));
-			code.write(OPCODE::CALL_FUNCTION);
-			code.write((uint8_t)1);
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash("GetByIter_1"));
+			code.Write(OPCODE::CALL_FUNCTION);
+			code.Write((uint8_t)1);
 
-			code.write(OPCODE::ASSIGN_OP);
-			code.write(OPCODE::POP_STACK_TOP);
+			code.Write(OPCODE::ASSIGN_OP);
+			code.Write(OPCODE::POP_STACK_TOP);
 
 			// generate body inside { }
 			GenerateExpressionListBytecode(body, code, function);
 
 			// iteratorIndex = container.Next(iteratorIndex);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iteratorIndex));
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(containerDeclare->objectName));
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash(iteratorIndex));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(iteratorIndex));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(containerDeclare->objectName));
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash(iteratorIndex));
 
 			// call of .Next(this, iter);
-			code.write(OPCODE::PUSH_OBJECT);
-			code.write(function.GetHash("Next_1"));
-			code.write(OPCODE::CALL_FUNCTION);
-			code.write((uint8_t)1);
+			code.Write(OPCODE::PUSH_OBJECT);
+			code.Write(function.GetHash("Next_1"));
+			code.Write(OPCODE::CALL_FUNCTION);
+			code.Write((uint8_t)1);
 
-			code.write(OPCODE::ASSIGN_OP);
-			code.write(OPCODE::POP_STACK_TOP);
+			code.Write(OPCODE::ASSIGN_OP);
+			code.Write(OPCODE::POP_STACK_TOP);
 
 
-			code.write(OPCODE::JUMP);
-			code.write(labelId); // to predicate
-			code.write(OPCODE::SET_LABEL);
-			code.write<uint16_t>(labelId + 1); // end-foreach
+			code.Write(OPCODE::JUMP);
+			code.Write(labelId); // to predicate
+			code.Write(OPCODE::SET_LABEL);
+			code.Write<uint16_t>(labelId + 1); // end-foreach
 		}
 
 		void ReturnExpression::Print(std::ostream& out, int depth) const
@@ -646,12 +646,12 @@ namespace MSL
 		{
 			if (Empty())
 			{
-				code.write(OPCODE::RETURN);
+				code.Write(OPCODE::RETURN);
 			}
 			else
 			{
 				returnValue->GenerateBytecode(code, function);
-				code.write(OPCODE::POP_TO_RETURN);
+				code.Write(OPCODE::POP_TO_RETURN);
 			}
 		}
 
@@ -668,7 +668,7 @@ namespace MSL
 				case ExpressionType::INDEX:
 				case ExpressionType::DECLARE:
 				case ExpressionType::OBJECT:
-					code.write(OPCODE::POP_STACK_TOP); // if result of these expressions is not needed, it should be discarded by stack_pop
+					code.Write(OPCODE::POP_STACK_TOP); // if result of these expressions is not needed, it should be discarded by stack_pop
 					break;
 				default:
 					break;

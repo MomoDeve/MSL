@@ -19,22 +19,22 @@ namespace MSL
 		*/
 		void CodeGenerator::GenerateNamespacePool()
 		{
-			write(OPCODE::ASSEMBLY_BEGIN_DECL);
+			Write(OPCODE::ASSEMBLY_BEGIN_DECL);
 			const auto& namespaces = assembly.GetNamespaces();
-			write(OPCODE::NAMESPACE_POOL_DECL_SIZE);
-			write(namespaces.size());
+			Write(OPCODE::NAMESPACE_POOL_DECL_SIZE);
+			Write(namespaces.size());
 			for (const auto& _namespace : namespaces)
 			{
-				writeString(_namespace.getName());
-				write(OPCODE::FRIEND_POOL_DECL_SIZE);
-				write(_namespace.friendNamespaces.size());
+				WriteString(_namespace.getName());
+				Write(OPCODE::FRIEND_POOL_DECL_SIZE);
+				Write(_namespace.friendNamespaces.size());
 				for (const auto& friendNamespace : _namespace.friendNamespaces)
 				{
-					writeString(friendNamespace);
+					WriteString(friendNamespace);
 				}
 				GenerateClassPool(_namespace);
 			}
-			write(OPCODE::ASSEMBLY_END_DECL);
+			Write(OPCODE::ASSEMBLY_END_DECL);
 		}
 
 		/*
@@ -47,14 +47,14 @@ namespace MSL
 		void CodeGenerator::GenerateClassPool(const Namespace& _namespace)
 		{
 			const auto& classes = _namespace.getMembers();
-			write(OPCODE::CLASS_POOL_DECL_SIZE);
-			write(classes.size());
+			Write(OPCODE::CLASS_POOL_DECL_SIZE);
+			Write(classes.size());
 			for (const auto& _class : classes)
 			{
-				writeString(_class.name);
+				WriteString(_class.name);
 
-				write(OPCODE::MODIFIERS_DECL);
-				write(_class.modifiers);
+				Write(OPCODE::MODIFIERS_DECL);
+				Write(_class.modifiers);
 
 				GenetateAttributePool(_class);
 				GenerateMethodPool(_class);
@@ -68,56 +68,57 @@ namespace MSL
 		*/
 		void CodeGenerator::GenetateAttributePool(const Class& _class)
 		{
-			write(OPCODE::ATTRIBUTE_POOL_DECL_SIZE);
+			Write(OPCODE::ATTRIBUTE_POOL_DECL_SIZE);
 			const auto& attributes = _class.GetAttributes();
-			write(attributes.size());
+			Write(attributes.size());
 			for (const auto& attr : attributes)
 			{
-				writeString(attr.name);
-				write(OPCODE::MODIFIERS_DECL);
-				write(attr.modifiers);
+				WriteString(attr.name);
+				Write(OPCODE::MODIFIERS_DECL);
+				Write(attr.modifiers);
 			}
 		}
 
 		void CodeGenerator::GenerateMethod(const Function& method)
 		{
-			write(OPCODE::METHOD_PARAMS_DECL_SIZE);
-			write(method.params.size());
+			Write(OPCODE::METHOD_PARAMS_DECL_SIZE);
+			Write(method.params.size());
 			for (const auto& param : method.params)
 			{
-				writeString(param);
+				WriteString(param);
 			}
-			write(OPCODE::DEPENDENCY_POOL_DECL_SIZE);
+			Write(OPCODE::DEPENDENCY_POOL_DECL_SIZE);
 			const auto& variables = method.getVariables();
-			write(variables.size());
+			Write(variables.size());
 			for (const auto& variable : method.getVariables())
 			{
-				writeString(variable);
+				WriteString(variable);
 			}
-			write(OPCODE::METHOD_BODY_BEGIN_DECL);
+			Write(OPCODE::METHOD_BODY_BEGIN_DECL);
 			method.GenerateBytecode(*this);
-			write(OPCODE::METHOD_BODY_END_DECL);
+			Write(OPCODE::METHOD_BODY_END_DECL);
 		}
 
 		void CodeGenerator::GenerateMethodPool(const Class& _class)
 		{
-			write(OPCODE::METHOD_POOL_DECL_SIZE);
+			Write(OPCODE::METHOD_POOL_DECL_SIZE);
 			const auto& methods = _class.GetMethods();
-			write(methods.size());
+			Write(methods.size());
 			for (const auto& method : methods)
 			{
-				writeString(method.name);
-				write(OPCODE::MODIFIERS_DECL);
-				write(method.modifiers);
+				WriteString(method.name);
+				Write(OPCODE::MODIFIERS_DECL);
+				Write(method.modifiers);
 				GenerateMethod(method);
 			}
 		}
 
-		void CodeGenerator::writeString(const std::string& data)
+		void CodeGenerator::WriteString(const std::string& data)
 		{
-			write(OPCODE::STRING_DECL);
-			uint8_t stringSize = static_cast<uint8_t>(data.size()); // size cannot be more than 0xFF !
-			write(stringSize);
+			using StringSize = uint16_t;
+			Write(OPCODE::STRING_DECL);
+			StringSize stringSize = static_cast<StringSize>(data.size()); // size cannot be more than 0xFFFF !
+			Write(stringSize);
 			out.write(data.c_str(), stringSize);
 		}
 

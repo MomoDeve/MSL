@@ -10,7 +10,7 @@ namespace MSL
 	{
 		/*
 		BytecodeReader class is used to generate human-read representation of msl binary file
-		if reader finds an error in file, it stops and generates last line with content [[ unresolved instruction ]]
+		if reader finds an error in file, it outputs line [[ unresolved instruction ]]
 		*/
 		class BytecodeReader
 		{

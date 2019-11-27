@@ -60,18 +60,18 @@ namespace MSL
 			writes binary representation of data to the binary file
 			*/
 			template<typename T>
-			void write(T data);
+			void Write(T data);
 			/*
 			writes string object to the binary file in format [uint8_t size][char[] char_array]
 			*/
-			void writeString(const std::string& data);
+			void WriteString(const std::string& data);
 		};
 
 		/*
 		generic method for writing binary data to file
 		*/
 		template<typename T>
-		inline void CodeGenerator::write(T data)
+		inline void CodeGenerator::Write(T data)
 		{
 			out.write(reinterpret_cast<char*>(&data), sizeof(T));
 		}

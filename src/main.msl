@@ -477,9 +477,9 @@ namespace Program
 
         public function TestClass()
         {
-             var v1 = Vector2(2, "2");
+             var v1 = Vector2(2, true);
              var v2 = Vector2(2, 3);
-             Console.PrintLine(v1.Dot(v2));
+             Console.PrintLine(v1 + v2);
         }
     }
 
@@ -487,19 +487,7 @@ namespace Program
     {
         public static function Main()
         {
-            try
-            {
-                var t = TestClass();
-            }
-            catch (e)
-            {
-                Console.PrintLine(e);
-                Console.PrintLine("  type: " + e.type);
-                Console.PrintLine("  message: " + e.message);
-                Console.PrintLine("  argument: " + e.argument);
-                Console.PrintLine("  trace: " + e.stackTrace);
-            }
-            Console.Print("\n");
+            var t = TestClass();
         }
     }
 }

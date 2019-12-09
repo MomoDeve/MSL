@@ -28,7 +28,7 @@ bool createAssembly(string fileName)
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
 	
-	#ifndef MSL_VM_DEBUG
+	#ifdef MSL_VM_DEBUG
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{

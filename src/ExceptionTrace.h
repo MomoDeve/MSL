@@ -10,14 +10,13 @@ namespace MSL
 		class ExceptionTrace
 		{
 			std::vector<std::string> innerArgs;
-			size_t errorType;
 		public:
 			std::string& GetMessage();
 			std::string& GetArgument();
 			std::string& GetTraceEntry(size_t index);
-			size_t& GetErrorType();
+			std::string& GetErrorType();
 			size_t GetTraceSize();
-			void Init(const std::string& message, const std::string& arg, size_t error);
+			void Init(const std::string& message, const std::string& arg, const std::string& error);
 			void AddTraceEntry(const std::string& entry);
 		};
 	}

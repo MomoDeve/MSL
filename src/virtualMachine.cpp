@@ -121,7 +121,7 @@ namespace MSL
 			const auto ns = GetNamespaceOrNull(objectName);
 			if (ns != nullptr) return AllocNamespaceWrapper(ns);
 
-			InvokeError(ERROR::OBJECT_NOT_FOUND, "object with name: `" + objectName + "` was not found");
+			InvokeError(ERROR::OBJECT_NOT_FOUND, "object with name `" + objectName + "` was not found", objectName);
 			std::string className = _class->ToString() + (_method->isStatic() ? "[static]" : "[this]");
 			DisplayInfo("current frame: " + _namespace->name + '.' + className + '.' + GetFullMethodType(_method));
 			return nullptr;
@@ -222,7 +222,7 @@ namespace MSL
 				cl = GetClassOrNull("System", "Null");
 				break;
 			default:
-				InvokeError(ERROR::INVALID_STACKOBJECT, "Cannot get primitive class of object with type: " + ToString(object->type));
+				InvokeError(ERROR::INVALID_STACKOBJECT, "Cannot get primitive class of object with type: " + ToString(object->type), object->ToString());
 				return nullptr;
 			}
 			return cl->wrapper;
@@ -250,7 +250,7 @@ namespace MSL
 						}
 						else
 						{
-							InvokeError(ERROR::INVALID_CALL_ARGUMENT, "find two or more matching classes while resolving object type: " + objectName);
+							InvokeError(ERROR::INVALID_CALL_ARGUMENT, "find two or more matching classes while resolving object type: " + objectName, objectName);
 
 							DisplayInfo("first match was: " + GetFullClassType(classWrap->type));
 							DisplayInfo("also found: " + GetFullClassType(otherClass));
@@ -352,17 +352,17 @@ namespace MSL
 						}
 						else if (classType->isAbstract()) // if class is abstract, constructor is not found too
 						{
-							InvokeError(ERROR::ABSTRACT_MEMBER_CALL, "cannot create instance of abstract class: " + GetFullClassType(classType));
+							InvokeError(ERROR::ABSTRACT_MEMBER_CALL, "cannot create instance of abstract class: " + GetFullClassType(classType), classType->name);
 
 						}
 						else if (classType->isStatic())
 						{
-							InvokeError(ERROR::MEMBER_NOT_FOUND, "cannot create instance of static class: " + GetFullClassType(classType));
+							InvokeError(ERROR::MEMBER_NOT_FOUND, "cannot create instance of static class: " + GetFullClassType(classType), classType->name);
 
 						}
 						else // probably constructor is just missing
 						{
-							InvokeError(ERROR::INVALID_METHOD_CALL, "could not call class " + GetFullClassType(classType) + " constructor: " + methodName);
+							InvokeError(ERROR::INVALID_METHOD_CALL, "could not call class " + GetFullClassType(classType) + " constructor: " + methodName, classType->name);
 
 							DisplayInfo("available constructors of this class:");
 							for (int i = 0; i < 17; i++) // find all possible class constructors (with less than 17 parameters, at least)
@@ -379,7 +379,14 @@ namespace MSL
 				}
 				if (frame->_class != nullptr)
 				{
-					if(errors == 0) InvokeError(ERROR::INVALID_METHOD_SIGNATURE, "method " + GetFullClassType(frame->_class) + '.' + *callStack.back().GetMethod() + " was not found");
+					if (errors == 0)
+					{
+						InvokeError(
+							ERROR::INVALID_METHOD_SIGNATURE,
+							"method " + GetFullClassType(frame->_class) + '.' + *callStack.back().GetMethod() + " was not found",
+							GetMethodActualName(*callStack.back().GetMethod())
+						);
+					}
 
 					DisplayInfo("available class methods: ");
 					for (const auto& method : frame->_class->methods)
@@ -400,7 +407,11 @@ namespace MSL
 				CallPath& prev = callStack[callStack.size() - 2];
 				if (*prev.GetNamespace() != frame->_namespace->name || *prev.GetClass() != frame->_class->name)
 				{
-					InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to call private method: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
+					InvokeError(
+						ERROR::PRIVATE_MEMBER_ACCESS, 
+						"trying to call private method: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method), 
+						GetMethodActualName(frame->_method->name)
+					);
 
 					PRINTPREVFRAME;
 					RET_CS_POP;
@@ -409,7 +420,11 @@ namespace MSL
 			// if method is abstract, it cannot be called
 			if (frame->_method->isAbstract())
 			{
-				InvokeError(ERROR::ABSTRACT_MEMBER_CALL, "trying to call abstract method: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
+				InvokeError(
+					ERROR::ABSTRACT_MEMBER_CALL, 
+					"trying to call abstract method: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method), 
+					GetMethodActualName(frame->_method->name)
+				);
 
 				PRINTPREVFRAME;
 				RET_CS_POP;
@@ -418,7 +433,11 @@ namespace MSL
 			{
 				if (frame->_class->staticConstructorCalled)
 				{
-					InvokeError(ERROR::INVALID_METHOD_CALL, "static constructor of class cannot be called: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method));
+					InvokeError(
+						ERROR::INVALID_METHOD_CALL,
+						"static constructor of class cannot be called: " + GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method),
+						GetMethodActualName(frame->_method->name)
+					);
 
 					PRINTPREVFRAME;
 					RET_CS_POP;
@@ -459,7 +478,7 @@ namespace MSL
 			{
 				if (objectStack.empty())
 				{
-					InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack does not contain enough parameters for method call");
+					InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack does not contain enough parameters for method call", GetMethodActualName(frame->_method->name));
 
 					RET_CS_POP;
 					return;
@@ -472,7 +491,7 @@ namespace MSL
 			{
 				if (frame->_method->parameters.empty() || frame->_method->parameters.front() != "this")
 				{
-					InvokeError(ERROR::INVALID_METHOD_SIGNATURE | ERROR::FATAL_ERROR, "first parameter of non-static method must always be equal to `this`");
+					InvokeError(ERROR::INVALID_METHOD_SIGNATURE | ERROR::FATAL_ERROR, "first parameter of non-static method must always be equal to `this`", GetMethodActualName(frame->_method->name));
 
 					PRINTFRAME;
 					RET_CS_POP;
@@ -492,7 +511,7 @@ namespace MSL
 				// constructor cannot be called if the class is statics
 				if (frame->_class->isStatic())
 				{
-					InvokeError(ERROR::INVALID_METHOD_CALL, "can not create instance of static class: " + GetFullClassType(frame->_class));
+					InvokeError(ERROR::INVALID_METHOD_CALL, "can not create instance of static class: " + GetFullClassType(frame->_class), frame->_class->name);
 
 					PRINTPREVFRAME;
 					RET_CS_POP;
@@ -508,20 +527,21 @@ namespace MSL
 			{
 				if (errors != 0)
 				{
-					// set System.Exception variable
-					// generate code to assign variable to exception reference
+					// add stack trace
+					exception.AddTraceEntry(
+						GetFullClassType(frame->_class) + '.' + GetMethodActualName(frame->_method->name)
+					);
+					// return if no catch statements in this frame
 					if (frame->exceptionStack.empty() || errors & ERROR::FATAL_ERROR)
 					{
-						exception.AddTraceEntry(
-							GetFullClassType(frame->_class) + '.' + GetFullMethodType(frame->_method)
-						);
 						RET_CS_POP;
-					} // assign errors to exception variable
+					}
+					// get jump label for handler
 					errors = 0;
-					auto exception = frame->exceptionStack.back();
-					objectStack.resize(exception.stackSize);
+					auto catchStatement = frame->exceptionStack.back();
+					objectStack.resize(catchStatement.stackSize);
 					frame->exceptionStack.pop_back();
-					frame->offset = frame->_method->labels[exception.label];
+					frame->offset = frame->_method->labels[catchStatement.label];
 				}
 				OPCODE op = ReadOPCode(frame->_method->body, frame->offset);
 				CollectGarbage();
@@ -565,7 +585,7 @@ namespace MSL
 				{
 					if (objectStack.size() < 2)
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for get_index call: " + (!objectStack.empty() ? objectStack.back()->ToString() : ""));
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for get_index call", !objectStack.empty() ? objectStack.back()->ToString() : "");
 
 						PRINTFRAME;
 						return;
@@ -608,7 +628,7 @@ namespace MSL
 					}
 					break;
 					default:
-						InvokeError(ERROR::INVALID_STACKOBJECT, "object with invalid type was passed to GET_INDEX call: " + ToString(object->type));
+						InvokeError(ERROR::INVALID_STACKOBJECT, "object with invalid type was passed to GET_INDEX call: " + ToString(object->type), object->ToString());
 						PRINTFRAME;
 						return;
 					}
@@ -619,7 +639,7 @@ namespace MSL
 					uint8_t paramSize = ReadOPCode(frame->_method->body, frame->offset);
 					if (objectStack.size() < paramSize + 2u) // function object + caller object
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for function call: " + (!objectStack.empty() ? objectStack.back()->ToString() : ""));
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for function call", !objectStack.empty() ? objectStack.back()->ToString() : "");
 
 						PRINTFRAME;
 						return;
@@ -682,14 +702,14 @@ namespace MSL
 						auto classIt = ns->classes.find(className);
 						if (classIt == ns->classes.end())
 						{
-							InvokeError(ERROR::INVALID_STACKOBJECT, "class `" + className + "` was not found in namespace: " + ns->name);
+							InvokeError(ERROR::INVALID_STACKOBJECT, "class `" + className + "` was not found in namespace: " + ns->name, className);
 
 							PRINTFRAME;
 							return;
 						}
 						else if (classIt->second.isInternal() && ns->name != frame->_namespace->name)
 						{
-							InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access namespace internal member: " + GetFullClassType(&classIt->second));
+							InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access namespace internal member: " + GetFullClassType(&classIt->second), className);
 
 							PRINTFRAME;
 							return;
@@ -718,7 +738,7 @@ namespace MSL
 					break;
 					default:
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "caller of method was neither class object nor class type");
+						InvokeError(ERROR::INVALID_STACKOBJECT, "caller of method was neither class object nor class type", caller->ToString());
 
 						DisplayInfo("called method name: " + objectStack.back()->ToString());
 						DisplayInfo("caller was: " + caller->ToString());
@@ -735,7 +755,7 @@ namespace MSL
 				{
 					if (objectStack.size() < 2)
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough objects in stack to get member");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough objects in stack to get member", !objectStack.empty() ? objectStack.back()->ToString() : "");
 
 						if (!objectStack.empty()) DisplayInfo("last one is: " + objectStack.back()->ToString());
 						PRINTFRAME;
@@ -750,7 +770,7 @@ namespace MSL
 					const std::string* memberName = GetObjectName(member);
 					if (memberName == nullptr)
 					{
-						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "invalid member was called: " + member->ToString());
+						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "invalid member was called: " + member->ToString(), member->ToString());
 
 						PRINTFRAME;
 						break;
@@ -759,7 +779,7 @@ namespace MSL
 					BaseObject* memberObject = GetMemberObject(calledObject, *memberName, false);
 					if (memberObject == nullptr)
 					{
-						InvokeError(ERROR::MEMBER_NOT_FOUND, "member was not found: " + calledObject->ToString() + '.' + member->ToString());
+						InvokeError(ERROR::MEMBER_NOT_FOUND, "member was not found: " + calledObject->ToString() + '.' + member->ToString(), member->ToString());
 
 						PRINTFRAME;
 						break;
@@ -784,7 +804,7 @@ namespace MSL
 							}
 							if (classType != frame->_class)
 							{
-								InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access class private member: " + GetFullClassType(classType) + '.' + type->name);
+								InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access class private member: " + GetFullClassType(classType) + '.' + type->name, type->name);
 
 								PRINTFRAME;
 								break;
@@ -797,7 +817,7 @@ namespace MSL
 				case (OPCODE::POP_TO_RETURN):
 					if (objectStack.empty())
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but `return` instruction called");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but `return` instruction called", "");
 
 						PRINTFRAME;
 					}
@@ -849,7 +869,7 @@ namespace MSL
 				case (OPCODE::POP_CATCH):
 					if (frame->exceptionStack.empty())
 					{
-						InvokeError(ERROR::EXCEPTIONSTACK_EMPTY | ERROR::FATAL_ERROR, "exception handler was already popped");
+						InvokeError(ERROR::EXCEPTIONSTACK_EMPTY | ERROR::FATAL_ERROR, "exception handler was already popped", GetMethodActualName(frame->_method->name));
 
 						PRINTFRAME;
 						return;
@@ -861,7 +881,7 @@ namespace MSL
 					auto label = ReadLabel(frame->_method->body, frame->offset);
 					if (objectStack.empty())
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but jump_if_true needs boolean");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but jump_if_true needs boolean", "jump_if_true");
 
 						PRINTFRAME;
 						return;
@@ -889,7 +909,7 @@ namespace MSL
 						frame->offset = frame->_method->labels[label];
 					else if (object->type != Type::FALSE && object->type != Type::NULLPTR)
 					{
-						InvokeError(ERROR::INVALID_METHOD_CALL, "object cannot be implicitly converted to boolean");
+						InvokeError(ERROR::INVALID_METHOD_CALL, "object cannot be implicitly converted to boolean", object->ToString());
 
 						PRINTFRAME;
 						break;
@@ -901,7 +921,7 @@ namespace MSL
 					auto label = ReadLabel(frame->_method->body, frame->offset);
 					if (objectStack.empty())
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but jump_if_false needs boolean");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack is empty, but jump_if_false needs boolean", "jump_if_false");
 
 						PRINTFRAME;
 						return;
@@ -982,7 +1002,7 @@ namespace MSL
 				case (OPCODE::POP_STACK_TOP):
 					if (objectStack.empty())
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "POP_STACK_TOP instruction called, but object stack was empty");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "pop_stack_top instruction called, but object stack was empty", "pop_stack_top");
 
 						PRINTFRAME;
 						return;
@@ -990,12 +1010,12 @@ namespace MSL
 					objectStack.pop_back();
 					break;
 				default:
-					InvokeError(ERROR::INVALID_OPCODE | ERROR::FATAL_ERROR, "opcode " + ToString(op) + " was found, but not expected");
+					InvokeError(ERROR::INVALID_OPCODE | ERROR::FATAL_ERROR, "opcode " + OpcodeToMethod(op) + " was found, but not expected", OpcodeToMethod(op));
 
 					break;
 				}
 			}
-			InvokeError(ERROR::INVALID_STACKFRAME_OFFSET | ERROR::FATAL_ERROR, "execution of method went out of frame");
+			InvokeError(ERROR::INVALID_STACKFRAME_OFFSET | ERROR::FATAL_ERROR, "execution of method went out of frame", std::to_string(frame->offset));
 
 			PRINTFRAME;
 		}
@@ -1004,7 +1024,7 @@ namespace MSL
 		{
 			if (objectStack.empty())
 			{
-				InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack was empty but expected to have SystemCall arguments");
+				InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack was empty but expected to have SystemCall arguments", "");
 
 				DisplayInfo("execution interrupted in method: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
 				return;
@@ -1045,7 +1065,7 @@ namespace MSL
 					auto ns = GetNamespaceOrNull(nsName);
 					if (ns == nullptr)
 					{
-						InvokeError(ERROR::OBJECT_NOT_FOUND, "current assembly does not contains namespace with name: " + nsName);
+						InvokeError(ERROR::OBJECT_NOT_FOUND, "current assembly does not contains namespace with name: " + nsName, nsName);
 						return;
 					}
 					objectStack.push_back(ns->wrapper);
@@ -1155,7 +1175,7 @@ namespace MSL
 					BaseObject* result = GetMemberObject(parentObj, member, false);
 					if (result == nullptr)
 					{
-						InvokeError(ERROR::MEMBER_NOT_FOUND, "Member with name " + member + " was not found in " + parentObj->ToString());
+						InvokeError(ERROR::MEMBER_NOT_FOUND, "Member with name `" + member + "` was not found in " + parentObj->ToString(), member);
 
 					}
 					objectStack.push_back(result);
@@ -1221,14 +1241,15 @@ namespace MSL
 					auto methodIt = classType->methods.find(method);
 					if (methodIt == classType->methods.end())
 					{
-						InvokeError(ERROR::MEMBER_NOT_FOUND, "class provided does not have method: " + method + ", class was: " + GetFullClassType(classType));
+						InvokeError(ERROR::MEMBER_NOT_FOUND, "class provided does not have method `" +
+							methodName + "` with " + std::to_string(array->size()) + " arguments, class was: " + GetFullClassType(classType), methodName);
 
 						PRINTFRAME_2(_class, _method);
 					}
 
 					if (!methodIt->second.isStatic() && !methodIt->second.isConstructor() && classObject == nullptr)
 					{
-						InvokeError(ERROR::INVALID_METHOD_CALL, "tried to call non-static method using class type as argument");
+						InvokeError(ERROR::INVALID_METHOD_CALL, "tried to call non-static method using class type as argument", methodName);
 
 						PRINTFRAME_2(_class, _method);
 					}
@@ -1269,7 +1290,7 @@ namespace MSL
 							arraySize = std::stol(value.to_string());
 						else
 						{
-							InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot create Array instance with size: " + value.to_string());
+							InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot create Array instance with size: " + value.to_string(), value.to_string());
 
 							PRINTFRAME_2(_class, _method);
 						}
@@ -1294,7 +1315,7 @@ namespace MSL
 						idx = std::stol(value.to_string());
 					else
 					{
-						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot access Array member with index = " + value.to_string());
+						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot access Array member with index = " + value.to_string(), value.to_string());
 
 						PRINTFRAME_2(_class, _method);
 					}
@@ -1399,14 +1420,14 @@ namespace MSL
 					BaseObject* array = objectStack.back();
 					objectStack.pop_back(); // pop array
 
-					if (!AssertType(iter, Type::INTEGER, "Invalid iterator was passed to Array.Next(this, iter) method", frame)) return;
+					if (!AssertType(iter, Type::INTEGER, "invalid iterator was passed to Array.Next(this, iter) method", frame)) return;
 					
 					IntegerObject::InnerType& iterValue = static_cast<IntegerObject*>(iter)->value;
 					objectStack.push_back(AllocInteger(iterValue + 1));
 				}
 				else
 				{
-					InvokeError(ERROR::INVALID_METHOD_CALL, "Array class does not contains method: " + GetFullMethodType(_method));
+					InvokeError(ERROR::INVALID_METHOD_CALL, "Array class does not contains method: " + GetFullMethodType(_method), GetMethodActualName(_method->name));
 
 					PRINTFRAME_2(_class, _method);
 				}
@@ -1416,13 +1437,13 @@ namespace MSL
 				if (_method->name.substr(0, 5) == "Call_") // Call with any parameters (see declaration in AddSystemNamespace)
 				{
 					#ifndef MSL_C_INTERFACE
-					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.Call method is not defined in MSL VM");
+					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.Call method is not defined in MSL VM", "Call");
 					return;
 					#else
 					int argCount = std::stoi(_method->name.substr(5, _method->name.size())) + 1; // class as extra parameter
 					if (argCount > (int)objectStack.size())
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough arguments to call Dll.Call() method");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough arguments to call Dll.Call() method", std::to_string(argCount));
 
 						return;
 					}
@@ -1441,12 +1462,12 @@ namespace MSL
 					
 					if (!dllLoader.HasLibrary(moduleName))
 					{
-						InvokeError(ERROR::DLL_NOT_FOUND, "module was not loaded before method call");
+						InvokeError(ERROR::DLL_NOT_FOUND, "module was not loaded before method call", moduleName);
 						return;
 					}
 					if (func == NULL) 
 					{
-						InvokeError(ERROR::INVALID_METHOD_SIGNATURE, "method " + functionName + " was not found in module: " + moduleName); 
+						InvokeError(ERROR::INVALID_METHOD_SIGNATURE, "method " + functionName + " was not found in module: " + moduleName, functionName); 
 						return; 
 					}
 					// DLL call
@@ -1456,7 +1477,7 @@ namespace MSL
 				else if (_method->name == "LoadLibrary_1")
 				{
 					#ifndef MSL_C_INTERFACE
-					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.LoadLibrary method is not defined in MSL VM");
+					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.LoadLibrary method is not defined in MSL VM", "LoadLibrary");
 					return;
 					#else
 					BaseObject* lib = GetUnderlyingObject(objectStack.back());
@@ -1472,7 +1493,7 @@ namespace MSL
 				else if (_method->name == "FreeLibrary_1")
 				{
 					#ifndef MSL_C_INTERFACE
-					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.LoadLibrary method is not defined in MSL VM");
+					InvokeError(ERROR::INVALID_METHOD_CALL, "Dll.FreeLibrary method is not defined in MSL VM", "FreeLibrary");
 					return;
 					#else
 					BaseObject* lib = GetUnderlyingObject(objectStack.back());
@@ -1653,7 +1674,7 @@ namespace MSL
 					}
 					else
 					{
-						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot access String element with index = " + indexValue.to_string());
+						InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot access String element with index = " + indexValue.to_string(), indexValue.to_string());
 
 						PRINTFRAME_2(_class, _method);
 					}
@@ -1752,7 +1773,7 @@ namespace MSL
 				{
 					if (config.execution.safeMode)
 					{
-						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.Disable() function is disabled is MSL VM safe mode");
+						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.Disable() function is disabled is MSL VM safe mode", "Disable");
 						return;
 					}
 					objectStack.pop_back(); // pop GC reference
@@ -1775,7 +1796,7 @@ namespace MSL
 				{
 					if (config.execution.safeMode)
 					{
-						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.SetMinimalMemory() function is disabled is MSL VM safe mode");
+						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.SetMinimalMemory() function is disabled is MSL VM safe mode", "SetMinimalMemory");
 						return;
 					}
 					BaseObject* value = objectStack.back();
@@ -1785,7 +1806,7 @@ namespace MSL
 					IntegerObject::InnerType& memory = static_cast<IntegerObject*>(value)->value;
 					if (memory < 0 || memory > std::numeric_limits<uint64_t>::max())
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "value parameter was invalid in GC.SetMinimalMemory(this, value) method: " + memory.to_string());
+						InvokeError(ERROR::INVALID_STACKOBJECT, "value parameter was invalid in GC.SetMinimalMemory(this, value) method: " + memory.to_string(), memory.to_string());
 
 						return;
 					}
@@ -1797,7 +1818,7 @@ namespace MSL
 				{
 					if (config.execution.safeMode)
 					{
-						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.SetMaximalMemory() function is disabled is MSL VM safe mode");
+						InvokeError(ERROR::INVALID_METHOD_CALL, "GC.SetMaximalMemory() function is disabled is MSL VM safe mode", "SetMaximalMemory");
 						return;
 					}
 					BaseObject* value = objectStack.back();
@@ -1807,7 +1828,7 @@ namespace MSL
 					IntegerObject::InnerType& memory = static_cast<IntegerObject*>(value)->value;
 					if (memory < 0 || memory > std::numeric_limits<uint64_t>::max())
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "value parameter was invalid in GC.SetMaximalMemory(this, value) method: " + memory.to_string());
+						InvokeError(ERROR::INVALID_STACKOBJECT, "value parameter was invalid in GC.SetMaximalMemory(this, value) method: " + memory.to_string(), memory.to_string());
 
 						return;
 					}
@@ -1875,7 +1896,11 @@ namespace MSL
 			}
 			else
 			{
-				InvokeError(ERROR::INVALID_METHOD_CALL, "Invalid method was passed to PerformSystemCall() method: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method));
+				InvokeError(
+					ERROR::INVALID_METHOD_CALL, 
+					"Invalid method was passed to PerformSystemCall() method: " + GetFullClassType(_class) + '.' + GetFullMethodType(_method), 
+					GetMethodActualName(_method->name)
+				);
 			}
 		}
 
@@ -1883,7 +1908,7 @@ namespace MSL
 		{
 			if (objectStack.size() < parameters)
 			{
-				InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack was empty on VM ALU call");
+				InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack was empty on VM ALU call", "");
 
 				PRINTFRAME;
 				return;
@@ -1927,7 +1952,7 @@ namespace MSL
 				LocalObject* local = static_cast<LocalObject*>(object);
 				if (local->ref.isConst && local->ref.object->type != Type::NULLPTR && (op == OPCODE::ASSIGN_OP || ALUinIncrMode))
 				{
-					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const local variable: " + local->ToString() + " = " + (value ? value->ToString() : "?"));
+					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const local variable: " + local->ToString() + " = " + (value ? value->ToString() : "null"), local->ToString());
 
 					PRINTFRAME;
 					return;
@@ -1940,7 +1965,7 @@ namespace MSL
 				AttributeObject* attr = static_cast<AttributeObject*>(object);
 				if (attr->type->isConst() && attr->object->type != Type::NULLPTR)
 				{
-					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const class attribute: " + attr->type->name);
+					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const class attribute: " + attr->type->name, attr->type->name);
 
 					PRINTFRAME;
 					return;
@@ -1957,7 +1982,7 @@ namespace MSL
 				objectReference = &object;
 				if (op == OPCODE::ASSIGN_OP)
 				{
-					InvokeError(ERROR::INVALID_STACKOBJECT, "primitive types are not assignable: " + object->ToString());
+					InvokeError(ERROR::INVALID_STACKOBJECT, "primitive types are not assignable: " + object->ToString(), object->ToString());
 					if(value != nullptr)
 						DisplayInfo("objects were: <" + ToString(value->type) + "> = " + ToString(value->type));
 					PRINTFRAME;
@@ -1965,7 +1990,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_STACKOBJECT, "trying to perform operation with invalid object: " + object->ToString());
+				InvokeError(ERROR::INVALID_STACKOBJECT, "trying to perform operation with invalid object: " + object->ToString(), object->ToString());
 
 				PRINTFRAME;
 				return;
@@ -2090,7 +2115,7 @@ namespace MSL
 					}
 					else
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString());
+						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString(), value->ToString());
 
 						PRINTFRAME;
 						return;
@@ -2119,7 +2144,7 @@ namespace MSL
 						}
 						else
 						{
-							InvokeError(ERROR::INVALID_METHOD_CALL, "cannot convert class object to Float: " + GetFullClassType(valueClassObject->type) + ".ToFloat() method not found");
+							InvokeError(ERROR::INVALID_METHOD_CALL, "cannot convert class object to Float: " + GetFullClassType(valueClassObject->type) + ".ToFloat() method not found", valueClassObject->ToString());
 
 							PRINTFRAME;
 							return;
@@ -2137,7 +2162,7 @@ namespace MSL
 					}
 					else
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString());
+						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString(), value->ToString());
 
 						PRINTFRAME;
 						return;
@@ -2162,7 +2187,7 @@ namespace MSL
 					}
 					else
 					{
-						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString());
+						InvokeError(ERROR::INVALID_STACKOBJECT, "cannot convert object to String: " + value->ToString(), value->ToString());
 
 						PRINTFRAME;
 						return;
@@ -2176,7 +2201,7 @@ namespace MSL
 			{
 				if (ALUinIncrMode)
 				{
-					InvokeError(ERROR::INVALID_OPCODE, "Boolean value cannot be incremented: " + (*objectReference)->ToString());
+					InvokeError(ERROR::INVALID_OPCODE, "Boolean value cannot be incremented: " + (*objectReference)->ToString(), (*objectReference)->ToString());
 
 					PRINTFRAME;
 					return;
@@ -2187,7 +2212,7 @@ namespace MSL
 			}
 			break;
 			default:
-				InvokeError(ERROR::INVALID_STACKOBJECT, "unexpected object type found in ALU call: " + (*objectReference)->ToString());
+				InvokeError(ERROR::INVALID_STACKOBJECT, "unexpected object type found in ALU call: " + (*objectReference)->ToString(), (*objectReference)->ToString());
 
 				PRINTFRAME;
 				return;
@@ -2470,7 +2495,7 @@ namespace MSL
 			{
 				if ((errors & ERROR::OUT_OF_MEMORY) == 0)
 				{
-					InvokeError(ERROR::OUT_OF_MEMORY | ERROR::FATAL_ERROR, "VM hit alloc limit, allocated memory: " + utils::formatBytes(totalMemory));
+					InvokeError(ERROR::OUT_OF_MEMORY | ERROR::FATAL_ERROR, "VM hit alloc limit, allocated memory: " + utils::formatBytes(totalMemory), std::to_string(totalMemory));
 					DisplayInfo("max memory of VM was set to: " + utils::formatBytes(config.GC.maxMemory));
 				}
 				errors |= ERROR::OUT_OF_MEMORY | ERROR::FATAL_ERROR;
@@ -2497,7 +2522,7 @@ namespace MSL
 			}
 			else
 			{
-				InvokeError(ERROR::INVALID_HASH_VALUE | ERROR::FATAL_ERROR, "hash value of dependency object was invalid: " + std::to_string(hashValue));
+				InvokeError(ERROR::INVALID_HASH_VALUE | ERROR::FATAL_ERROR, "hash value of dependency object was invalid: " + std::to_string(hashValue), std::to_string(hashValue));
 
 				return false;
 			}
@@ -2507,7 +2532,7 @@ namespace MSL
 		{
 			if (AssertType(object, type)) return true;
 			
-			InvokeError(ERROR::INVALID_STACKOBJECT, message);
+			InvokeError(ERROR::INVALID_STACKOBJECT, message, object->ToString());
 
 			DisplayInfo("expected object with type " + ToString(type) + ", found: " + ToString(object->type));
 			DisplayInfo("object value was: " + object->ToString());
@@ -2525,21 +2550,21 @@ namespace MSL
 			const auto method = GetMethodOrNull(object->type, methodName);
 			if (method == nullptr)
 			{
-				InvokeError(ERROR::MEMBER_NOT_FOUND, "method name provided to InvokeObjectMethod() function not found");
+				InvokeError(ERROR::MEMBER_NOT_FOUND, "method name provided to InvokeObjectMethod() function not found", methodName);
 
 				DisplayInfo("with " + GetFullClassType(object->type) + " object and method name: " + methodName);
 				return;
 			}
 			if (method->isAbstract() || method->isStatic())
 			{
-				InvokeError(ERROR::INVALID_METHOD_SIGNATURE, "trying to access abstract or static method in InvokeObjectMethod() function");
+				InvokeError(ERROR::INVALID_METHOD_SIGNATURE, "trying to access abstract or static method in InvokeObjectMethod() function", methodName);
 
 				DisplayInfo("with " + GetFullClassType(object->type) + " object and method name: " + methodName);
 				return;
 			}
 			if (!method->isPublic())
 			{
-				InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access private method in InvokeObjectMethod() function");
+				InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access private method in InvokeObjectMethod() function", methodName);
 
 				DisplayInfo("with " + GetFullClassType(object->type) + " object and method name: " + methodName);
 				return;
@@ -2563,7 +2588,102 @@ namespace MSL
 		void VirtualMachine::InvokeError(size_t error, const std::string& message, const std::string& arg)
 		{
 			errors |= error;
-			exception.Init(message, arg, error);
+			exception.Init(message, arg, ErrorToString(error));
+		}
+
+		std::string VirtualMachine::OpcodeToMethod(OPCODE op) const
+		{
+			switch (op)
+			{
+			case MSL::VM::NEGATION_OP:
+				return "NegationOperator";
+			case MSL::VM::NEGATIVE_OP:
+				return "NegOperator";
+			case MSL::VM::POSITIVE_OP:
+				return "PosOperator";
+			case MSL::VM::SUM_OP:
+				return "SumOperator";
+			case MSL::VM::SUB_OP:
+				return "SubOperator";
+			case MSL::VM::MULT_OP:
+				return "MultOperator";
+			case MSL::VM::DIV_OP:
+				return "DivOperator";
+			case MSL::VM::MOD_OP:
+				return "ModOperator";
+			case MSL::VM::POWER_OP:
+				return "PowerOperator";
+			case MSL::VM::CMP_EQ:
+				return "IsEqual";
+			case MSL::VM::CMP_NEQ:
+				return "IsNotEqual";
+			case MSL::VM::CMP_L:
+				return "IsLess";
+			case MSL::VM::CMP_G:
+				return "IsGreater";
+			case MSL::VM::CMP_LE:
+				return "IsLessEqual";
+			case MSL::VM::CMP_GE:
+				return "IsGreaterEqual";
+			case MSL::VM::CMP_AND:
+				return "AndOperator";
+			case MSL::VM::CMP_OR:
+				return "OrOperator";
+			default:
+				return "";
+			}
+		}
+
+		std::string VirtualMachine::ErrorToString(size_t error) const
+		{
+			error &= (~(ERROR::FATAL_ERROR | ERROR::TERMINATE_ON_LAUNCH));
+			switch (error)
+			{
+			case 0:
+				return "NoError";
+			case ERROR::CALLSTACK_EMPTY:
+				return "CallStackEmpty";
+			case ERROR::INVALID_CALL_ARGUMENT:
+				return "InvalidArgument";
+			case ERROR::INVALID_OPCODE:
+				return "InvalidOpcode";
+			case ERROR::INVALID_STACKFRAME_OFFSET:
+				return "InvalidOffset";
+			case ERROR::OBJECTSTACK_CORRUPTION:
+				return "ObjectStackCorruption";
+			case ERROR::INVALID_METHOD_SIGNATURE:
+				return "InvalidSignature";
+			case ERROR::OBJECTSTACK_EMPTY:
+				return "ObjectStackEmpty";
+			case ERROR::INVALID_HASH_VALUE:
+				return "InvalidHashValue";
+			case ERROR::OBJECT_NOT_FOUND:
+				return "ObjectNotFound";
+			case ERROR::MEMBER_NOT_FOUND:
+				return "MemberNotFound";
+			case ERROR::INVALID_STACKOBJECT:
+				return "InvalidStackObject";
+			case ERROR::STACKOVERFLOW:
+				return "StackOverflow";
+			case ERROR::PRIVATE_MEMBER_ACCESS:
+				return "PrivateMemberAccess";
+			case ERROR::CALLSTACK_CORRUPTION:
+				return "CallStackCorruption";
+			case ERROR::CONST_MEMBER_MODIFICATION:
+				return "ConstMemberModification";
+			case ERROR::ABSTRACT_MEMBER_CALL:
+				return "AbstractMemberCall";
+			case ERROR::INVALID_METHOD_CALL:
+				return "InvalidMethodCall";
+			case ERROR::OUT_OF_MEMORY:
+				return "OutOfMemory";
+			case ERROR::DLL_NOT_FOUND:
+				return "DllNotFound";
+			case ERROR::EXCEPTIONSTACK_EMPTY:
+				return "ExceptionStackEmpty";
+			default:
+				return "MultipleErrors";
+			}
 		}
 
 		void VirtualMachine::DisplayInfo(std::string message) const
@@ -2723,7 +2843,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two integers: " + ToString(op));
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two integers: " + OpcodeToMethod(op), OpcodeToMethod(op));
 
 				PRINTFRAME;
 				break;
@@ -2802,7 +2922,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two strings: " + ToString(op));
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two strings: " + OpcodeToMethod(op), OpcodeToMethod(op));
 
 				PRINTFRAME;
 				break;
@@ -2826,7 +2946,7 @@ namespace MSL
 				objectStack.push_back(result);
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with string and integer: " + ToString(op));
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with string and integer: " + OpcodeToMethod(op), OpcodeToMethod(op));
 
 				PRINTFRAME;
 				break;
@@ -2835,64 +2955,21 @@ namespace MSL
 
 		void VirtualMachine::PerformALUCallClassObject(ClassObject* obj, OPCODE op, Frame* frame)
 		{
+			std::string methodName = OpcodeToMethod(op);
+			if(methodName.empty())
+			{
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two class objects: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				PRINTFRAME;
+			}
 			switch (op)
 			{
-			case MSL::VM::NEGATION_OP:
-				InvokeObjectMethod("NegationOperator_1", obj);
-				break;
-			case MSL::VM::NEGATIVE_OP:
-				InvokeObjectMethod("NegOperator_2", obj);
-				break;
-			case MSL::VM::POSITIVE_OP:
-				InvokeObjectMethod("PosOperator_2", obj);
-				break;
-			case MSL::VM::SUM_OP:
-				InvokeObjectMethod("SumOperator_2", obj);
-				break;
-			case MSL::VM::SUB_OP:
-				InvokeObjectMethod("SubOperator_2", obj);
-				break;
-			case MSL::VM::MULT_OP:
-				InvokeObjectMethod("MultOperator_2", obj);
-				break;
-			case MSL::VM::DIV_OP:
-				InvokeObjectMethod("DivOperator_2", obj);
-				break;
-			case MSL::VM::MOD_OP:
-				InvokeObjectMethod("ModOperator_2", obj);
-				break;
-			case MSL::VM::POWER_OP:
-				InvokeObjectMethod("PowerOperator_2", obj);
-				break;
-			case MSL::VM::CMP_EQ:
-				InvokeObjectMethod("IsEqual_2", obj);
-				break;
-			case MSL::VM::CMP_NEQ:
-				InvokeObjectMethod("IsNotEqual_2", obj);
-				break;
-			case MSL::VM::CMP_L:
-				InvokeObjectMethod("IsLess_2", obj);
-				break;
-			case MSL::VM::CMP_G:
-				InvokeObjectMethod("IsGreater_2", obj);
-				break;
-			case MSL::VM::CMP_LE:
-				InvokeObjectMethod("IsLessEqual_2", obj);
-				break;
-			case MSL::VM::CMP_GE:
-				InvokeObjectMethod("IsGreaterEqual_2", obj);
-				break;
-			case MSL::VM::CMP_AND:
-				InvokeObjectMethod("AndOperator_2", obj);
-				break;
-			case MSL::VM::CMP_OR:
-				InvokeObjectMethod("OrOperator_2", obj);
-				break;
+			// one argument
+			case OPCODE::NEGATION_OP:
+			case OPCODE::NEGATIVE_OP:
+			case OPCODE::POSITIVE_OP:
+				InvokeObjectMethod(methodName + "_1", obj);
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid opcode was passed to VM ALU: " + ToString(op));
-
-				PRINTFRAME;
-				break;
+				InvokeObjectMethod(methodName + "_2", obj);
 			}
 		}
 
@@ -2931,8 +3008,7 @@ namespace MSL
 					objectStack.push_back(AllocFalse());
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid opcode was passed to VM ALU: " + ToString(op));
-
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two Booleans: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				PRINTFRAME;
 				break;
 			}
@@ -3032,7 +3108,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two floats: " + ToString(op));
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two floats: " + OpcodeToMethod(op), OpcodeToMethod(op));
 
 				PRINTFRAME;
 				break;
@@ -3065,7 +3141,7 @@ namespace MSL
 				break;
 			default:
 				objectStack.push_back(class1);
-				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two class types: " + ToString(op));
+				InvokeError(ERROR::INVALID_OPCODE, "invalid operation with two class types: " + OpcodeToMethod(op), OpcodeToMethod(op));
 
 				PRINTFRAME;
 				break;
@@ -3142,7 +3218,7 @@ namespace MSL
 		{
 			if ((uint64_t)size * sizeof(NullObject) > config.GC.maxMemory)
 			{
-				InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot allocate array with too big size = " + std::to_string(size) + " (" + MSL::utils::formatBytes(size) + ')');
+				InvokeError(ERROR::INVALID_CALL_ARGUMENT, "cannot allocate array with too big size = " + std::to_string(size) + " (" + MSL::utils::formatBytes(size) + ')', std::to_string(size));
 
 				DisplayInfo("GC memory limit was set to " + MSL::utils::formatBytes(config.GC.maxMemory));
 				return GC.arrayAlloc->Alloc(0);
@@ -3224,7 +3300,7 @@ namespace MSL
 
 			if (callStack.empty())
 			{
-				InvokeError(ERROR::CALLSTACK_EMPTY | ERROR::TERMINATE_ON_LAUNCH, "call stack was empty on VM launch, terminating");
+				InvokeError(ERROR::CALLSTACK_EMPTY | ERROR::TERMINATE_ON_LAUNCH, "call stack was empty on VM launch, terminating", "");
 				DisplayInfo("check if entry point (static Main function) is defined in MSL file");
 				return;
 			}
@@ -3232,13 +3308,13 @@ namespace MSL
 			const CallPath& path = callStack.back();
 			if (path.GetNamespace() == nullptr || path.GetClass() == nullptr || path.GetMethod() == nullptr)
 			{
-				InvokeError(ERROR::TERMINATE_ON_LAUNCH, "entry-point was not provided to the VM");
+				InvokeError(ERROR::TERMINATE_ON_LAUNCH, "entry-point was not provided to the VM", "");
 				return;
 			}
 			const MethodType* entryPoint = GetMethodOrNull(*path.GetNamespace(), *path.GetClass(), *path.GetMethod());
 			if (entryPoint == nullptr)
 			{
-				InvokeError(ERROR::INVALID_CALL_ARGUMENT | ERROR::TERMINATE_ON_LAUNCH, "entry-point method, provided in call stack was not found");
+				InvokeError(ERROR::INVALID_CALL_ARGUMENT | ERROR::TERMINATE_ON_LAUNCH, "entry-point method, provided in call stack was not found", "");
 				return;
 			}
 
@@ -3254,7 +3330,7 @@ namespace MSL
 			}
 			catch (std::bad_alloc&)
 			{
-				InvokeError(ERROR::OUT_OF_MEMORY | ERROR::FATAL_ERROR, "VM hit memory limit and fatal error occured. Execution cancelled");
+				InvokeError(ERROR::OUT_OF_MEMORY | ERROR::FATAL_ERROR, "VM hit memory limit and fatal error occured. Execution cancelled", "bad_alloc");
 				if (config.streams.error != nullptr)
 					*config.streams.error << "GC log information:";
 				GC.SetLogStream(config.streams.error);
@@ -3263,7 +3339,7 @@ namespace MSL
 			}
 			catch (std::exception& e)
 			{
-				InvokeError(ERROR::FATAL_ERROR, "an exception occured during VM execution: ");
+				InvokeError(ERROR::FATAL_ERROR, "an exception occured during VM execution: ", e.what());
 				if (config.streams.error != nullptr) *config.streams.error << e.what() << std::endl;
 				GC.ReleaseMemory();
 			}
@@ -3277,13 +3353,16 @@ namespace MSL
 				{
 					std::ostream& err = *config.streams.error;
 					if (errors & ERROR::FATAL_ERROR)
-						err << "[VM]: fatal error during VM execution:\n    " + exception.GetMessage();
+						err << "[VM]: fatal error during VM execution:";
 					else
-						err << "[VM]: unhandled exception during VM execution:\n    " + exception.GetMessage();
-					err << std::endl << "[VM]: exception stack trace:";
+						err << "[VM]: unhandled exception during VM execution:";
+					err << "\n    type: '" << exception.GetErrorType() + "'";
+					err << "\n    message: '" << exception.GetMessage() << "'";
+					err << "\n    argument: '" << exception.GetArgument() << "'";
+					err << "\n    exception stack trace:";
 					for (size_t i = 0; i < exception.GetTraceSize(); i++)
 					{
-						err << "\n    from " << exception.GetTraceEntry(i);
+						err << "\n        " << exception.GetTraceEntry(i);
 					}
 					err << std::endl;
 				}
@@ -3293,19 +3372,19 @@ namespace MSL
 
 					if (objectStack.size() > 1)
 					{
-						InvokeError(ERROR::OBJECTSTACK_CORRUPTION | ERROR::FATAL_ERROR, "object stack is not in its initial position after execution");
+						InvokeError(ERROR::OBJECTSTACK_CORRUPTION | ERROR::FATAL_ERROR, "object stack is not in its initial position after execution", std::to_string(objectStack.size()));
 						return;
 					}
 					if (!callStack.empty())
 					{
-						InvokeError(ERROR::CALLSTACK_CORRUPTION | ERROR::FATAL_ERROR, "call stack was not empty after VM execution");
+						InvokeError(ERROR::CALLSTACK_CORRUPTION | ERROR::FATAL_ERROR, "call stack was not empty after VM execution", std::to_string(callStack.size()));
 						return;
 					}
 					if (config.execution.checkExitCode)
 					{
 						if (objectStack.empty())
 						{
-							InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "no return value from entry point function provided");
+							InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "no return value from entry point function provided", "");
 							return;
 						}
 						if (config.streams.out != nullptr)
@@ -3321,7 +3400,7 @@ namespace MSL
 							}
 							else
 							{
-								InvokeError(ERROR::INVALID_STACKOBJECT, "return value from entry point function was neither integer nor null");
+								InvokeError(ERROR::INVALID_STACKOBJECT, "return value from entry point function was neither integer nor null", objectStack.back()->ToString());
 							}
 						}
 					}
@@ -3340,6 +3419,7 @@ namespace MSL
 		{
 			return errors;
 		}
+
 		std::vector<std::string> VirtualMachine::GetErrorStrings(uint32_t errors) const
 		{
 			std::vector<std::string> errorList;

@@ -67,9 +67,11 @@ namespace MSL
 			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void InitializeAttribute(ClassObject* object, const std::string& attribute, BaseObject* value);
-			void InvokeError(size_t error, const std::string& message, const std::string& arg = "");
-			void DisplayInfo(std::string message) const;
+			void InvokeError(size_t error, const std::string& message, const std::string& arg);
 			void PrintObjectStack() const;
+			void DisplayInfo(std::string message) const;
+			std::string OpcodeToMethod(OPCODE op) const;
+			std::string ErrorToString(size_t error) const;
 			std::string GetFullClassType(const ClassType* type) const;
 			std::string GetFullMethodType(const MethodType* type) const;
 			std::string GetMethodActualName(const std::string& methodName) const;

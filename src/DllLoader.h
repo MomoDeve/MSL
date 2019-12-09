@@ -17,6 +17,7 @@ namespace MSL
 			void AddLibrary(const std::string& filename);
 			void FreeLibrary(const std::string& filename);
 			DllFunction GetFunctionPointer(const std::string& module, const std::string& function) const;
+			bool HasLibrary(const std::string& filename) const;
 			DWORD GetLastError() const;
 		};
 	}

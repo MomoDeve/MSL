@@ -686,6 +686,8 @@ namespace MSL
 				return ParseWhileExpression(function);
 			case Token::Type::RETURN:
 				return ParseReturnExpression(function);
+			case Token::Type::TRY:
+				return ParseTryExpression(function);
 			default:
 				return ParseRawExpression(function);
 			}
@@ -757,6 +759,43 @@ namespace MSL
 			lexer->Next(); // skipping `)` -> `{`
 			lambdaExpr->body = ParseExpressionBlock(function);
 			return TO_BASE(lambdaExpr);
+		}
+
+		unique_ptr<BaseExpression> Parser::ParseTryExpression(Function& function)
+		{
+			// try { ... }
+			if (lexer->Peek().type != Token::Type::TRY)
+			{
+				Error("`try` expected");
+			}
+			auto tryExpr = std::make_unique<TryExpression>();
+			lexer->Next(); // skipping `try` -> `{`
+			tryExpr->tryBody = ParseExpressionBlock(function);
+			// catch { ... }
+			if (lexer->Peek().type == Token::Type::CATCH)
+			{
+				lexer->Next(); // skipping `catch` -> `(`
+				// catch (variable) { ... }
+				if (lexer->Peek().type == Token::Type::ROUND_BRACKET_O)
+				{
+					lexer->Next(); // skipping `(` -> [variable]
+					if (lexer->Peek().type != Token::Type::OBJECT)
+						Error("object name expected before catch block");
+					tryExpr->variable = lexer->Peek().value;
+					function.InsertDependency(tryExpr->variable);
+					function.InsertDependency("System");
+					function.InsertDependency("Exception");
+					function.InsertDependency("Instance_0");
+
+					lexer->Next(); // skipping [variable] -> `)`
+					if (lexer->Peek().type != Token::Type::ROUND_BRACKET_C)
+						Error("`)` expected before `catch` keyword");
+					lexer->Next(); // skipping `)` -> `catch` 
+				}
+				// catch body
+				tryExpr->catchBody = ParseExpressionBlock(function);
+			}
+			return TO_BASE(tryExpr);
 		}
 
 		unique_ptr<BaseExpression> Parser::ParseForExpression(Function& function)
@@ -955,7 +994,7 @@ namespace MSL
 			return expr;
 		}
 
-		unique_ptr<BaseExpression> Parser::ParseNextVariable(Function& function)
+		unique_ptr<BaseExpression> Parser::ParseNextVariable(Function& function, bool catchIndex)
 		{
 			if (lexer->Peek().type == Token::Type::ROUND_BRACKET_O)
 			{
@@ -1006,8 +1045,8 @@ namespace MSL
 					function.InsertDependency(callExpr->functionName);
 					lexer->Next(); // skipping `)`
 					return TO_BASE(callExpr);
-				}
-				else if (lexer->Peek().type == Token::Type::SQUARE_BRACKET_O)
+				} // catchIndex  must be fixed TO DO
+				else if (catchIndex && lexer->Peek().type == Token::Type::SQUARE_BRACKET_O)
 				{
 					function.InsertDependency(object.value);
 					auto objectExpr = std::make_unique<ObjectExpression>();
@@ -1063,7 +1102,7 @@ namespace MSL
 				binExpr->expressionType = firstToken.type;
 				uint32_t currentPriority = firstToken.type & Token::PRIORITY;
 				lexer->Next(); // skipping `BINARY_OP`
-				unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function);
+				unique_ptr<BaseExpression> rightExpr = ParseNextVariable(function, firstToken.type != Token::Type::DOT);
 				// TO DO fix here
 				if (rightExpr == nullptr)
 				{

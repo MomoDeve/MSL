@@ -54,6 +54,8 @@ namespace MSL
 				FOREACH,
 				IN,
 				USING,
+				TRY,
+				CATCH,
 
 				OBJECT = VALUE_TYPE + 1,
 				THIS,

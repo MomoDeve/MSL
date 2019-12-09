@@ -675,5 +675,65 @@ namespace MSL
 				}
 			}
 		}
+
+		void TryExpression::Print(std::ostream& out, int depth) const
+		{
+			out << std::string(depth, '\t') << "try\n";
+			out << std::string(depth, '\t') << "{\n";
+			for(const auto& expr : tryBody)
+				expr->Print(out, depth + 1);
+			out << std::string(depth, '\t') << "}\n";
+			out << std::string(depth, '\t') << "catch\n";
+			if (!variable.empty())
+				out << std::string(depth, '\t') << '(' << variable << ")\n";
+			out << std::string(depth, '\t') << "{\n";
+			for (const auto& expr : catchBody)
+				expr->Print(out, depth + 1);
+			out << std::string(depth, '\t') << "}\n";
+		}
+
+		TryExpression::TryExpression()
+		{
+			BaseExpression::type = ExpressionType::TRY;
+		}
+
+		void TryExpression::GenerateBytecode(MSL::compiler::CodeGenerator& code, const MSL::compiler::Function& function) const
+		{
+			uint16_t labelId = function.labelInnerId;
+			function.labelInnerId += 2; // for catch block and end of catch block
+
+			// try { ... }
+			code.Write(OPCODE::PUSH_CATCH);
+			code.Write(labelId);
+			GenerateExpressionListBytecode(tryBody, code, function);
+			code.Write(OPCODE::POP_CATCH);
+			code.Write(OPCODE::JUMP);
+			code.Write<uint16_t>(labelId + 1);
+			
+			code.Write(OPCODE::SET_LABEL);
+			code.Write(labelId);
+
+			if (!variable.empty())
+			{
+				// [variable] = System.Exception;
+				code.Write(OPCODE::ALLOC_CONST_VAR);
+				code.Write(function.GetHash(variable));
+				code.Write(OPCODE::PUSH_OBJECT);
+				code.Write(function.GetHash("System"));
+				code.Write(OPCODE::PUSH_OBJECT);
+				code.Write(function.GetHash("Exception"));
+				code.Write(OPCODE::GET_MEMBER);
+				code.Write(OPCODE::PUSH_OBJECT);
+				code.Write(function.GetHash("Instance_0"));
+				code.Write(OPCODE::CALL_FUNCTION);
+				code.Write((uint8_t)0);
+				code.Write(OPCODE::ASSIGN_OP);
+				code.Write(OPCODE::POP_STACK_TOP);
+			}
+
+			GenerateExpressionListBytecode(catchBody, code, function);
+			code.Write(OPCODE::SET_LABEL);
+			code.Write<uint16_t>(labelId + 1);
+		}
 	}
 }

@@ -8,13 +8,21 @@ namespace MSL
 {
 	namespace VM
 	{
+		struct ExceptionInfo
+		{
+			size_t stackSize;
+			uint16_t label;
+		};
+
 		struct Frame
 		{
 			using LocalsTable = std::unordered_map<std::string, Local>;
 			using LocalStorage = std::vector<std::unique_ptr<std::string>>;
+			using ExceptionStack = std::vector<ExceptionInfo>;
 
 			LocalsTable locals;
 			LocalStorage localStorage;
+			ExceptionStack exceptionStack;
 			const NamespaceType* _namespace = nullptr;
 			const ClassType* _class = nullptr;
 			const MethodType* _method = nullptr;

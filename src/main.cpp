@@ -6,6 +6,8 @@
 
 using namespace std;
 
+//#define MSL_VM_DEBUG
+
 bool createAssembly(string fileName)
 {
 	ifstream file(fileName + ".msl");
@@ -26,7 +28,7 @@ bool createAssembly(string fileName)
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
 	
-	#ifdef MSL_VM_DEBUG
+	#ifndef MSL_VM_DEBUG
 	{
 		for (const auto& _namespace : assembly.GetNamespaces())
 		{
@@ -45,6 +47,13 @@ bool createAssembly(string fileName)
 	ofstream binary(fileName + ".emsl", ios::binary);
 	auto contents = generator.GetBuffer();
 	binary.write(contents.c_str(), contents.size());
+	binary.close();
+
+#ifdef MSL_VM_DEBUG
+	ofstream out(fileName + ".bmsl");
+	MSL::utils::BytecodeReader breader(fileName + ".emsl");
+	breader.ReadToEnd(out);
+#endif
 
 	return true;
 }
@@ -81,15 +90,6 @@ void compileASC(stringstream& ss)
 	if (VM.AddBytecodeFile(&bytecode))
 	{
 		VM.Run();
-	}
-	auto errors = VM.GetErrorStrings(VM.GetErrors());
-	if (!errors.empty())
-	{
-		cout << "[VM ERRORS]:\n";
-		for (const auto& error : errors)
-		{
-			cout << error << std::endl;
-		}
 	}
 }
 
@@ -159,7 +159,7 @@ void compileFromArgs(int argc, char* argv[])
 
 		VM.Run();
 
-		auto errors = VM.GetErrorStrings(VM.GetErrors());
+		/*auto errors = VM.GetErrorStrings(VM.GetErrors());
 		if (!errors.empty())
 		{
 			cout << "[VM ERRORS]:\n";
@@ -167,7 +167,7 @@ void compileFromArgs(int argc, char* argv[])
 			{
 				cout << error << std::endl;
 			}
-		}
+		}*/
 	}
 }
 

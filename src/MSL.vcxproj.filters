@@ -94,8 +94,11 @@
     <Filter Include="MSL\utils\stringExtensions">
       <UniqueIdentifier>{e6ad41c3-e3fc-4d34-9aaa-3522aa6cbc9f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MSL\VM\DllLoader">
+    <Filter Include="MSL\VM\dllLoader">
       <UniqueIdentifier>{43df85dc-3573-4f3e-9e2a-cf40d07e9d50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MSL\VM\exceptionTrace">
+      <UniqueIdentifier>{24d15a97-ecb1-4524-b206-ed1ced86e167}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -184,7 +187,10 @@
       <Filter>MSL\VM\garbageCollector</Filter>
     </ClInclude>
     <ClInclude Include="DllLoader.h">
-      <Filter>MSL\VM\DllLoader</Filter>
+      <Filter>MSL\VM\dllLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionTrace.h">
+      <Filter>MSL\VM\exceptionTrace</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -259,7 +265,10 @@
       <Filter>MSL\VM\garbageCollector</Filter>
     </ClCompile>
     <ClCompile Include="DllLoader.cpp">
-      <Filter>MSL\VM\DllLoader</Filter>
+      <Filter>MSL\VM\dllLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="ExceptionTrace.cpp">
+      <Filter>MSL\VM\exceptionTrace</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1867,9 +1867,38 @@ CALL_FUNCTION 3
 POP_TO_RETURN 
 METHOD_BODY_END_DECL 
 [0]  STRING_DECL 7 Program
-FRIEND_POOL_DECL_SIZE 1
+FRIEND_POOL_DECL_SIZE 2
 [0]  STRING_DECL 6 System
-CLASS_POOL_DECL_SIZE 1
+[1]  STRING_DECL 4 Math
+CLASS_POOL_DECL_SIZE 2
+[0]  STRING_DECL 9 TestClass
+MODIFIERS_DECL 00000000
+ATTRIBUTE_POOL_DECL_SIZE 0
+METHOD_POOL_DECL_SIZE 1
+[0]  STRING_DECL 9 TestClass
+MODIFIERS_DECL 00001100
+METHOD_PARAMS_DECL_SIZE 0
+DEPENDENCY_POOL_DECL_SIZE 5
+[0]  STRING_DECL 1 v
+[1]  STRING_DECL 1 2
+[2]  STRING_DECL 9 Vector2_1
+[3]  STRING_DECL 7 Console
+[4]  STRING_DECL 11 PrintLine_1
+METHOD_BODY_BEGIN_DECL 
+ALLOC_VAR #0
+PUSH_THIS 
+PUSH_INTEGER #1
+PUSH_OBJECT #2
+CALL_FUNCTION 1
+ASSIGN_OP 
+POP_STACK_TOP 
+PUSH_OBJECT #3
+PUSH_OBJECT #0
+PUSH_OBJECT #4
+CALL_FUNCTION 1
+POP_STACK_TOP 
+RETURN 
+METHOD_BODY_END_DECL 
 [0]  STRING_DECL 12 ProgramClass
 MODIFIERS_DECL 00000000
 ATTRIBUTE_POOL_DECL_SIZE 0
@@ -1877,31 +1906,60 @@ METHOD_POOL_DECL_SIZE 2
 [0]  STRING_DECL 4 Main
 MODIFIERS_DECL 10000110
 METHOD_PARAMS_DECL_SIZE 0
-DEPENDENCY_POOL_DECL_SIZE 3
-[0]  STRING_DECL 7 Console
-[1]  STRING_DECL 1539 big test 
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
-[2]  STRING_DECL 11 PrintLine_1
+DEPENDENCY_POOL_DECL_SIZE 11
+[0]  STRING_DECL 1 t
+[1]  STRING_DECL 11 TestClass_0
+[2]  STRING_DECL 1 e
+[3]  STRING_DECL 6 System
+[4]  STRING_DECL 9 Exception
+[5]  STRING_DECL 10 Instance_0
+[6]  STRING_DECL 7 Console
+[7]  STRING_DECL 7 message
+[8]  STRING_DECL 11 PrintLine_1
+[9]  STRING_DECL 10 stackTrace
+[10] STRING_DECL 1 0
 METHOD_BODY_BEGIN_DECL 
-PUSH_OBJECT #0
-PUSH_STRING #1
+PUSH_CATCH L0
+ALLOC_VAR #0
+PUSH_THIS 
+PUSH_OBJECT #1
+CALL_FUNCTION 0
+ASSIGN_OP 
+POP_STACK_TOP 
+POP_CATCH 
+JUMP L1
+SET_LABEL L0
+ALLOC_CONST_VAR #2
+PUSH_OBJECT #3
+PUSH_OBJECT #4
+GET_MEMBER 
+PUSH_OBJECT #5
+CALL_FUNCTION 0
+ASSIGN_OP 
+POP_STACK_TOP 
+PUSH_OBJECT #6
 PUSH_OBJECT #2
+PUSH_OBJECT #7
+GET_MEMBER 
+PUSH_OBJECT #8
 CALL_FUNCTION 1
 POP_STACK_TOP 
+PUSH_OBJECT #6
+PUSH_OBJECT #2
+PUSH_OBJECT #9
+GET_MEMBER 
+PUSH_OBJECT #8
+CALL_FUNCTION 1
+POP_STACK_TOP 
+PUSH_OBJECT #6
+PUSH_OBJECT #2
+PUSH_INTEGER #10
+PUSH_OBJECT #9
+GET_INDEX 
+PUSH_OBJECT #8
+CALL_FUNCTION 1
+POP_STACK_TOP 
+SET_LABEL L1
 RETURN 
 METHOD_BODY_END_DECL 
 [0]  STRING_DECL 12 ProgramClass

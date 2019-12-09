@@ -118,6 +118,8 @@ namespace MSL
 						break;
 					OPCODE_CASE(POP_STACK_TOP)
 						break;
+					OPCODE_CASE(POP_CATCH)
+						break;
 					READ_HASH_CASE(PUSH_STRING)
 						break;
 					READ_HASH_CASE(PUSH_INTEGER)
@@ -131,6 +133,8 @@ namespace MSL
 					READ_HASH_CASE(ALLOC_CONST_VAR)
 						break;
 					READ_LABEL_CASE(SET_LABEL)
+						break;
+					READ_LABEL_CASE(PUSH_CATCH)
 						break;
 					READ_LABEL_CASE(JUMP_IF_TRUE)
 						break;

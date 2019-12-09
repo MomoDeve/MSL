@@ -130,6 +130,7 @@
     <ClInclude Include="callPath.h" />
     <ClInclude Include="codeGenerator.h" />
     <ClInclude Include="configuration.h" />
+    <ClInclude Include="ExceptionTrace.h" />
     <ClInclude Include="expressions.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="garbageCollector.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="classType.cpp" />
     <ClCompile Include="codeGenerator.cpp" />
     <ClCompile Include="DllLoader.cpp" />
+    <ClCompile Include="ExceptionTrace.cpp" />
     <ClCompile Include="expressions.cpp" />
     <ClCompile Include="function.cpp" />
     <ClCompile Include="garbageCollector.cpp" />

@@ -28,6 +28,7 @@ namespace MSL
 			INDEX,
 			CALL,
 			LAMBDA,
+			TRY,
 			BASE,
 		};
 

@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <vector>
 #include <sstream>
 
@@ -6,10 +7,13 @@ namespace momo
 {
 	class big_integer
 	{
-		static const int32_t _base;
-		static const int32_t _base_digits;
+		using NumberType = int32_t;
+		using NumberVector = std::basic_string<int32_t>;
 
-		std::vector<int32_t> _digits;
+		static const NumberType _base;
+		static const NumberType _base_digits;
+
+		NumberVector _digits;
 		bool _negative;
 		bool _inf;
 
@@ -27,6 +31,7 @@ namespace momo
 	public:
 		static const big_integer inf;
 		bool is_inf() const;
+		bool is_zero() const;
 
 		big_integer();
 		big_integer(long long value);

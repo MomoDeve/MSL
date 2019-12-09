@@ -65,6 +65,8 @@ namespace MSL
 			JUMP_IF_TRUE, // pops stack top. if true -> jumps by label index, else does nothing
 			JUMP_IF_FALSE, // pops stack top. if false -> jumps by label index, else does nothing
 			POP_STACK_TOP, // pops top of the stack
+			PUSH_CATCH, // pushes new catch handler on top of exception stack
+			POP_CATCH, // pops top catch handler from exception stack
 		};
 
 		/*

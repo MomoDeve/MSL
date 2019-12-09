@@ -67,6 +67,8 @@ namespace MSL
 			if (value == "false") return Type::FALSE_CONSTANT;
 			if (value == "null") return Type::NULLPTR;
 			if (value == "using") return Type::USING;
+			if (value == "try") return Type::TRY;
+			if (value == "catch") return Type::CATCH;
 			if (isInteger(value)) return Type::INTEGER_CONSTANT;
 			if (isFloat(value)) return Type::FLOAT_CONSTANT;
 			if (isString(value)) return Type::STRING_CONSTANT;
@@ -86,132 +88,203 @@ namespace MSL
 		{
 			switch (type)
 			{
-			case Token::Type::ENDLINE:
-				return STRING(Token::Type::ENDLINE);
-			case Token::Type::APOS:
-				return STRING(Token::Type::APOS);
-			case Token::Type::COMMA:
-				return STRING(Token::Type::COMMA);
-			case Token::Type::SEMICOLON:
-				return STRING(Token::Type::SEMICOLON);
-			case Token::Type::FOR:
-				return STRING(Token::Type::FOR);
-			case Token::Type::IF:
-				return STRING(Token::Type::IF);
-			case Token::Type::ELSE:
-				return STRING(Token::Type::ELSE);
-			case Token::Type::ELIF:
-				return STRING(Token::Type::ELIF);
-			case Token::Type::WHILE:
-				return STRING(Token::Type::WHILE);
-			case Token::Type::VARIABLE:
-				return STRING(Token::Type::VARIABLE);
-			case Token::Type::FUNCTION:
-				return STRING(Token::Type::FUNCTION);
-			case Token::Type::NAMESPACE:
-				return STRING(Token::Type::NAMESPACE);
-			case Token::Type::LAMBDA:
-				return STRING(Token::Type::LAMBDA);
-			case Token::Type::THIS:
-				return STRING(Token::Type::THIS);
-			case Token::Type::IN:
-				return STRING(Token::Type::IN);
-			case Token::Type::FOREACH:
-				return STRING(Token::Type::FOREACH);
-			case Token::Type::OBJECT:
-				return STRING(Token::Type::OBJECT);
-			case Token::Type::TRUE_CONSTANT:
-				return STRING(Token::Type::TRUE_CONSTANT);
-			case Token::Type::FALSE_CONSTANT:
-				return STRING(Token::Type::FALSE_CONSTANT);
-			case Token::Type::NULLPTR:
-				return STRING(Token::Type::NULLPTR);
-			case Token::Type::INTEGER_CONSTANT:
-				return STRING(Token::Type::INTEGER_CONSTANT);
-			case Token::Type::FLOAT_CONSTANT:
-				return STRING(Token::Type::FLOAT_CONSTANT);
-			case Token::Type::STRING_CONSTANT:
-				return STRING(Token::Type::STRING_CONSTANT);
-			case Token::Type::ROUND_BRACKET_O:
-				return STRING(Token::Type::ROUND_BRACKET_O);
-			case Token::Type::ROUND_BRACKET_C:
-				return STRING(Token::Type::ROUND_BRACKET_C);
-			case Token::Type::SQUARE_BRACKET_O:
-				return STRING(Token::Type::SQUARE_BRACKET_O);
-			case Token::Type::SQUARE_BRACKET_C:
-				return STRING(Token::Type::SQUARE_BRACKET_C);
-			case Token::Type::BRACE_BRACKET_O:
-				return STRING(Token::Type::BRACE_BRACKET_O);
-			case Token::Type::BRACE_BRACKET_C:
-				return STRING(Token::Type::BRACE_BRACKET_C);
-			case Token::Type::NEGATION_OP:
-				return STRING(Token::Type::NEGATION_OP);
-			case Token::Type::NEGATIVE_OP:
-				return STRING(Token::Type::NEGATIVE_OP);
-			case Token::Type::POSITIVE_OP:
-				return STRING(Token::Type::POSITIVE_OP);
-			case Token::Type::RETURN:
-				return STRING(Token::Type::RETURN);
-			case Token::Type::DOT:
-				return STRING(Token::Type::DOT);
-			case Token::Type::ASSIGN_OP:
-				return STRING(Token::Type::ASSIGN_OP);
-			case Token::Type::SUM_ASSIGN_OP:
-				return STRING(Token::Type::SUM_ASSIGN_OP);
-			case Token::Type::SUB_ASSIGN_OP:
-				return STRING(Token::Type::SUB_ASSIGN_OP);
-			case Token::Type::MULT_ASSIGN_OP:
-				return STRING(Token::Type::MULT_ASSIGN_OP);
-			case Token::Type::DIV_ASSIGN_OP:
-				return STRING(Token::Type::DIV_ASSIGN_OP);
-			case Token::Type::MOD_ASSIGN_OP:
-				return STRING(Token::Type::MOD_ASSIGN_OP);
-			case Token::Type::LOGIC_EQUALS:
-				return STRING(Token::Type::LOGIC_EQUALS);
-			case Token::Type::LOGIC_NOT_EQUALS:
-				return STRING(Token::Type::LOGIC_NOT_EQUALS);
-			case Token::Type::LOGIC_LESS:
-				return STRING(Token::Type::LOGIC_LESS);
-			case Token::Type::LOGIC_GREATER:
-				return STRING(Token::Type::LOGIC_GREATER);
-			case Token::Type::LOGIC_LESS_EQUALS:
-				return STRING(Token::Type::LOGIC_LESS_EQUALS);
-			case Token::Type::LOGIC_GREATER_EQUALS:
-				return STRING(Token::Type::LOGIC_GREATER_EQUALS);
-			case Token::Type::LOGIC_OR:
-				return STRING(Token::Type::LOGIC_OR);
-			case Token::Type::LOGIC_AND:
-				return STRING(Token::Type::LOGIC_AND);
-			case Token::Type::SUM_OP:
-				return STRING(Token::Type::SUM_OP);
-			case Token::Type::SUB_OP:
-				return STRING(Token::Type::SUB_OP);
-			case Token::Type::MULT_OP:
-				return STRING(Token::Type::MULT_OP);
-			case Token::Type::DIV_OP:
-				return STRING(Token::Type::DIV_OP);
-			case Token::Type::MOD_OP:
-				return STRING(Token::Type::MOD_OP);
-			case Token::Type::POWER_OP:
-				return STRING(Token::Type::POWER_OP);
-			case Token::Type::CONST:
-				return STRING(Token::Type::CONST);
-			case Token::Type::PUBLIC:
-				return STRING(Token::Type::PUBLIC);
-			case Token::Type::PRIVATE:
-				return STRING(Token::Type::PRIVATE);
-			case Token::Type::INTERNAL:
-				return STRING(Token::Type::INTERNAL);
-			case Token::Type::ABSTRACT:
-				return STRING(Token::Type::ABSTRACT);
-			case Token::Type::STATIC:
-				return STRING(Token::Type::STATIC);
-			case Token::Type::CLASS:
-				return STRING(Token::Type::CLASS);
-			case Token::Type::INTERFACE:
-				return STRING(Token::Type::INTERFACE);
+			case MSL::compiler::Token::ENDLINE:
+				return STRING(Token::ENDLINE);
+				break;
+			case MSL::compiler::Token::APOS:
+				return STRING(Token::APOS);
+				break;
+			case MSL::compiler::Token::COMMA:
+				return STRING(Token::COMMA);
+				break;
+			case MSL::compiler::Token::SEMICOLON:
+				return STRING(Token::SEMICOLON);
+				break;
+			case MSL::compiler::Token::FOR:
+				return STRING(Token::FOR);
+				break;
+			case MSL::compiler::Token::IF:
+				return STRING(Token::IF);
+				break;
+			case MSL::compiler::Token::ELSE:
+				return STRING(Token::ELSE);
+				break;
+			case MSL::compiler::Token::ELIF:
+				return STRING(Token::ELIF);
+				break;
+			case MSL::compiler::Token::WHILE:
+				return STRING(Token::WHILE);
+				break;
+			case MSL::compiler::Token::VARIABLE:
+				return STRING(Token::VARIABLE);
+				break;
+			case MSL::compiler::Token::FUNCTION:
+				return STRING(Token::FUNCTION);
+				break;
+			case MSL::compiler::Token::NAMESPACE:
+				return STRING(Token::NAMESPACE);
+				break;
+			case MSL::compiler::Token::LAMBDA:
+				return STRING(Token::LAMBDA);
+				break;
+			case MSL::compiler::Token::FOREACH:
+				return STRING(Token::FOREACH);
+				break;
+			case MSL::compiler::Token::IN:
+				return STRING(Token::IN);
+				break;
+			case MSL::compiler::Token::USING:
+				return STRING(Token::USING);
+				break;
+			case MSL::compiler::Token::TRY:
+				return STRING(Token::TRY);
+				break;
+			case MSL::compiler::Token::CATCH:
+				return STRING(Token::CATCH);
+				break;
+			case MSL::compiler::Token::OBJECT:
+				return STRING(Token::OBJECT);
+				break;
+			case MSL::compiler::Token::THIS:
+				return STRING(Token::THIS);
+				break;
+			case MSL::compiler::Token::INTEGER_CONSTANT:
+				return STRING(Token::INTEGER_CONSTANT);
+				break;
+			case MSL::compiler::Token::FLOAT_CONSTANT:
+				return STRING(Token::FLOAT_CONSTANT);
+				break;
+			case MSL::compiler::Token::STRING_CONSTANT:
+				return STRING(Token::STRING_CONSTANT);
+				break;
+			case MSL::compiler::Token::TRUE_CONSTANT:
+				return STRING(Token::TRUE_CONSTANT);
+				break;
+			case MSL::compiler::Token::FALSE_CONSTANT:
+				return STRING(Token::FALSE_CONSTANT);
+				break;
+			case MSL::compiler::Token::NULLPTR:
+				return STRING(Token::NULLPTR);
+				break;
+			case MSL::compiler::Token::ROUND_BRACKET_O:
+				return STRING(Token::ROUND_BRACKET_O);
+				break;
+			case MSL::compiler::Token::ROUND_BRACKET_C:
+				return STRING(Token::ROUND_BRACKET_C);
+				break;
+			case MSL::compiler::Token::SQUARE_BRACKET_O:
+				return STRING(Token::SQUARE_BRACKET_O);
+				break;
+			case MSL::compiler::Token::SQUARE_BRACKET_C:
+				return STRING(Token::SQUARE_BRACKET_C);
+				break;
+			case MSL::compiler::Token::BRACE_BRACKET_O:
+				return STRING(Token::BRACE_BRACKET_O);
+				break;
+			case MSL::compiler::Token::BRACE_BRACKET_C:
+				return STRING(Token::BRACE_BRACKET_C);
+				break;
+			case MSL::compiler::Token::NEGATION_OP:
+				return STRING(Token::NEGATION_OP);
+				break;
+			case MSL::compiler::Token::NEGATIVE_OP:
+				return STRING(Token::NEGATIVE_OP);
+				break;
+			case MSL::compiler::Token::POSITIVE_OP:
+				return STRING(Token::POSITIVE_OP);
+				break;
+			case MSL::compiler::Token::RETURN:
+				return STRING(Token::RETURN);
+				break;
+			case MSL::compiler::Token::DOT:
+				return STRING(Token::DOT);
+				break;
+			case MSL::compiler::Token::ASSIGN_OP:
+				return STRING(Token::ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::SUM_ASSIGN_OP:
+				return STRING(Token::SUM_ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::SUB_ASSIGN_OP:
+				return STRING(Token::SUB_ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::MULT_ASSIGN_OP:
+				return STRING(Token::MULT_ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::DIV_ASSIGN_OP:
+				return STRING(Token::DIV_ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::MOD_ASSIGN_OP:
+				return STRING(Token::MOD_ASSIGN_OP);
+				break;
+			case MSL::compiler::Token::LOGIC_EQUALS:
+				return STRING(Token::LOGIC_EQUALS);
+				break;
+			case MSL::compiler::Token::LOGIC_NOT_EQUALS:
+				return STRING(Token::LOGIC_NOT_EQUALS);
+				break;
+			case MSL::compiler::Token::LOGIC_LESS:
+				return STRING(Token::LOGIC_LESS);
+				break;
+			case MSL::compiler::Token::LOGIC_GREATER:
+				return STRING(Token::LOGIC_GREATER);
+				break;
+			case MSL::compiler::Token::LOGIC_LESS_EQUALS:
+				return STRING(Token::LOGIC_LESS_EQUALS);
+				break;
+			case MSL::compiler::Token::LOGIC_GREATER_EQUALS:
+				return STRING(Token::LOGIC_GREATER_EQUALS);
+				break;
+			case MSL::compiler::Token::LOGIC_OR:
+				return STRING(Token::LOGIC_OR);
+				break;
+			case MSL::compiler::Token::LOGIC_AND:
+				return STRING(Token::LOGIC_AND);
+				break;
+			case MSL::compiler::Token::SUM_OP:
+				return STRING(Token::SUM_OP);
+				break;
+			case MSL::compiler::Token::SUB_OP:
+				return STRING(Token::SUB_OP);
+				break;
+			case MSL::compiler::Token::MULT_OP:
+				return STRING(Token::MULT_OP);
+				break;
+			case MSL::compiler::Token::DIV_OP:
+				return STRING(Token::DIV_OP);
+				break;
+			case MSL::compiler::Token::MOD_OP:
+				return STRING(Token::MOD_OP);
+				break;
+			case MSL::compiler::Token::POWER_OP:
+				return STRING(Token::POWER_OP);
+				break;
+			case MSL::compiler::Token::CONST:
+				return STRING(Token::CONST);
+				break;
+			case MSL::compiler::Token::PUBLIC:
+				return STRING(Token::PUBLIC);
+				break;
+			case MSL::compiler::Token::PRIVATE:
+				return STRING(Token::PRIVATE);
+				break;
+			case MSL::compiler::Token::INTERNAL:
+				return STRING(Token::INTERNAL);
+				break;
+			case MSL::compiler::Token::ABSTRACT:
+				return STRING(Token::ABSTRACT);
+				break;
+			case MSL::compiler::Token::STATIC:
+				return STRING(Token::STATIC);
+				break;
+			case MSL::compiler::Token::CLASS:
+				return STRING(Token::CLASS);
+				break;
+			case MSL::compiler::Token::INTERFACE:
+				return STRING(Token::INTERFACE);
+				break;
 			default:
-				return STRING(Token::Type::ERROR);
+				return STRING(Token::ERROR);
 			}
 		}
 

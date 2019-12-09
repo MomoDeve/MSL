@@ -380,6 +380,10 @@ namespace MSL
 					// as labels are stored in OffsetArray, opcode is useless and ignored
 					RegisterLabelInMethod(method, ReadLabel());
 					break;
+				case (OPCODE::PUSH_CATCH):
+					WRITE_OPCODE(OPCODE::PUSH_CATCH);
+					WRITE_LABEL;
+					break;
 				case (OPCODE::JUMP):
 					WRITE_OPCODE(OPCODE::JUMP);
 					WRITE_LABEL;
@@ -394,6 +398,9 @@ namespace MSL
 					break;
 				case (OPCODE::POP_STACK_TOP):
 					WRITE_OPCODE(OPCODE::POP_STACK_TOP);
+					break;
+				case (OPCODE::POP_CATCH):
+					WRITE_OPCODE(OPCODE::POP_CATCH);
 					break;
 				case (OPCODE::METHOD_BODY_END_DECL):
 					return method; // success

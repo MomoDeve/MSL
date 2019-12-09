@@ -140,10 +140,16 @@ namespace MSL
 			*/
 			unique_ptr<BaseExpression> ParseVariableDecl(Function& function);
 			/*
-			[warning]: lambda expression current unsupported, so calling this function will always produce error while parsing
+			[warning]: lambda expression currently not supported, so calling this function will always produce error while parsing
 			this function always return nullptr and should not be used in code 
 			*/
 			unique_ptr<BaseExpression> ParseLambdaExpression(Function& function);
+			/*
+			parses try-catch expression in format 
+			try {[block expression]} catch ([object declare]) {[block expression]}
+			if error was found, 'Parsed::success' = false
+			*/
+			unique_ptr<BaseExpression> ParseTryExpression(Function& function);
 			/*
 			parses for expression in format for([object declare]; [...]; [...]) {[block expression]}
 			if error was found, 'Parsed::success' = false
@@ -178,7 +184,7 @@ namespace MSL
 			parses `(`, variable name, function name, constant or unary operator
 			if error was found, 'Parsed::success' = false
 			*/
-			unique_ptr<BaseExpression> ParseNextVariable(Function& function);
+			unique_ptr<BaseExpression> ParseNextVariable(Function& function, bool catchIndex = true);
 			/*
 			parses almost any expression until semicolon token is met. Usually called if any other specific expression parse function does not match
 			leftBranch parameter must be set only inside this function

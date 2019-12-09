@@ -14,12 +14,13 @@ namespace MSL
 
 		void DllLoader::AddLibrary(const std::string& filename)
 		{
+			if (HasLibrary(filename)) FreeLibrary(filename); // reload
 			modules.insert({ filename, ::LoadLibrary(filename.c_str()) });
 		}
 
 		void DllLoader::FreeLibrary(const std::string& filename)
 		{
-			if (modules.find(filename) != modules.end())
+			if (HasLibrary(filename))
 			{
 				::FreeLibrary(modules[filename]);
 				modules.erase(filename);
@@ -28,10 +29,15 @@ namespace MSL
 
 		DllLoader::DllFunction DllLoader::GetFunctionPointer(const std::string& module, const std::string& function) const
 		{
-			if (modules.find(module) == modules.end()) 
+			if (!HasLibrary(module)) 
 				return nullptr;
 
 			return reinterpret_cast<DllFunction>(::GetProcAddress(modules.at(module), function.c_str()));
+		}
+
+		bool DllLoader::HasLibrary(const std::string& filename) const
+		{
+			return modules.find(filename) != modules.end();
 		}
 
 		DWORD DllLoader::GetLastError() const

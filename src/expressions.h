@@ -113,6 +113,21 @@ namespace MSL
 		};
 
 		/*
+		try catch expression (used for error handling, supports exception variable (optional)
+		*/
+		struct TryExpression : public BaseExpression
+		{
+			std::string variable;
+			ExpressionList tryBody;
+			ExpressionList catchBody;
+			void Print(std::ostream& out, int depth = 0) const override;
+
+			TryExpression();
+
+			virtual void GenerateBytecode(MSL::compiler::CodeGenerator& code, const MSL::compiler::Function& function) const override;
+		};
+
+		/*
 		index expression (operator [] with only one parameter)
 		*/
 		struct IndexExpression : public BaseExpression
@@ -132,10 +147,10 @@ namespace MSL
 		struct ObjectExpression : public BaseExpression
 		{
 			Token object = Token(Token::Type::ERROR, "unnamed");
+			void Print(std::ostream& out, int depth = 0) const override;
 
 			ObjectExpression();
 
-			void Print(std::ostream& out, int depth = 0) const override;
 			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
 		};
 
@@ -168,7 +183,6 @@ namespace MSL
 
 			LambdaExpression();
 
-
 			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
 		};
 
@@ -186,7 +200,6 @@ namespace MSL
 			void Print(std::ostream& out, int depth = 0) const override;
 
 			ForeachExpression();
-
 
 			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
 		};

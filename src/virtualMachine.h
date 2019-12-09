@@ -6,6 +6,7 @@
 #include "assemblyEditor.h"
 #include "assemblyType.h"
 #include "garbageCollector.h"
+#include "ExceptionTrace.h"
 
 //#define MSL_VM_DEBUG
 #undef MSL_VM_DEBUG
@@ -34,6 +35,7 @@ namespace MSL
 			DllLoader dllLoader;
 			#endif
 
+			ExceptionTrace exception;
 			AssemblyType assembly;
 			Configuration config;
 			uint32_t errors;
@@ -50,7 +52,7 @@ namespace MSL
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* ResolveReference(BaseObject* object, const Frame::LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
-			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName, bool printHelp = true);
+			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName, bool printHelp);
 			ClassWrapper* GetPrimitiveClass(BaseObject* object);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;
@@ -64,7 +66,8 @@ namespace MSL
 			bool LoadDll(const std::string& libName);
 			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
-			void DisplayError(std::string message) const;
+			void InitializeAttribute(ClassObject* object, const std::string& attribute, BaseObject* value);
+			void InvokeError(size_t error, const std::string& message, const std::string& arg = "");
 			void DisplayInfo(std::string message) const;
 			void PrintObjectStack() const;
 			std::string GetFullClassType(const ClassType* type) const;
@@ -72,7 +75,7 @@ namespace MSL
 			std::string GetMethodActualName(const std::string& methodName) const;
 			void PerformSystemCall(const ClassType* _class, const MethodType* _method, Frame* frame);
 			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
-			void PerformALUcallIntegers(IntegerObject* int1, const IntegerObject::InnerType* int2, OPCODE op, Frame* frame);
+			void PerformALUCallIntegers(IntegerObject* int1, const IntegerObject::InnerType* int2, OPCODE op, Frame* frame);
 			void PerformALUcallStrings(StringObject* str1, const StringObject::InnerType* str2, OPCODE op, Frame* frame);
 			void PerformALUcallStringInteger(StringObject* str, const IntegerObject::InnerType* integer, OPCODE op, Frame* frame);
 			void PerformALUcallFloats(FloatObject* f1, const FloatObject::InnerType* f2, OPCODE op, Frame* frame);
@@ -88,7 +91,10 @@ namespace MSL
 			ArrayObject* AllocArray(size_t size = 0);
 			StringObject* AllocString(const std::string& value);
 			IntegerObject* AllocInteger(const std::string& value);
+			IntegerObject* AllocInteger(int64_t value);
+			IntegerObject* AllocInteger(const IntegerObject::InnerType& value);
 			FloatObject* AllocFloat(const std::string& value);
+			FloatObject* AllocFloat(FloatObject::InnerType value);
 			ClassWrapper* AllocClassWrapper(const ClassType* _class);
 			ClassObject* AllocClassObject(const ClassType* _class);
 			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
@@ -118,6 +124,8 @@ namespace MSL
 					INVALID_METHOD_CALL = 1 << 17,
 					OUT_OF_MEMORY = 1 << 18,
 					DLL_NOT_FOUND = 1 << 19,
+					EXCEPTIONSTACK_EMPTY = 1 << 20,
+					FATAL_ERROR = 1u << 31,
 				};
 			};
 

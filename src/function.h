@@ -123,7 +123,7 @@ namespace MSL
 			void RemoveLocal(const std::string& localName);
 			/*
 			moves outer variable name to VariableArray and adds its name to hash-table
-			if variable name already existed in table, it will be overwriten in hash-table, but not deleted from VariableArray
+			if variable name already existed in table, no changes are applied
 			*/
 			void InsertDependency(const std::string& dependencyName);
 

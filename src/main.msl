@@ -335,6 +335,11 @@ namespace Math
 		{
 			return Vector2(x - vec.x, y - vec.y);
 		}
+
+        public function Dot(vec)
+        {
+            return x * vec.x + y * vec.y;
+        }
 	}
 }
 
@@ -461,31 +466,40 @@ namespace System
         }
     }
 }
-
 namespace Program
 {
     using namespace System;
+    using namespace Math;
+
+    class TestClass
+    {
+        public var x;
+
+        public function TestClass()
+        {
+             var v1 = Vector2(2, "2");
+             var v2 = Vector2(2, 3);
+             Console.PrintLine(v1.Dot(v2));
+        }
+    }
 
     class ProgramClass
     {
-
         public static function Main()
         {
-            Console.PrintLine("hello world!");
+            try
+            {
+                var t = TestClass();
+            }
+            catch (e)
+            {
+                Console.PrintLine(e);
+                Console.PrintLine("  type: " + e.type);
+                Console.PrintLine("  message: " + e.message);
+                Console.PrintLine("  argument: " + e.argument);
+                Console.PrintLine("  trace: " + e.stackTrace);
+            }
+            Console.Print("\n");
         }
-	}
+    }
 }
-/*
-namespace Program
-{
-	class ProgramClass
-	{
-		static function Main()
-		{
-			a * b + c;
-			a * b + c * d;
-			a * b ** c * d + e * f;
-			v1.x * v2.x + v1.y * v2.y;
-		}
-	}
-}*/

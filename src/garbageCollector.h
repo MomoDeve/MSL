@@ -64,7 +64,7 @@ namespace MSL
 			uint64_t GetClearedMemorySinceIter() const;
 			uint64_t GetClearedObjectCount() const;
 			uint64_t GetTotalIterations() const;
-			void PrintLog() const;
+			virtual void PrintLog() const;
 		};
 
 		template<typename T>

@@ -1011,12 +1011,10 @@ namespace MSL
 					break;
 				default:
 					InvokeError(ERROR::INVALID_OPCODE | ERROR::FATAL_ERROR, "opcode " + OpcodeToMethod(op) + " was found, but not expected", OpcodeToMethod(op));
-
 					break;
 				}
 			}
 			InvokeError(ERROR::INVALID_STACKFRAME_OFFSET | ERROR::FATAL_ERROR, "execution of method went out of frame", std::to_string(frame->offset));
-
 			PRINTFRAME;
 		}
 

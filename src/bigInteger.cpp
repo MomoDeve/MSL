@@ -60,6 +60,7 @@ namespace momo
 		_digits.push_back(0);
 	}
 
+	#undef max // winapi
 	void big_integer::from_buffer(std::stringstream& buffer, size_t size)
 	{
 		size = std::max(size, 1U);
@@ -426,6 +427,7 @@ namespace momo
 		return (num1 > num2 ? num1 : num2);
 	}
 
+	#undef min // winapi
 	inline const big_integer& min(const big_integer& num1, const big_integer& num2)
 	{
 		return (num1 < num2 ? num1 : num2);

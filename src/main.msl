@@ -477,17 +477,22 @@ namespace Program
 
         public function TestClass()
         {
-             var v1 = Vector2(2, true);
-             var v2 = Vector2(2, 3);
-             Console.PrintLine(v1 + v2);
+            x = 3;
+        }
+
+        public function ToString()
+        {
+            return ProgramClass;
         }
     }
 
     class ProgramClass
     {
+
         public static function Main()
         {
-            var t = TestClass();
+            var f = Console.ReadFloat();
+            Console.PrintLine(f);
         }
     }
 }

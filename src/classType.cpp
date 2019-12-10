@@ -10,11 +10,13 @@ bool MSL::VM::ClassType::isAbstract() const
 	return modifiers & Modifiers::ABSTRACT;
 }
 
+#undef CONST // winapi
 bool MSL::VM::ClassType::isConst() const
 {
 	return modifiers & Modifiers::CONST;
 }
 
+#undef INTERFACE // winapi
 bool MSL::VM::ClassType::isInterface() const
 {
 	return modifiers & Modifiers::INTERFACE;

@@ -119,8 +119,9 @@ namespace MSL
 			return 0;
 		}
 
+		#undef TRUE // winapi
 		TrueObject::TrueObject()
-			: BaseObject(Type::TRUE) { }
+			: BaseObject(MSL::VM::Type::TRUE) { }
 
 		std::string TrueObject::ToString() const
 		{
@@ -137,6 +138,7 @@ namespace MSL
 			return 0;
 		}
 
+		#undef FALSE // winapi
 		FalseObject::FalseObject()
 			: BaseObject(Type::FALSE) { }
 

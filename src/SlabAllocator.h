@@ -56,7 +56,7 @@ namespace momo
 	{
 		
 		memory = (ElementT*)malloc(maxSize * sizeof(ElementT));
-		memset(memory, 0, maxSize * sizeof(ElementT));
+		if(memory != nullptr) memset(memory, 0, maxSize * sizeof(ElementT));
 		freeTable = (IndexT*)malloc(maxSize * sizeof(IndexT));
 
 		#ifdef MEMORY_CHECK

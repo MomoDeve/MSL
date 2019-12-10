@@ -20,7 +20,7 @@ Prints object to the output stream. If object is class or namespace, outputs its
 ```cs
 Console.Print(-3); // `-3`
 var arr = Array(2);
-are[0] = "hello"; arr[1] = "world";
+arr[0] = "hello"; arr[1] = "world";
 Console.Print("\n"); // new line character
 Console.Print(arr[0]); // `hello`
 Console.Print(arr.ToString()); // `["hello", "world"]`
@@ -42,7 +42,7 @@ Reads input from input stream until meets space character or reaches end of file
 var s1 = Console.Read();
 var s2 = Console.Read(); 
 Console.PrintLine(s1); // `hello`
-Console.PrintLine(s2) // `world`
+Console.PrintLine(s2); // `world`
 ```
 ### Console.ReadLine()
 Reads line from input stream until meets newline character of reached end of file:
@@ -73,13 +73,13 @@ If input was not float, returns 0.0 by default. If this method meets unrecognise
 // input: `42`
 var f1 = Console.ReadFloat(); // f1 = 42.0
 // input: `-123.973`
-var f2 = Console.ReadInt(); // f2 = -123.973
+var f2 = Console.ReadFloat(); // f2 = -123.973
 // input: `-1e3`
-var f3 = Console.ReadInt(); // f3 = -1000
+var f3 = Console.ReadFloat(); // f3 = -1000
 // input: `150.3f33e`
-var f4 = Console.ReadInt(); // f4 = 150.3
+var f4 = Console.ReadFloat(); // f4 = 150.3
 // input: `aaa1ssl-2`
-var f5 = Console.ReadInt(); // f5 = 0.0
+var f5 = Console.ReadFloat(); // f5 = 0.0
 ```
 ### Console.ReadBool()
 Reads Boolean from input stream until meets space character or reaches end of file and tries to parse it to `System.True` or `System.False` object.

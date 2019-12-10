@@ -67,9 +67,7 @@ namespace MSL
 			inline bool AssertType(const BaseObject* object, Type type);
 			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void InitializeAttribute(ClassObject* object, const std::string& attribute, BaseObject* value);
-			void InvokeError(size_t error, const std::string& message, const std::string& arg);
 			void PrintObjectStack() const;
-			void DisplayInfo(std::string message) const;
 			std::string OpcodeToMethod(OPCODE op) const;
 			std::string ErrorToString(size_t error) const;
 			std::string GetFullClassType(const ClassType* type) const;
@@ -134,8 +132,17 @@ namespace MSL
 			VirtualMachine(Configuration config);
 			bool AddBytecodeFile(std::istream* binaryFile);
 			void Run();
-			uint32_t GetErrors() const;
 			std::vector<std::string> GetErrorStrings(uint32_t errors) const;
+
+			// methods for DLL API use
+			AssemblyType& GetAssembly();
+			CallStack& GetCallStack();
+			ObjectStack& GetObjectStack();
+			GarbageCollector& GetGC();
+			uint32_t& GetErrors();
+			Configuration& GetConfig();
+			ExceptionTrace& GetException();
+			void InvokeError(size_t error, const std::string& message, const std::string& arg);
 		};
 
 		template<typename T>

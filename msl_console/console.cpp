@@ -2,12 +2,12 @@
 
 using namespace MSL::utils;
 
-void Print(VM_ATTRIBUTES)
+void Print(PARAMS)
 {
-	std::ostream& out = *config->streams.out;
-	BaseObject* object = GetUnderlyingObject(stack->back());
+	BaseObject* object = GetUnderlyingObject(vm->GetObjectStack().back());
 	
-	if (config->streams.out == nullptr) return;
+	if (vm->GetConfig().streams.out == nullptr) return;
+	std::ostream& out = *vm->GetConfig().streams.out;
 
 	switch (object->type)
 	{
@@ -25,8 +25,8 @@ void Print(VM_ATTRIBUTES)
 	case Type::ATTRIBUTE:
 	{
 		AttributeObject* attr = static_cast<AttributeObject*>(object);
-		stack->push_back(attr->object);
-		Print(stack, assembly, errors, config, gc);
+		vm->GetObjectStack().push_back(attr->object);
+		Print(vm);
 		return; // no PrintLine check, because it will happen inside recursion call
 	}
 	case Type::CLASS_OBJECT:
@@ -43,60 +43,60 @@ void Print(VM_ATTRIBUTES)
 	}
 }
 
-void PrintLine(VM_ATTRIBUTES)
+void PrintLine(PARAMS)
 {
-	Print(stack, assembly, errors, config, gc);
-	if (config->streams.out != nullptr) *config->streams.out << std::endl;
+	Print(vm);
+	if (vm->GetConfig().streams.out != nullptr) *vm->GetConfig().streams.out << std::endl;
 }
 
-void Read(VM_ATTRIBUTES)
+void Read(PARAMS)
 {
 	StringObject::InnerType str;
-	if (config->streams.in != nullptr)
-		*config->streams.in >> str;
+	if (vm->GetConfig().streams.in != nullptr)
+		*vm->GetConfig().streams.in >> str;
 
-	stack->push_back(AllocString(gc, str));
+	vm->GetObjectStack().push_back(AllocString(vm->GetGC(), str));
 }
 
-void ReadInt(VM_ATTRIBUTES)
+void ReadInt(PARAMS)
 {
 	std::string str = "0";
-	if (config->streams.in != nullptr)
-		*config->streams.in >> str;
+	if (vm->GetConfig().streams.in != nullptr)
+		*vm->GetConfig().streams.in >> str;
 
-	stack->push_back(AllocInteger(gc, str));
+	vm->GetObjectStack().push_back(AllocInteger(vm->GetGC(), str));
 }
 
-void ReadFloat(VM_ATTRIBUTES)
+void ReadFloat(PARAMS)
 {
 	std::string str = "0.0";
-	if (config->streams.in != nullptr)
-		*config->streams.in >> str;
+	if (vm->GetConfig().streams.in != nullptr)
+		*vm->GetConfig().streams.in >> str;
 
-	stack->push_back(AllocFloat(gc, str));
+	vm->GetObjectStack().push_back(AllocFloat(vm->GetGC(), str));
 }
 
-void ReadLine(VM_ATTRIBUTES)
+void ReadLine(PARAMS)
 {
 	StringObject::InnerType str;
-	if (config->streams.in != nullptr)
-		std::getline(*config->streams.in, str);
+	if (vm->GetConfig().streams.in != nullptr)
+		std::getline(*vm->GetConfig().streams.in, str);
 
-	stack->push_back(AllocString(gc, str));
+	vm->GetObjectStack().push_back(AllocString(vm->GetGC(), str));
 }
 
-void ReadBool(VM_ATTRIBUTES)
+void ReadBool(PARAMS)
 {
 	std::string str;
-	if (config->streams.in != nullptr)
-		 *config->streams.in >> str;
+	if (vm->GetConfig().streams.in != nullptr)
+		 *vm->GetConfig().streams.in >> str;
 
 	if (str == "1" || str == "True" || str == "true")
 	{
-		stack->push_back(AllocTrue(gc));
+		vm->GetObjectStack().push_back(AllocTrue(vm->GetGC()));
 	}
 	else
 	{
-		stack->push_back(AllocFalse(gc));
+		vm->GetObjectStack().push_back(AllocFalse(vm->GetGC()));
 	}
 }

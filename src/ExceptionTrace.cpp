@@ -5,6 +5,7 @@ std::string& MSL::VM::ExceptionTrace::GetErrorType()
 	return innerArgs[0];
 }
 
+#undef GetMessage // winapi
 std::string& MSL::VM::ExceptionTrace::GetMessage()
 {
 	return innerArgs[1];

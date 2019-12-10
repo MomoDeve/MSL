@@ -345,6 +345,52 @@ namespace Math
 
 namespace System
 {
+    public static class GC
+    {
+        private static var dll;
+
+        public static function GC()
+        {
+            dll = "msl_gc.dll";
+            Dll.LoadLibrary(dll);
+        }
+
+        public static function Collect()
+        {
+            return Dll.Call(dll, "Collect");
+        }
+
+        public static function Disable()
+        {
+            return Dll.Call(dll, "Disable");
+        }
+
+        public static function Enable()
+        {
+            return Dll.Call(dll, "Enable");
+        }
+
+        public static function ReleaseMemory()
+        {
+            return Dll.Call(dll, "ReleaseMemory");
+        }
+
+        public static function SetMinimalMemory(value)
+        {
+            return Dll.Call(dll, "SetMinimalMemory", value);
+        }
+
+        public static function SetMaximalMemory(value)
+        {
+            return Dll.Call(dll, "SetMaximalMemory", value);
+        }
+
+        public static function SetLogPermissions(value)
+        {
+            return Dll.Call(dll, "SetLogPermissions", value);
+        }
+    }
+
     public static class Console
     {
         private static var dll;
@@ -471,28 +517,11 @@ namespace Program
     using namespace System;
     using namespace Math;
 
-    class TestClass
-    {
-        public var x;
-
-        public function TestClass()
-        {
-            x = 3;
-        }
-
-        public function ToString()
-        {
-            return ProgramClass;
-        }
-    }
-
     class ProgramClass
     {
-
         public static function Main()
         {
-            var f = Console.ReadFloat();
-            Console.PrintLine(f);
+            while (true) var array = Array(100000);
         }
     }
 }

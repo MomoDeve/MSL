@@ -15,7 +15,7 @@ namespace MSL
 		void DllLoader::AddLibrary(const std::string& filename)
 		{
 			if (HasLibrary(filename)) FreeLibrary(filename); // reload
-			modules.insert({ filename, ::LoadLibrary(filename.c_str()) });
+			modules.insert({ filename, ::LoadLibraryA(filename.c_str()) });
 		}
 
 		void DllLoader::FreeLibrary(const std::string& filename)

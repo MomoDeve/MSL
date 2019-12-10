@@ -3,86 +3,98 @@
 using namespace MSL::VM;
 using namespace MSL::utils;
 
-void FloatSqrt(VM_ATTRIBUTES)
+void FloatSqrt(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return;
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::sqrt(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return;
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::sqrt(object->value);
 }
 
-void FloatAbs(VM_ATTRIBUTES)
+void FloatAbs(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return;
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::abs(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return;
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::abs(object->value);
 }
 
-void FloatSin(VM_ATTRIBUTES)
+void FloatSin(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return;
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::sin(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return;
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::sin(object->value);
 }
 
-void FloatCos(VM_ATTRIBUTES)
+void FloatCos(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::cos(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::cos(object->value);
 }
 
-void FloatTan(VM_ATTRIBUTES)
+void FloatTan(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return;
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::tan(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return;
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::tan(object->value);
 }
 
-void FloatExp(VM_ATTRIBUTES)
+void FloatExp(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::exp(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::exp(object->value);
 }
 
-void FloatAtan(VM_ATTRIBUTES)
+void FloatAtan(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::atan(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::atan(object->value);
 }
 
-void FloatAcos(VM_ATTRIBUTES)
+void FloatAcos(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::acos(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::acos(object->value);
 }
 
-void FloatAsin(VM_ATTRIBUTES)
+void FloatAsin(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::asin(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::asin(object->value);
 }
 
-void FloatLog10(VM_ATTRIBUTES)
+void FloatLog10(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::log10(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::log10(object->value);
 }
 
-void FloatLog2(VM_ATTRIBUTES)
+void FloatLog2(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::log2(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::log2(object->value);
 }
 
-void FloatLog(VM_ATTRIBUTES)
+void FloatLog(PARAMS)
 {
-	 if(!AssertType(stack->back(), MSL::VM::Type::FLOAT, errors, config)) return; 
-	 auto* object = static_cast<MSL::VM::FloatObject*>(stack->back());
-	 object->value = std::log(object->value);
+	auto* top = vm->GetObjectStack().back();
+	if(!AssertType(vm, top, MSL::VM::Type::FLOAT)) return; 
+	auto* object = static_cast<MSL::VM::FloatObject*>(top);
+	object->value = std::log(object->value);
 }

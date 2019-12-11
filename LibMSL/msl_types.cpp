@@ -96,7 +96,7 @@ bool MSL::utils::AssertType(MSL::VM::VirtualMachine* vm, MSL::VM::BaseObject* ob
 	if (object->type == type) return true;
 
 	vm->InvokeError(
-		ERROR::INVALID_STACKOBJECT,
+		ERROR::INVALID_TYPE,
 		"object with type " + MSL::VM::ToString(object->type) + " incopatible with expected type " + MSL::VM::ToString(type),
 		object->ToString()
 	);

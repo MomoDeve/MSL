@@ -55,7 +55,7 @@ void SetMinimalMemory(PARAMS)
 	if (memory < 0 || memory > std::numeric_limits<uint64_t>::max())
 	{
 		vm->InvokeError(
-			ERROR::INVALID_STACKOBJECT, 
+			ERROR::INVALID_ARGUMENT, 
 			"value parameter was invalid in GC.SetMinimalMemory(this, value) method: " + memory.to_string(), 
 			memory.to_string()
 		);
@@ -85,7 +85,7 @@ void SetMaximalMemory(PARAMS)
 	if (memory < 0 || memory > std::numeric_limits<uint64_t>::max())
 	{
 		vm->InvokeError(
-			ERROR::INVALID_STACKOBJECT,
+			ERROR::INVALID_ARGUMENT,
 			"value parameter was invalid in GC.SetMaximalMemory(this, value) method: " + memory.to_string(),
 			memory.to_string()
 		);
@@ -103,7 +103,7 @@ void SetLogPermissions(PARAMS)
 	if (value->type != Type::TRUE && value->type != Type::FALSE)
 	{
 		vm->InvokeError(
-			ERROR::INVALID_STACKOBJECT,
+			ERROR::INVALID_TYPE,
 			"GC.SetLogPermission(this, value) accepts only Boolean as parameter",
 			value->ToString()
 		);

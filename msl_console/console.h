@@ -7,7 +7,6 @@
 #define PARAMS MSL::VM::VirtualMachine* vm
 
 using namespace MSL::VM;
-using Stack = std::vector<MSL::VM::BaseObject*>;
 
 DLLEXPORT Print    (PARAMS);
 DLLEXPORT PrintLine(PARAMS);

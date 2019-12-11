@@ -36,7 +36,6 @@ namespace MSL
 				bool checkExitCode = true;
 				bool useUnicode = true;
 				bool safeMode = false;
-				bool displayInfo = false;
 			} execution;
 		};
 	}

@@ -8,13 +8,10 @@
 #include "garbageCollector.h"
 #include "ExceptionTrace.h"
 
-//#define MSL_VM_DEBUG
-#undef MSL_VM_DEBUG
+#define MSL_DLL_API
+//#undef MSL_DLL_API
 
-#define MSL_C_INTERFACE
-//#undef MSL_C_INTERFACE
-
-#ifdef MSL_C_INTERFACE
+#ifdef MSL_DLL_API
 #include "DllLoader.h"
 #undef ERROR
 #endif
@@ -31,7 +28,7 @@ namespace MSL
 			ObjectStack objectStack;
 			GarbageCollector GC;
 
-			#ifdef MSL_C_INTERFACE
+			#ifdef MSL_DLL_API
 			DllLoader dllLoader;
 			#endif
 
@@ -52,12 +49,9 @@ namespace MSL
 			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
 			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* ResolveReference(BaseObject* object, const Frame::LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
-			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName, bool printHelp);
-			ClassWrapper* GetPrimitiveClass(BaseObject* object);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;
 			const std::string* GetObjectName(const BaseObject* object) const;
-			void StartNewStackFrame();
 			void InitializeStaticMembers();
 			void AddSystemNamespace();
 			void CollectGarbage(bool forceCollection = false);
@@ -104,27 +98,25 @@ namespace MSL
 			{
 				enum : uint32_t
 				{
-					CALLSTACK_EMPTY = 1,
-					INVALID_CALL_ARGUMENT = 1 << 1,
-					TERMINATE_ON_LAUNCH = 1 << 2,
-					INVALID_OPCODE = 1 << 3,
-					INVALID_STACKFRAME_OFFSET = 1 << 4,
-					OBJECTSTACK_CORRUPTION = 1 << 5,
-					INVALID_METHOD_SIGNATURE = 1 << 6,
-					OBJECTSTACK_EMPTY = 1 << 7,
-					INVALID_HASH_VALUE = 1 << 8,
-					OBJECT_NOT_FOUND = 1 << 9,
-					MEMBER_NOT_FOUND = 1 << 10,
-					INVALID_STACKOBJECT = 1 << 11,
-					STACKOVERFLOW = 1 << 12,
+					CALLSTACK_EMPTY = 1 << 0,
+					OBJECTSTACK_EMPTY = 1 << 1,
+					EXCEPTIONSTACK_EMPTY = 1 << 2,
+					STACKOVERFLOW = 1 << 3,
+					OUT_OF_MEMORY = 1 << 4,
+					INVALID_BYTECODE = 1 << 5,
+					INVALID_OPERATOR = 1 << 6,
+					INVALID_ARGUMENT = 1 << 7,
+					INVALID_TYPE = 1 << 8,
+					INVALID_METHOD_CALL = 1 << 9,
+					DLL_NOT_FOUND = 1 << 10,
+					MEMBER_NOT_FOUND = 1 << 11,
+					METHOD_NOT_FOUND = 1 << 12,
 					PRIVATE_MEMBER_ACCESS = 1 << 13,
-					CALLSTACK_CORRUPTION = 1 << 14,
+					ABSTRACT_MEMBER_ACCESS = 1 << 14,
 					CONST_MEMBER_MODIFICATION = 1 << 15,
-					ABSTRACT_MEMBER_CALL = 1 << 16,
-					INVALID_METHOD_CALL = 1 << 17,
-					OUT_OF_MEMORY = 1 << 18,
-					DLL_NOT_FOUND = 1 << 19,
-					EXCEPTIONSTACK_EMPTY = 1 << 20,
+					AMBIGUOUS_TYPE = 1 << 16,
+
+					TERMINATE_ON_LAUNCH = 1 << 30,
 					FATAL_ERROR = 1u << 31,
 				};
 			};
@@ -134,6 +126,11 @@ namespace MSL
 			void Run();
 			std::vector<std::string> GetErrorStrings(uint32_t errors) const;
 
+			#ifdef MSL_DLL_API
+			public:
+			#else
+			private:
+			#endif
 			// methods for DLL API use
 			AssemblyType& GetAssembly();
 			CallStack& GetCallStack();
@@ -143,6 +140,9 @@ namespace MSL
 			Configuration& GetConfig();
 			ExceptionTrace& GetException();
 			void InvokeError(size_t error, const std::string& message, const std::string& arg);
+			ClassWrapper* GetClassPrimitive(BaseObject* object);
+			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
+			void StartNewStackFrame();
 		};
 
 		template<typename T>

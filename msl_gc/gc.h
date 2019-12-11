@@ -4,7 +4,6 @@
 #include "../LibMSL/msl_types.cpp"
 
 using namespace MSL::VM;
-using Stack = std::vector<MSL::VM::BaseObject*>;
 
 #define DLLEXPORT extern "C" __declspec(dllexport) void _cdecl
 #define PARAMS MSL::VM::VirtualMachine* vm

@@ -36,7 +36,7 @@ namespace MSL
 			AssemblyType assembly;
 			Configuration config;
 			uint32_t errors;
-			bool ALUinIncrMode;
+			bool AluIncrMode;
 
 			OPCODE ReadOPCode(const std::vector<uint8_t>& bytes, size_t& offset);
 			uint16_t ReadLabel(const std::vector<uint8_t>& bytes, size_t& offset);
@@ -68,7 +68,6 @@ namespace MSL
 			std::string GetFullMethodType(const MethodType* type) const;
 			std::string GetMethodActualName(const std::string& methodName) const;
 			void PerformSystemCall(const ClassType* _class, const MethodType* _method, Frame* frame);
-			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
 			void PerformALUCallIntegers(IntegerObject* int1, const IntegerObject::InnerType* int2, OPCODE op, Frame* frame);
 			void PerformALUcallStrings(StringObject* str1, const StringObject::InnerType* str2, OPCODE op, Frame* frame);
 			void PerformALUcallStringInteger(StringObject* str, const IntegerObject::InnerType* integer, OPCODE op, Frame* frame);
@@ -142,6 +141,7 @@ namespace MSL
 			void InvokeError(size_t error, const std::string& message, const std::string& arg);
 			ClassWrapper* GetClassPrimitive(BaseObject* object);
 			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
+			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
 			void StartNewStackFrame();
 		};
 

@@ -550,8 +550,11 @@ namespace MSL
 					}
 					break;
 					default:
-						InvokeError(ERROR::INVALID_TYPE, "object with invalid type was passed to GetByIndex() call: " + ToString(object->type), object->ToString());
-						
+						InvokeError(
+							ERROR::INVALID_TYPE, 
+							"object with invalid type was passed to GetByIndex() call: " + ToString(object->type), 
+							object->ToString()
+						);
 						return;
 					}
 					break;
@@ -861,7 +864,7 @@ namespace MSL
 					objectStack.push_back(AllocNull());
 					break;
 				case (OPCODE::SET_ALU_INCR):
-					ALUinIncrMode = true;
+					AluIncrMode = true;
 					break;
 				case (OPCODE::RETURN):
 					if (frame->_method->isConstructor())
@@ -900,160 +903,6 @@ namespace MSL
 			{
 				InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "object stack was empty but expected to have SystemCall arguments", "");
 				return;
-			}
-			if (_class->name == "Array")
-			{
-				if (_method->name == "Array_0" || _method->name == "Array_1")
-				{
-					size_t arraySize = 0;
-					BaseObject* size = objectStack.back();
-					objectStack.pop_back(); // pop size. If not exists, class reference is popped anyway
-					if (AssertType(size, Type::INTEGER))
-					{
-						objectStack.pop_back(); // delete class reference
-						IntegerObject::InnerType& value = static_cast<IntegerObject*>(size)->value;
-						if (value >= 0 && value < (unsigned long long)std::numeric_limits<size_t>::max())
-							arraySize = std::stol(value.to_string());
-						else
-						{
-							InvokeError(ERROR::INVALID_ARGUMENT, "cannot create Array instance with size: " + value.to_string(), value.to_string());
-							return;
-						}
-					}
-					ClassObject* arr = AllocClassObject(_class);
-					arr->attributes["array"]->object = AllocArray(arraySize);
-					objectStack.push_back(arr);
-				}
-				else if (_method->name == "GetByIndex_2" || _method->name == "GetByIter_2")
-				{
-					size_t idx = 0;
-					BaseObject* index = objectStack.back();
-					objectStack.pop_back(); // pop index
-					ClassObject* arrayClass = static_cast<ClassObject*>(objectStack.back());
-					ArrayObject* arrayObject = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object);
-					objectStack.pop_back(); // pop array object
-
-					if (!AssertType(index, Type::INTEGER, "invalid argument was passed as array index", frame)) return;
-					
-					IntegerObject::InnerType& value = static_cast<IntegerObject*>(index)->value;
-					if (value >= 0 && value < (unsigned long long)arrayObject->array.size())
-						idx = std::stol(value.to_string());
-					else
-					{
-						InvokeError(ERROR::INVALID_ARGUMENT, "cannot access Array member with index = " + value.to_string(), value.to_string());
-						return;
-					}
-
-					std::string name = "System.Array.array[" + std::to_string(idx) + ']';
-					objectStack.push_back(AllocLocal(name, arrayObject->array[idx]));
-				}
-				else if (_method->name == "Size_1")
-				{
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-					objectStack.push_back(AllocInteger(objects.size()));
-				}
-				else if (_method->name == "Empty_1")
-				{
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-					if (objects.empty())
-					{
-						objectStack.push_back(AllocTrue());
-					}
-					else
-					{
-						objectStack.push_back(AllocFalse());
-					}
-				}
-				else if (_method->name == "ToString_1")
-				{
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-
-					objectStack.push_back(AllocString("["));
-					for (int i = 0; i < int(objects.size()); i++)
-					{
-						bool isString = AssertType(objects[i].object, Type::STRING);
-						if (isString) static_cast<StringObject*>(objectStack.back())->value += '"';
-
-						objectStack.push_back(objects[i].object);
-						PerformALUCall(OPCODE::SUM_OP, 2, frame);
-
-						if (isString) static_cast<StringObject*>(objectStack.back())->value += '"';
-						
-						if (i != int(objects.size()) - 1)
-						{
-							static_cast<StringObject*>(objectStack.back())->value += ", ";
-						}
-					}
-					static_cast<StringObject*>(objectStack.back())->value += ']';
-				}
-				else if (_method->name == "Begin_1")
-				{
-					objectStack.pop_back(); // array object
-					objectStack.push_back(AllocInteger(0));
-				}
-				else if (_method->name == "End_1")
-				{
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-					objectStack.push_back(AllocInteger(objects.size()));
-				}
-				else if (_method->name == "Pop_1")
-				{
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-					if (!objects.empty())
-					{
-						BaseObject* object = objects.back().object;
-						objects.pop_back();
-						objectStack.push_back(object);
-					}
-					else
-					{
-						objectStack.push_back(AllocNull());
-					}
-				}
-				else if (_method->name == "Append_2")
-				{
-					BaseObject* object = objectStack.back();
-					objectStack.pop_back(); // pop object
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-					ClassObject* arrayClass = static_cast<ClassObject*>(array);
-					ArrayObject::InnerType& objects = static_cast<ArrayObject*>(arrayClass->attributes["array"]->object)->array;
-
-					objects.push_back({ object, false });
-					objectStack.push_back(array);
-				}
-				else if (_method->name == "Next_2")
-				{
-					BaseObject* iter = objectStack.back(); 
-					objectStack.pop_back(); // pop iter
-					BaseObject* array = objectStack.back();
-					objectStack.pop_back(); // pop array
-
-					if (!AssertType(iter, Type::INTEGER, "invalid iterator was passed to Array.Next(this, iter) method", frame)) return;
-					
-					IntegerObject::InnerType& iterValue = static_cast<IntegerObject*>(iter)->value;
-					objectStack.push_back(AllocInteger(iterValue + 1));
-				}
-				else
-				{
-					InvokeError(ERROR::MEMBER_NOT_FOUND, "Array class does not contains method: " + GetFullMethodType(_method), GetMethodActualName(_method->name));
-					return;
-				}
 			}
 			else if (_class->name == "Dll")
 			{
@@ -1372,33 +1221,53 @@ namespace MSL
 			{
 				if (_method->name == "Instance_0")
 				{
+					objectStack.push_back(AllocString(exception.GetErrorType()));
 					objectStack.push_back(AllocString(exception.GetMessage()));
-					PerformSystemCall(_class, &_class->methods.at("Exception_1"), frame);
+					objectStack.push_back(AllocString(exception.GetArgument()));
+					PerformSystemCall(_class, &_class->methods.at("Exception_3"), frame);
 				}
-				else if (_method->name == "Exception_1")
+				else if (_method->name == "Exception_3")
 				{
-					if (!AssertType(objectStack.back(), Type::STRING, "String object expected as parameter to Exception(message)", frame))
+					if (!AssertType(objectStack.back(), Type::STRING, "String object expected as type parameter", frame))
+						return;
+					auto argument = static_cast<StringObject*>(objectStack.back());
+					objectStack.pop_back(); // pop argument
+					
+					if (!AssertType(objectStack.back(), Type::STRING, "String object expected as message parameter", frame))
 						return;
 					auto message = static_cast<StringObject*>(objectStack.back());
 					objectStack.pop_back(); // pop message
+
+					if (!AssertType(objectStack.back(), Type::STRING, "String object expected as argument parameter", frame))
+						return;
+					auto type = static_cast<StringObject*>(objectStack.back());
+					objectStack.pop_back(); // pop type
+					
 					auto ExceptionClass = static_cast<ClassWrapper*>(objectStack.back())->type;
 					objectStack.pop_back(); // pop System.Exception
 					auto ExceptionObject = AllocClassObject(ExceptionClass);
 
+					// type attribute
+					InitializeAttribute(ExceptionObject, "type", type);
+
 					// message attribute
 					InitializeAttribute(ExceptionObject, "message", message);
 
-					// type attribute
-					InitializeAttribute(ExceptionObject, "type", AllocInteger(exception.GetErrorType()));
-
 					// argument attribute
-					InitializeAttribute(ExceptionObject, "argument", AllocString(exception.GetArgument()));
+					InitializeAttribute(ExceptionObject, "argument", argument);
 
 					// stackTrace attribute
 					auto arrayClass = GetClassOrNull("System", "Array");
 					objectStack.push_back(arrayClass->wrapper);
 					objectStack.push_back(AllocInteger(exception.GetTraceSize()));
-					PerformSystemCall(arrayClass, GetMethodOrNull(arrayClass, "Array_1"), frame);
+
+					CallPath newFrame;
+					newFrame.SetMethod(&GetMethodOrNull(arrayClass, "Array_1")->name);
+					newFrame.SetClass(&arrayClass->name);
+					newFrame.SetNamespace(&arrayClass->namespaceName);
+					callStack.push_back(std::move(newFrame));
+					StartNewStackFrame();
+
 					auto arrayInstance = static_cast<ClassObject*>(objectStack.back());
 					objectStack.pop_back();
 					ArrayObject* gcArray = static_cast<ArrayObject*>(arrayInstance->attributes.at("array")->object);
@@ -1464,7 +1333,8 @@ namespace MSL
 			case Type::LOCAL:
 			{
 				LocalObject* local = static_cast<LocalObject*>(object);
-				if (local->ref.isConst && local->ref.object->type != Type::NULLPTR && (op == OPCODE::ASSIGN_OP || ALUinIncrMode))
+				if (local->ref.isConst && local->ref.object->type != Type::NULLPTR && 
+					(op == OPCODE::ASSIGN_OP || AluIncrMode))
 				{
 					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const local variable: " + local->ToString() + " = " + (value ? value->ToString() : "null"), local->ToString());
  					return;
@@ -1475,7 +1345,8 @@ namespace MSL
 			case Type::ATTRIBUTE:
 			{
 				AttributeObject* attr = static_cast<AttributeObject*>(object);
-				if (attr->type->isConst() && attr->object->type != Type::NULLPTR)
+				if (attr->type->isConst() && attr->object->type != Type::NULLPTR && 
+					(op == OPCODE::ASSIGN_OP || AluIncrMode))
 				{
 					InvokeError(ERROR::CONST_MEMBER_MODIFICATION, "trying to modify const class attribute: " + attr->type->name, attr->type->name);
  					return;
@@ -1509,7 +1380,7 @@ namespace MSL
 			}
 
 			// call assign after operations in this method
-			if (ALUinIncrMode)
+			if (AluIncrMode)
 			{
 				objectStack.push_back(object);
 			}
@@ -1696,7 +1567,7 @@ namespace MSL
 			case Type::FALSE:
 			case Type::TRUE:
 			{
-				if (ALUinIncrMode)
+				if (AluIncrMode)
 				{
 					InvokeError(ERROR::INVALID_BYTECODE, "Boolean value cannot be incremented: " + (*objectReference)->ToString(), (*objectReference)->ToString());
  					return;
@@ -1711,10 +1582,10 @@ namespace MSL
  				return;
 			}
 
-			if (ALUinIncrMode)
+			if (AluIncrMode)
 			{
 				PerformALUCall(OPCODE::ASSIGN_OP, 2, frame);
-				ALUinIncrMode = false; // resets after call
+				AluIncrMode = false; // resets after call
 			}
 		}
 
@@ -1765,12 +1636,27 @@ namespace MSL
 			#define CONSTRUCTOR(_name, _cppobj, params) METHOD(_name, _cppobj, params); \
 			_cppobj.modifiers |= MethodType::Modifiers::CONSTRUCTOR
 
-			#define CONSTRUCTOR_0(_name) CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 0); \
+			#define CONSTRUCTOR_0(_name) \
+			CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 0); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 0)
 
-			#define CONSTRUCTOR_1(_name, param1) CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 1); \
+			#define CONSTRUCTOR_1(_name, param1) \
+			CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 1); \
 			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
 			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 1)
+
+			#define CONSTRUCTOR_2(_name, param1, param2) \
+			CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 2); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
+			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 2)
+
+			#define CONSTRUCTOR_3(_name, param1, param2, param3) \
+			CONSTRUCTOR(_name, CONCAT(_name, __LINE__), 3); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param1); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param2); \
+			CONCAT(_name, __LINE__).parameters.push_back(#param3); \
+			INSERT_METHOD(_name, CONCAT(_name, __LINE__), 3)
 
 			#define STATIC_METHOD(_name, _cppobj, params) METHOD(_name, _cppobj, params); \
 			_cppobj.modifiers |= MethodType::Modifiers::STATIC
@@ -1911,7 +1797,7 @@ namespace MSL
 					PUBLIC_CONST_ATTRIBUTE(stackTrace);
 					PUBLIC_CONST_ATTRIBUTE(type);
 					PUBLIC_CONST_ATTRIBUTE(argument);
-					CONSTRUCTOR_1(Exception, message);
+					CONSTRUCTOR_3(Exception, type, message, argument);
 				END_CLASS(Exception);
 
 				BEGIN_CLASS(String);
@@ -1929,23 +1815,6 @@ namespace MSL
 					STATIC_METHOD_1(GetByIter, iter); // returns symbol of the string by iterator as one-length string
 					STATIC_METHOD_1(Next, iter); // increments iterator of the string
 				END_CLASS(String);
-
-				BEGIN_CLASS(Array);
-					Array.modifiers &= ~ClassType::Modifiers::STATIC;
-					CONSTRUCTOR_0(Array); // creates an empty array
-					CONSTRUCTOR_1(Array, size); // creates array with the desired size filled with null
-					METHOD_2(Append, this, object);  // adds object to the end of the array
-					METHOD_2(GetByIndex, this, index); // return object stored in array by index
-					METHOD_2(GetByIter, this, iter); // return object stored in array by iterator
-					METHOD_2(Next, this, iter); // increments iterator of the array
-					METHOD_1(Pop, this); // deletes last objects in the array and reduces its size by 1
-					METHOD_1(Empty, this); // checks if the array is empty (size = 0)
-					METHOD_1(Size, this); // returns array size
-					METHOD_1(ToString, this); // converts array to string (all stored objects are implicitly converted to strings by default rules)
-					METHOD_1(Begin, this); // return iterator to the begin of the array
-					METHOD_1(End, this); // return iterator to the end of the array
-					ATTRIBUTE(array); // private member which implements array storage
-				END_CLASS(Array);
 
 			END_NAMESPACE(System);
 		}
@@ -2665,7 +2534,10 @@ namespace MSL
 
 			ArrayObject* array = GC.arrayAlloc->Alloc(size);
 			for (size_t i = 0; i < size; i++)
+			{
 				array->array[i].object = AllocNull();
+				array->array[i].isElement = true;
+			}
 			return array;
 		}
 
@@ -2700,7 +2572,7 @@ namespace MSL
 		}
 
 		VirtualMachine::VirtualMachine(Configuration config)
-			: config(std::move(config)), errors(0), ALUinIncrMode(false) { }
+			: config(std::move(config)), errors(0), AluIncrMode(false) { }
 
 		bool VirtualMachine::AddBytecodeFile(std::istream* binaryFile)
 		{

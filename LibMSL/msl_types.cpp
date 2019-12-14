@@ -61,7 +61,10 @@ namespace MSL
 		{
 			ArrayObject* array = GC.arrayAlloc->Alloc(size);
 			for (size_t i = 0; i < size; i++)
+			{
 				array->array[i].object = AllocNull(GC);
+				array->array[i].isElement = true;
+			}
 			return array;
 		}
 
@@ -75,6 +78,16 @@ namespace MSL
 			return GC.integerAlloc->Alloc(value);
 		}
 
+		IntegerObject* AllocInteger(GarbageCollector& GC, size_t value)
+		{
+			return GC.integerAlloc->Alloc((unsigned long long)value);
+		}
+
+		IntegerObject* AllocInteger(GarbageCollector& GC, const IntegerObject::InnerType& value)
+		{
+			return GC.integerAlloc->Alloc(value);
+		}
+
 		FloatObject* AllocFloat(GarbageCollector& GC, const std::string& value)
 		{
 			try
@@ -83,6 +96,7 @@ namespace MSL
 			}
 			catch (std::invalid_argument& e) // stod throws exception if value is not parsed
 			{
+				e;
 				return GC.floatAlloc->Alloc(0.0);
 			}
 		}

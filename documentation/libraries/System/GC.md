@@ -17,6 +17,7 @@ namespace System
  ```
 ### GC.SetLogPermissions(value)
 *This method will be described first because it is used a lot in the code samples.*
+
 Outputs garbage collection information to the `log` GC stream provided in VM config, including: iteration number, time of iteration, collected object count, managed object count, cleared memory and managed memory. `value` is a Boolean parameter which sets permission to output log to stream:
 ```cs
 Console.PrintLine("Log enabled");
@@ -41,7 +42,7 @@ Console.PrintLine("GC Disabled!");
 while(true) Array(10000000); // OutOfMemory will be thrown soon
 ```
 ### GC.Enable()
-Enabled garbage collection in VM. By default GC is enabled, but can be manually turned off in configuration file. This method throws `InvalidMethodCall` exception if `safeMode` was set to `true` in VM config:
+Enables garbage collection in VM. By default GC is enabled, but can be manually turned off in configuration file. This method throws `InvalidMethodCall` exception if `safeMode` was set to `true` in VM config:
 ```cs
 GC.SetLogPermissions(true);
 GC.Disable();

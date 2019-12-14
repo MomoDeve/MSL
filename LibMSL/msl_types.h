@@ -46,6 +46,8 @@ namespace MSL
 		ArrayObject* AllocArray(GarbageCollector& GC, size_t size);
 		StringObject* AllocString(GarbageCollector& GC, const std::string& value);
 		IntegerObject* AllocInteger(GarbageCollector& GC, const std::string& value);
+		IntegerObject* AllocInteger(GarbageCollector& GC, size_t value);
+		IntegerObject* AllocInteger(GarbageCollector& GC, IntegerObject::InnerType& value);
 		FloatObject* AllocFloat(GarbageCollector& GC, const std::string& value);
 	}
 }

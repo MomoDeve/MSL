@@ -166,6 +166,7 @@ namespace MSL
 		{
 			BaseObject* object = nullptr;
 			bool isConst = false;
+			bool isElement = false;
 		};
 
 		struct LocalObject : BaseObject

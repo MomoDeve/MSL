@@ -38,6 +38,7 @@ namespace MSL
 		{
 			return frame;
 		}
+
 		void CallPath::SetFrame(Frame* frame)
 		{
 			this->frame = frame;

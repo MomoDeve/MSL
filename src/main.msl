@@ -1,115 +1,5 @@
 namespace Utils
 {	
-	public class Array
-	{
-		var array;
-		
-        public function Inner()
-        {
-            return array;
-        }
-
-		public function Size()
-		{
-			return array.Size();
-		}
-		
-		public function Array()
-		{
-			array = System.Array();
-		}
-		
-		public function Array(size)
-		{
-			array = System.Array(size);
-		}
-		
-		public function Append(object)
-		{
-			array.Append(object);
-		}
-		
-		public function Back()
-		{
-			return array[array.Size() - 1];
-		}
-		
-		public function Front()
-		{
-			return array[0];
-		}
-		
-		public function Cloned()
-		{
-			var result = Array(Size());
-			for(var i = 0; i < array.Size(); i += 1)
-			{
-				result[i] = array[i];
-			}
-			return result;
-		}
-		
-		public function Merged(array)
-		{
-			var result = this.Cloned();
-			for(var i = 0; i < array.Size(); i += 1)
-			{
-				result.Append(array[i]);
-			}
-			return result;
-		}
-		
-		public function Reversed()
-		{
-			var result = Array(Size());
-			for(var i = 0; i < Size(); i += 1)
-			{
-				result[i] = this[Size() - i - 1];
-			}
-			return result;
-		}
-		
-		public function Empty()
-		{
-			return array.Empty();
-		}
-		
-		public function Pop()
-		{
-			return array.Pop();
-		}
-		
-		public function Begin()
-		{
-			return array.Begin();
-		}
-		
-		public function End()
-		{
-			return array.End();
-		}
-		
-		public function GetByIter(iter)
-		{
-			return array.GetByIter(iter);
-		}
-		
-		public function Next(iter)
-		{
-			return array.Next(iter);
-		}
-		
-		public function ToString()
-		{
-			return array.ToString();
-		}
-		
-		public function GetByIndex(index)
-		{
-			return array[index];
-		}
-	}
-
 	public class String
 	{
         public static function Split(string, delimiters)
@@ -492,6 +382,121 @@ namespace System
         }
     }
 
+    public class Array
+    {
+        private static var dll;
+        private var array;
+    
+        public static function Array()
+        {
+            dll = "msl_array.dll"
+            Dll.LoadLibrary(dll);
+        }        
+
+        public function Array()
+        {
+            return Array(0);
+        }
+
+        public function Array(size)
+        {
+            return Dll.Call(dll, "ArrayConstructor", size);
+        }
+
+        public function Append(object)
+        {
+            return Dll.Call(dll, "Append", array, object);
+        }
+
+        public function GetByIndex(index)
+        {
+            return Dll.Call(dll, "GetByIndex", array, index);
+        }
+
+        public function GetByIter(iterator)
+        {
+            return GetByIndex(iterator);
+        }
+
+        public function Next(iterator)
+        {
+            return iterator + 1;
+        }
+
+        public function Pop()
+        {
+            return Dll.Call(dll, "Pop", array);
+        }
+
+        public function Empty()
+        {
+            return Size() == 0;
+        }
+
+        public function Size()
+        {
+            return Dll.Call(dll, "Size", array);
+        }
+
+        public function ToString()
+        {
+            return Dll.Call(dll, "ToString", array);
+        } 
+            
+        public function Begin()
+        {
+            return 0;
+        }
+
+        public function End()
+        {
+            return Size();
+        }
+
+        public function Back()
+		{
+			return GetByIndex(Size() - 1);
+		}
+		
+		public function Front()
+		{
+			return GetByIndex(0);
+		}
+		
+		public function Cloned()
+		{
+            var size = Size();
+			var result = Array(size);
+			for(var i = 0; i < size; i += 1)
+			{
+				result[i] = array[i];
+			}
+			return result;
+		}
+		
+		public function Merged(array)
+		{
+			var result = Cloned();
+            var size = Size();
+			for(var i = 0; i < size; i += 1)
+			{
+				result.Append(array[i]);
+			}
+			return result;
+		}
+		
+		public function Reversed()
+		{
+            var size = Size();
+			var result = Array(size);
+			for(var i = 0; i < size; i += 1)
+			{
+				result[i] = this[size - i - 1];
+			}
+			return result;
+		}
+    }
+
     public static class Math
     {
         private static var dll;
@@ -571,16 +576,9 @@ namespace Program
 
     class ProgramClass
     {
-        public function ProgramClass(x) { }
-
         public static function Main()
         {
-            GC.SetLogPermissions(true); // see documentation below
-            GC.SetMaximalMemory(2 * 1024 * 1024 * 1024); // OS limit
-            var bigArray = Array(128 * 1024 * 1024); // ~ 1 GB
-            Console.PrintLine("Now will be collected by GC");
-            bigArray = null;
-            for(var i = 0; i < 100000; i += 1) { } // wait until next collection
+            
         }
     }
 }

@@ -143,7 +143,6 @@ It returns true as success indicator, and that means that bytecode was loaded an
 ![Hello World](https://user-images.githubusercontent.com/40578274/67675950-81840d80-f991-11e9-8fa9-144b89b163df.png)
 Notice that VM states that Main function returned 0 even if we did not specify return value. Thats because all functions return null by default, which in this case can be interpreted as 0. 
 
-Any VM errors that have occured during the run of the program, can be retrieved as an array using GetErrors() and GetErrorStrings() methods after end of the execution.
 Full code for VM launch with error display:
 ```cpp
 int main()
@@ -154,15 +153,6 @@ int main()
     if (VM.AddBytecodeFile(&fs))
     {
         VM.Run();
-    }
-    auto errors = VM.GetErrorStrings(VM.GetErrors());
-    if (!errors.empty())
-    {
-        std::cerr << "[VM ERRORS]:\n";
-        for (const std::string& error : errors)
-        {
-            std::cerr << error << std::endl;
-        }
     }
     return 0;
 }

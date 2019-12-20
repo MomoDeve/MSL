@@ -55,11 +55,11 @@ void ReflectionIsNamespaceExists(PARAMS)
 	if (vm->GetAssembly().namespaces.find(ns) ==
 		vm->GetAssembly().namespaces.end())
 	{
-		stack.push_back(AllocFalse(vm->GetGC()));
+		stack.push_back(vm->AllocFalse());
 	}
 	else
 	{
-		stack.push_back(AllocTrue(vm->GetGC()));
+		stack.push_back(vm->AllocTrue());
 	}
 }
 
@@ -78,10 +78,10 @@ void ReflectionContainsMember(PARAMS)
 		(result->type == Type::ATTRIBUTE && !static_cast<AttributeObject*>(result)->type->isPublic()) ||
 		(result->type == Type::CLASS) && static_cast<ClassWrapper*>(result)->type->isInternal())
 	{
-		stack.push_back(AllocFalse(vm->GetGC()));
+		stack.push_back(vm->AllocFalse());
 		return;
 	}
-	stack.push_back(AllocTrue(vm->GetGC()));
+	stack.push_back(vm->AllocTrue());
 }
 
 void ReflectionContainsMethod(PARAMS)
@@ -113,7 +113,7 @@ void ReflectionContainsMethod(PARAMS)
 	}
 	else
 	{
-		stack.push_back(AllocFalse(vm->GetGC()));
+		stack.push_back(vm->AllocFalse());
 		return;
 	}
 
@@ -122,15 +122,15 @@ void ReflectionContainsMethod(PARAMS)
 	auto methodIt = classType->methods.find(method);
 	if (classType->methods.find(method) == classType->methods.end())
 	{
-		stack.push_back(AllocFalse(vm->GetGC()));
+		stack.push_back(vm->AllocFalse());
 		return;
 	}
 	if (!methodIt->second.isPublic() || !methodIt->second.isStatic() && !methodIt->second.isConstructor() && classObject == nullptr)
 	{
-		stack.push_back(AllocFalse(vm->GetGC()));
+		stack.push_back(vm->AllocFalse());
 		return;
 	}
-	stack.push_back(AllocTrue(vm->GetGC()));
+	stack.push_back(vm->AllocTrue());
 }
 
 void ReflectionGetMember(PARAMS)
@@ -162,7 +162,7 @@ void ReflectionCreateInstance(PARAMS)
 	auto& stack = vm->GetObjectStack();
 	BaseObject* top = stack.back();
 	stack.pop_back();
-	stack.push_back(AllocString(vm->GetGC(), VM_COMMAND_CREATE_INSTANCE));
+	stack.push_back(vm->AllocString(VM_COMMAND_CREATE_INSTANCE));
 	stack.push_back(top);
 	ReflectionInvoke(vm);
 }
@@ -185,7 +185,7 @@ void ReflectionInvoke(PARAMS)
 		arrayClass->attributes.find("array") == arrayClass->attributes.end() ||
 		arrayClass->attributes["array"]->object->type != Type::BASE)
 	{
-		array = &AllocArray(vm->GetGC(), 1)->array;
+		array = &vm->AllocArray(1)->array;
 		if (array->empty()) return; // OutOfMemory (?)
 		(*array)[0] = { object, false };
 	}
@@ -239,12 +239,6 @@ void ReflectionInvoke(PARAMS)
 		return;
 	}
 
-	CallPath newFrame;
-	newFrame.SetNamespace(&classType->namespaceName);
-	newFrame.SetClass(&classType->name);
-	newFrame.SetMethod(&method);
-	vm->GetCallStack().push_back(std::move(newFrame));
-
 	if (methodIt->second.isStatic())
 	{
 		stack.push_back(classType->wrapper);
@@ -257,7 +251,10 @@ void ReflectionInvoke(PARAMS)
 	{
 		stack.push_back(param.object);
 	}
-	vm->StartNewStackFrame();
+	if (methodIt->second.isStatic())
+		vm->InvokeStaticMethod(methodIt->first, classType);
+	else
+		vm->InvokeObjectMethod(methodIt->first, classObject);
 }
 
 void MathSqrt(PARAMS)
@@ -359,7 +356,7 @@ void MathLog(PARAMS)
 void GCCollect(PARAMS)
 {
 	vm->GetGC().Collect(vm->GetAssembly(), vm->GetCallStack(), vm->GetObjectStack());
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCDisable(PARAMS)
@@ -370,7 +367,7 @@ void GCDisable(PARAMS)
 		return;
 	}
 	vm->GetConfig().GC.allowCollect = false;
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCEnable(PARAMS)
@@ -381,13 +378,13 @@ void GCEnable(PARAMS)
 		return;
 	}
 	vm->GetConfig().GC.allowCollect = true;
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCReleaseMemory(PARAMS)
 {
 	vm->GetGC().ReleaseFreeMemory();
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCSetMinimalMemory(PARAMS)
@@ -417,7 +414,7 @@ void GCSetMinimalMemory(PARAMS)
 	}
 	uint64_t val = std::stoull(memory.to_string());
 	vm->GetConfig().GC.minMemory = val;
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCSetMaximalMemory(PARAMS)
@@ -447,7 +444,7 @@ void GCSetMaximalMemory(PARAMS)
 	}
 	uint64_t val = std::stoull(memory.to_string());
 	vm->GetConfig().GC.maxMemory = val;
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void GCSetLogPermissions(PARAMS)
@@ -469,7 +466,7 @@ void GCSetLogPermissions(PARAMS)
 	else
 		vm->GetGC().SetLogStream(vm->GetConfig().GC.log);
 
-	vm->GetObjectStack().push_back(AllocNull(vm->GetGC()));
+	vm->GetObjectStack().push_back(vm->AllocNull());
 }
 
 void ConsolePrint(PARAMS)
@@ -525,7 +522,7 @@ void ConsoleRead(PARAMS)
 	if (vm->GetConfig().streams.in != nullptr)
 		*vm->GetConfig().streams.in >> str;
 
-	vm->GetObjectStack().push_back(AllocString(vm->GetGC(), str));
+	vm->GetObjectStack().push_back(vm->AllocString(str));
 }
 
 void ConsoleReadInt(PARAMS)
@@ -534,7 +531,7 @@ void ConsoleReadInt(PARAMS)
 	if (vm->GetConfig().streams.in != nullptr)
 		*vm->GetConfig().streams.in >> str;
 
-	vm->GetObjectStack().push_back(AllocInteger(vm->GetGC(), str));
+	vm->GetObjectStack().push_back(vm->AllocInteger(str));
 }
 
 void ConsoleReadFloat(PARAMS)
@@ -543,7 +540,7 @@ void ConsoleReadFloat(PARAMS)
 	if (vm->GetConfig().streams.in != nullptr)
 		*vm->GetConfig().streams.in >> str;
 
-	vm->GetObjectStack().push_back(AllocFloat(vm->GetGC(), str));
+	vm->GetObjectStack().push_back(vm->AllocFloat(str));
 }
 
 void ConsoleReadLine(PARAMS)
@@ -552,7 +549,7 @@ void ConsoleReadLine(PARAMS)
 	if (vm->GetConfig().streams.in != nullptr)
 		std::getline(*vm->GetConfig().streams.in, str);
 
-	vm->GetObjectStack().push_back(AllocString(vm->GetGC(), str));
+	vm->GetObjectStack().push_back(vm->AllocString(str));
 }
 
 void ConsoleReadBool(PARAMS)
@@ -563,19 +560,19 @@ void ConsoleReadBool(PARAMS)
 
 	if (str == "1" || str == "True" || str == "true")
 	{
-		vm->GetObjectStack().push_back(AllocTrue(vm->GetGC()));
+		vm->GetObjectStack().push_back(vm->AllocTrue());
 	}
 	else
 	{
-		vm->GetObjectStack().push_back(AllocFalse(vm->GetGC()));
+		vm->GetObjectStack().push_back(vm->AllocFalse());
 	}
 }
 
 static ClassObject* InitArray(PARAMS, size_t size)
 {
 	const ClassType* arrayClass = &vm->GetAssembly().namespaces["System"].classes["Array"];
-	ClassObject* arr = AllocClassObject(vm->GetGC(), arrayClass);
-	arr->attributes["array"]->object = AllocArray(vm->GetGC(), size);
+	ClassObject* arr = vm->AllocClassObject(arrayClass);
+	arr->attributes["array"]->object = vm->AllocArray(size);
 	return arr;
 }
 
@@ -630,7 +627,7 @@ void ArrayGetByIndex(PARAMS)
 		return;
 	};
 	size_t idx = std::stoul(value.to_string());
-	stack.push_back(AllocLocal(vm->GetGC(), "__array", array[idx]));
+	stack.push_back(vm->AllocLocal("__array", array[idx]));
 }
 
 void ArraySize(PARAMS)
@@ -638,7 +635,7 @@ void ArraySize(PARAMS)
 	auto& stack = vm->GetObjectStack();
 	auto& array = GetArrayReference(stack.back());
 	stack.pop_back();
-	stack.push_back(AllocInteger(vm->GetGC(), array.size()));
+	stack.push_back(vm->AllocInteger(array.size()));
 }
 
 void ArrayToString(PARAMS)
@@ -647,7 +644,7 @@ void ArrayToString(PARAMS)
 	auto& array = GetArrayReference(stack.back());
 	stack.pop_back();
 
-	auto output = AllocString(vm->GetGC(), "[");
+	auto output = vm->AllocString("[");
 	stack.push_back(output);
 	for (int i = 0; i < int(array.size()); i++)
 	{
@@ -715,7 +712,7 @@ void ArraySort(PARAMS)
 				throw std::exception("invalid compare");
 			});
 	}
-	catch (std::exception& e)
+	catch (std::exception&)
 	{
 		return;
 	}

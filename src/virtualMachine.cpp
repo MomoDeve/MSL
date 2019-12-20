@@ -509,7 +509,7 @@ namespace MSL
 				{
 					if (objectStack.size() < 2)
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for get_index call", !objectStack.empty() ? objectStack.back()->ToString() : "");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for GetByIndex call", "GetByIndex");
  						return;
 					}
 					BaseObject* object = objectStack.back();
@@ -564,7 +564,7 @@ namespace MSL
 					uint8_t paramSize = ReadOPCode(frame->_method->body, frame->offset);
 					if (objectStack.size() < paramSize + 2u) // function object + caller object
 					{
-						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for function call", !objectStack.empty() ? objectStack.back()->ToString() : "");
+						InvokeError(ERROR::OBJECTSTACK_EMPTY | ERROR::FATAL_ERROR, "not enough parameters in stack for function call", !objectStack.empty() ? GetMethodActualName(objectStack.back()->ToString()) : "");
  						return;
 					}
 					BaseObject* obj = objectStack.back();
@@ -1896,7 +1896,7 @@ namespace MSL
 			const auto method = GetMethodOrNull(object->type, methodName);
 			if (method == nullptr)
 			{
-				InvokeError(ERROR::MEMBER_NOT_FOUND, "method name provided to InvokeObjectMethod() function not found", methodName);
+				InvokeError(ERROR::METHOD_NOT_FOUND, "method name provided to InvokeObjectMethod() function not found", methodName);
 				return;
 			}
 			if (method->isAbstract() || method->isStatic())
@@ -1913,6 +1913,32 @@ namespace MSL
 			newFrame.SetMethod(&methodName);
 			newFrame.SetClass(&object->type->name);
 			newFrame.SetNamespace(&object->type->namespaceName);
+			callStack.push_back(std::move(newFrame));
+			StartNewStackFrame();
+		}
+
+		void VirtualMachine::InvokeStaticMethod(const std::string& methodName, const ClassType* type)
+		{
+			const auto method = GetMethodOrNull(type, methodName);
+			if (method == nullptr)
+			{
+				InvokeError(ERROR::METHOD_NOT_FOUND, "method name provided to InvokeStaticMethod() function not found", methodName);
+				return;
+			}
+			if (method->isAbstract() || !method->isStatic())
+			{
+				InvokeError(ERROR::INVALID_METHOD_CALL, "trying to access abstract or non-static method in InvokeStaticMethod() function", methodName);
+				return;
+			}
+			if (!method->isPublic())
+			{
+				InvokeError(ERROR::PRIVATE_MEMBER_ACCESS, "trying to access private method in InvokeStaticMethod() function", methodName);
+				return;
+			}
+			CallPath newFrame;
+			newFrame.SetMethod(&methodName);
+			newFrame.SetClass(&type->name);
+			newFrame.SetNamespace(&type->namespaceName);
 			callStack.push_back(std::move(newFrame));
 			StartNewStackFrame();
 		}
@@ -2604,6 +2630,9 @@ namespace MSL
 
 		void VirtualMachine::Run()
 		{
+			#ifdef MSL_DLL_API
+			dllLoader.UseFunctionCache(config.execution.cacheDll);
+			#endif
 			GC.SetLogStream(config.GC.log);
 			AddSystemNamespace();
 			InitializeStaticMembers();
@@ -2793,6 +2822,17 @@ namespace MSL
 				errorList.push_back(STRING(ERROR::FATAL_ERROR));
 
 			return errorList;
+		}
+
+		void VirtualMachine::AddExternalFunction(const std::string& module, const std::string& function, void(*pointer)(VirtualMachine*))
+		{
+			if (!config.execution.cacheDll)
+			{
+				if(config.streams.error != nullptr)
+					*config.streams.error << "[VM WARNING]: external functions disabled if config.execution.cacheDll is set to `false`" << std::endl;
+				return;
+			}
+			dllLoader.AddDllFunction(module, function, (DllLoader::DllFunction)pointer);
 		}
 
 		AssemblyType& VirtualMachine::GetAssembly()

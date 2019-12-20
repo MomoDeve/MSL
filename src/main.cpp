@@ -157,6 +157,15 @@ void compileFromArgs(int argc, char* argv[])
 		}
 		cout << "launching MSL VM...\n\n";
 
+		// small example of VM C++ function call
+		VM.AddExternalFunction("ExternalFunctions", "HelloWorld", [](MSL::VM::VirtualMachine* vm) 
+		{
+			auto Console = vm->GetClassOrNull("System", "Console");
+			vm->GetObjectStack().push_back(Console->wrapper);
+			vm->GetObjectStack().push_back(vm->AllocString("hello world!"));
+			vm->InvokeStaticMethod("PrintLine_1", Console);
+		});
+		///////////////////////////////////////////
 		VM.Run();
 
 		/*auto errors = VM.GetErrorStrings(VM.GetErrors());

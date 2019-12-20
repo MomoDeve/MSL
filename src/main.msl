@@ -233,26 +233,12 @@ namespace MathUtils
 	}
 }
 
-namespace Program
-{
+namespace Program {
     using namespace System;
 
-    class ProgramClass
-    {
-        public static function Main()
-        {
-            var array = Array(10);
-            array[0] = 2;
-            array[1] = 8;
-            array[2] = 3;
-            array[3] = 11;
-            array[4] = -2;
-            array[5] = -4;
-            array[6] = 2.0;
-            array[7] = 0;
-            array[8] = 0;
-            array[9] = 6;
-            Console.PrintLine(array.Sort());
+    class ProgramClass {
+        public static function Main() {
+            Dll.Call("ExternalFunctions", "HelloWorld");
         }
     }
 }

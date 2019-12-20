@@ -29,20 +29,46 @@ namespace MSL
 
 		DllLoader::DllFunction DllLoader::GetFunctionPointer(const std::string& module, const std::string& function) const
 		{
-			if (!HasLibrary(module)) 
-				return nullptr;
-
-			return reinterpret_cast<DllFunction>(::GetProcAddress(modules.at(module), function.c_str()));
+			if (useFunctionCache)
+			{
+				if (!functionCache.Has(module) || !functionCache[module].Has(function))
+				{
+					if (!HasLibrary(module)) return nullptr;
+					auto pointer = DllFunction(::GetProcAddress(modules.at(module), function.c_str()));
+					if (pointer == nullptr) return nullptr;
+					functionCache[module][function] = pointer;
+				}
+				return functionCache[module][function];
+			}
+			else
+			{
+				if (!HasLibrary(module))
+					return nullptr;
+				return DllFunction(::GetProcAddress(modules.at(module), function.c_str()));
+			}
 		}
 
 		bool DllLoader::HasLibrary(const std::string& filename) const
-		{
-			return modules.find(filename) != modules.end();
+		{			
+			return modules.find(filename) != modules.end() || (useFunctionCache && functionCache.Has(filename));
 		}
 
 		DWORD DllLoader::GetLastError() const
 		{
 			return ::GetLastError();
+		}
+
+		void DllLoader::UseFunctionCache(bool value)
+		{
+			useFunctionCache = value;
+		}
+
+		void DllLoader::AddDllFunction(const std::string& module, const std::string& function, DllFunction pointer)
+		{
+			if (useFunctionCache)
+			{
+				functionCache[module][function] = pointer;
+			}
 		}
 	}
 }

@@ -43,11 +43,6 @@ namespace MSL
 			size_t ReadHash(const std::vector<uint8_t>& bytes, size_t& offset);
 			template<typename T> T GenericRead(const std::vector<uint8_t>& bytes, size_t& offset);
 
-			const MethodType* GetMethodOrNull(const std::string& _namespace, const std::string& _class, const std::string& _method) const;
-			const MethodType* GetMethodOrNull(const ClassType* _class, const std::string& _method) const;
-			const ClassType* GetClassOrNull(const std::string& _namespace, const std::string& _class) const;
-			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
-			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
 			BaseObject* ResolveReference(BaseObject* object, const Frame::LocalsTable& locals, const MethodType* _method, const BaseObject* _class, const NamespaceType* _namespace, bool checkError);
 			ClassWrapper* SearchForClass(const std::string& objectName, const NamespaceType* _namespace);
 			BaseObject* GetUnderlyingObject(BaseObject* object) const;
@@ -59,7 +54,6 @@ namespace MSL
 			bool AssertType(const BaseObject* object, Type type, const std::string& message, const Frame* frame = nullptr);
 			bool LoadDll(const std::string& libName);
 			inline bool AssertType(const BaseObject* object, Type type);
-			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
 			void InitializeAttribute(ClassObject* object, const std::string& attribute, BaseObject* value);
 			void PrintObjectStack() const;
 			std::string OpcodeToMethod(OPCODE op) const;
@@ -75,23 +69,6 @@ namespace MSL
 			void PerformALUcallClassTypes(ClassWrapper* class1, const ClassType* class2, OPCODE op, Frame* frame);
 			void PerformALUCallClassObject(ClassObject* obj, OPCODE op, Frame* frame);
 			void PerformALUcallBooleans(bool b1, bool b2, OPCODE op, Frame* frame);
-
-			Frame* AllocFrame();
-			UnknownObject* AllocUnknown(const std::string* value);
-			NullObject* AllocNull();
-			TrueObject* AllocTrue();
-			FalseObject* AllocFalse();
-			ArrayObject* AllocArray(size_t size = 0);
-			StringObject* AllocString(const std::string& value);
-			IntegerObject* AllocInteger(const std::string& value);
-			IntegerObject* AllocInteger(int64_t value);
-			IntegerObject* AllocInteger(const IntegerObject::InnerType& value);
-			FloatObject* AllocFloat(const std::string& value);
-			FloatObject* AllocFloat(FloatObject::InnerType value);
-			ClassWrapper* AllocClassWrapper(const ClassType* _class);
-			ClassObject* AllocClassObject(const ClassType* _class);
-			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
-			LocalObject* AllocLocal(const std::string& localName, Local& local);
 		public:
 			struct ERROR
 			{
@@ -124,6 +101,7 @@ namespace MSL
 			bool AddBytecodeFile(std::istream* binaryFile);
 			void Run();
 			std::vector<std::string> GetErrorStrings(uint32_t errors) const;
+			void AddExternalFunction(const std::string& module, const std::string& function, void(*pointer)(VirtualMachine*));
 
 			#ifdef MSL_DLL_API
 			public:
@@ -131,6 +109,24 @@ namespace MSL
 			private:
 			#endif
 			// methods for DLL API use
+			// GC Memory Allocators
+			Frame* AllocFrame();
+			UnknownObject* AllocUnknown(const std::string* value);
+			NullObject* AllocNull();
+			TrueObject* AllocTrue();
+			FalseObject* AllocFalse();
+			ArrayObject* AllocArray(size_t size = 0);
+			StringObject* AllocString(const std::string& value);
+			IntegerObject* AllocInteger(const std::string& value);
+			IntegerObject* AllocInteger(int64_t value);
+			IntegerObject* AllocInteger(const IntegerObject::InnerType& value);
+			FloatObject* AllocFloat(const std::string& value);
+			FloatObject* AllocFloat(FloatObject::InnerType value);
+			ClassWrapper* AllocClassWrapper(const ClassType* _class);
+			ClassObject* AllocClassObject(const ClassType* _class);
+			NamespaceWrapper* AllocNamespaceWrapper(const NamespaceType* _namespace);
+			LocalObject* AllocLocal(const std::string& localName, Local& local);
+			// Inner Variables
 			AssemblyType& GetAssembly();
 			CallStack& GetCallStack();
 			ObjectStack& GetObjectStack();
@@ -138,11 +134,20 @@ namespace MSL
 			uint32_t& GetErrors();
 			Configuration& GetConfig();
 			ExceptionTrace& GetException();
+			// Assembly Members
+			const MethodType* GetMethodOrNull(const std::string& _namespace, const std::string& _class, const std::string& _method) const;
+			const MethodType* GetMethodOrNull(const ClassType* _class, const std::string& _method) const;
+			const ClassType* GetClassOrNull(const std::string& _namespace, const std::string& _class) const;
+			const ClassType* GetClassOrNull(const NamespaceType* _namespace, const std::string& _class) const;
+			const NamespaceType* GetNamespaceOrNull(const std::string& _namespace) const;
+			// Method Invoke
 			void InvokeError(size_t error, const std::string& message, const std::string& arg);
 			ClassWrapper* GetClassPrimitive(BaseObject* object);
 			BaseObject* GetMemberObject(BaseObject* object, const std::string& memberName);
 			void PerformALUCall(OPCODE op, size_t parameters, Frame* frame);
 			void StartNewStackFrame();
+			void InvokeObjectMethod(const std::string& methodName, const ClassObject* object);
+			void InvokeStaticMethod(const std::string& methodName, const ClassType* type);
 		};
 
 		template<typename T>

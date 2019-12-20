@@ -16,11 +16,11 @@ namespace MSL
 			{
 				return nullptr; // static constructor must be called before
 			}
-			ClassObject* object = GC.classObjAlloc->Alloc(_class);
+			ClassObject* object = GC.classObjAlloc.Alloc(_class);
 			object->attributes.reserve(_class->objectAttributes.size());
 			for (const auto& attr : _class->objectAttributes)
 			{
-				AttributeObject* objectAttr = GC.attributeAlloc->Alloc(&attr.second);
+				AttributeObject* objectAttr = GC.attributeAlloc.Alloc(&attr.second);
 				objectAttr->object = AllocNull(GC);
 				object->attributes[attr.second.name] = objectAttr;
 			}
@@ -34,12 +34,12 @@ namespace MSL
 
 		LocalObject* AllocLocal(GarbageCollector& GC, const std::string& localName, Local& local)
 		{
-			return GC.localObjAlloc->Alloc(local, localName);
+			return GC.localObjAlloc.Alloc(local, localName);
 		}
 
 		UnknownObject* AllocUnknown(GarbageCollector& GC, const std::string* value)
 		{
-			return GC.unknownObjAlloc->Alloc(value);
+			return GC.unknownObjAlloc.Alloc(value);
 		}
 
 		NullObject* AllocNull(GarbageCollector& GC)
@@ -59,7 +59,7 @@ namespace MSL
 
 		ArrayObject* AllocArray(GarbageCollector& GC, size_t size)
 		{
-			ArrayObject* array = GC.arrayAlloc->Alloc(size);
+			ArrayObject* array = GC.arrayAlloc.Alloc(size);
 			for (size_t i = 0; i < size; i++)
 			{
 				array->array[i].object = AllocNull(GC);
@@ -70,34 +70,34 @@ namespace MSL
 
 		StringObject* AllocString(GarbageCollector& GC, const std::string& value)
 		{
-			return GC.stringAlloc->Alloc(value);
+			return GC.stringAlloc.Alloc(value);
 		}
 
 		IntegerObject* AllocInteger(GarbageCollector& GC, const std::string& value)
 		{
-			return GC.integerAlloc->Alloc(value);
+			return GC.integerAlloc.Alloc(value);
 		}
 
 		IntegerObject* AllocInteger(GarbageCollector& GC, size_t value)
 		{
-			return GC.integerAlloc->Alloc((unsigned long long)value);
+			return GC.integerAlloc.Alloc((unsigned long long)value);
 		}
 
 		IntegerObject* AllocInteger(GarbageCollector& GC, const IntegerObject::InnerType& value)
 		{
-			return GC.integerAlloc->Alloc(value);
+			return GC.integerAlloc.Alloc(value);
 		}
 
 		FloatObject* AllocFloat(GarbageCollector& GC, const std::string& value)
 		{
 			try
 			{
-				return GC.floatAlloc->Alloc(std::stod(value));
+				return GC.floatAlloc.Alloc(std::stod(value));
 			}
 			catch (std::invalid_argument& e) // stod throws exception if value is not parsed
 			{
 				e;
-				return GC.floatAlloc->Alloc(0.0);
+				return GC.floatAlloc.Alloc(0.0);
 			}
 		}
 	}

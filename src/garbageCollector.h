@@ -13,7 +13,7 @@ namespace MSL
 		class GarbageCollector
 		{
 			template<typename T>
-			using Allocator = std::unique_ptr<momo::SlabAllocator<T>>;
+			using Allocator = momo::SlabAllocator<T>;
 
 			std::ostream* out;
 			uint64_t clearedObjects;
@@ -52,9 +52,8 @@ namespace MSL
 			Allocator<ArrayObject> arrayAlloc;
 			Allocator<Frame> frameAlloc;
 
-			GarbageCollector(std::ostream* log = nullptr, size_t allocSize = 1);
+			GarbageCollector(std::ostream* log = nullptr);
 			void SetLogStream(std::ostream* log);
-			void SetInitCapacity(uint64_t capacity);
 			void Collect(AssemblyType& assembly, std::vector<CallPath>& callStack, std::vector<BaseObject*> objectStack);
 			void ReleaseMemory();
 			void ReleaseFreeMemory();
@@ -79,7 +78,7 @@ namespace MSL
 					objPtr->state = GCstate::FREE;
 					this->clearedObjects++;
 					this->clearedMemory += objPtr->GetSize();
-					allocator->allocCount--;
+					allocator.allocCount--;
 					slab.Free(objPtr);
 					break;
 				case GCstate::MARKED:
@@ -97,16 +96,16 @@ namespace MSL
 		template<typename T>
 		inline void GarbageCollector::ClearSlabs(Allocator<T>& allocator)
 		{
-			allocator->managedMemory = 0;
-			for (auto& slab : allocator->GetBusySlabs())
+			allocator.managedMemory = 0;
+			for (auto& slab : allocator.GetBusySlabs())
 			{
 				ClearObjectsInSlab(allocator, slab);
 			}
-			for (auto& slab : allocator->GetPartialSlabs())
+			for (auto& slab : allocator.GetPartialSlabs())
 			{
 				ClearObjectsInSlab(allocator, slab);
 			}
-			allocator->ReallocateSlabs();
+			allocator.ReallocateSlabs();
 		}
 	}
 }

@@ -46,7 +46,7 @@ namespace MSL
 
 		std::string FloatObject::GetExtraInfo() const
 		{
-			return "Float";
+			return "Math";
 		}
 
 		size_t FloatObject::GetSize() const
@@ -309,7 +309,7 @@ namespace MSL
 			case MSL::VM::Type::INTEGER:
 				return "Integer";
 			case MSL::VM::Type::FLOAT:
-				return "Float";
+				return "Math";
 			case MSL::VM::Type::STRING:
 				return "String";
 			case MSL::VM::Type::NULLPTR:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "objects.h"
+#include "cacher.h"
 #include <vector>
 #include <string>
 
@@ -19,6 +20,10 @@ namespace MSL
 			using LocalsTable = std::unordered_map<std::string, Local>;
 			using LocalStorage = std::vector<std::unique_ptr<std::string>>;
 			using ExceptionStack = std::vector<ExceptionInfo>;
+			using IntegerCache = momo::Cacher<size_t, IntegerObject::InnerType>;
+			using FloatCache = momo::Cacher<size_t, FloatObject::InnerType>;
+			IntegerCache integerCache;
+			FloatCache floatCache;
 
 			LocalsTable locals;
 			LocalStorage localStorage;

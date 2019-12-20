@@ -103,7 +103,7 @@ namespace MSL
 					STACKOVERFLOW = 1 << 3,
 					OUT_OF_MEMORY = 1 << 4,
 					INVALID_BYTECODE = 1 << 5,
-					INVALID_OPERATOR = 1 << 6,
+					INVALID_OPERATION = 1 << 6,
 					INVALID_ARGUMENT = 1 << 7,
 					INVALID_TYPE = 1 << 8,
 					INVALID_METHOD_CALL = 1 << 9,

@@ -168,7 +168,7 @@ namespace MSL
 				cl = GetClassOrNull("System", "Integer");
 				break;
 			case Type::FLOAT:
-				cl = GetClassOrNull("System", "Float");
+				cl = GetClassOrNull("System", "Math");
 				break;
 			case Type::STRING:
 				cl = GetClassOrNull("System", "String");
@@ -846,15 +846,27 @@ namespace MSL
 				case (OPCODE::PUSH_INTEGER):
 				{
 					size_t hash = ReadHash(frame->_method->body, frame->offset);
-					if(ValidateHashValue(hash, frame->_method->dependencies.size()))
-						objectStack.push_back(AllocInteger(frame->_method->dependencies[hash]));
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
+					{
+						if (!frame->integerCache.Has(hash))
+							frame->integerCache.Add(hash, 
+								IntegerObject::InnerType(frame->_method->dependencies[hash])
+							);
+						objectStack.push_back(AllocInteger(frame->integerCache[hash]));
+					}
 					break;
 				}
 				case (OPCODE::PUSH_FLOAT):
 				{
 					size_t hash = ReadHash(frame->_method->body, frame->offset);
-					if(ValidateHashValue(hash, frame->_method->dependencies.size()))
-						objectStack.push_back(AllocFloat(frame->_method->dependencies[hash]));
+					if (ValidateHashValue(hash, frame->_method->dependencies.size()))
+					{
+						if (!frame->floatCache.Has(hash))
+							frame->floatCache.Add(hash,
+								FloatObject::InnerType(std::stod(frame->_method->dependencies[hash]))
+							);
+						objectStack.push_back(AllocFloat(frame->floatCache[hash]));
+					}
 					break;
 				}
 				case (OPCODE::PUSH_THIS):
@@ -1000,9 +1012,9 @@ namespace MSL
 					objectStack.push_back(object);
 				}
 			}
-			else if (_class->name == "Float")
+			else if (_class->name == "Math")
 			{
-				if (_method->name == "Float_0")
+				if (_method->name == "Math_0")
 				{
 					objectStack.pop_back();
 					objectStack.push_back(AllocFloat(0.0));
@@ -1014,7 +1026,7 @@ namespace MSL
 					obj = GetUnderlyingObject(obj);
 					objectStack.push_back(AllocString(obj->ToString()));
 				}
-				else if (_method->name == "Float_1")
+				else if (_method->name == "Math_1")
 				{
 					BaseObject* object = objectStack.back();
 					objectStack.pop_back();
@@ -1594,16 +1606,16 @@ namespace MSL
 			for (auto assemblyIt = assembly.namespaces.begin(); assemblyIt != assembly.namespaces.end(); assemblyIt++)
 			{
 				NamespaceType& ns = assemblyIt->second;
-				ns.wrapper = GC.nsWrapAlloc->Alloc(&ns);
+				ns.wrapper = GC.nsWrapAlloc.Alloc(&ns);
 				for (auto namespaceIt = ns.classes.begin(); namespaceIt != ns.classes.end(); namespaceIt++)
 				{
 					ClassType& c = namespaceIt->second;
-					c.wrapper = GC.classWrapAlloc->Alloc(&c);
-					c.staticInstance = GC.classObjAlloc->Alloc(&c);
+					c.wrapper = GC.classWrapAlloc.Alloc(&c);
+					c.staticInstance = GC.classObjAlloc.Alloc(&c);
 					c.staticInstance->attributes.reserve(c.staticAttributes.size());
 					for (const auto& attr : c.staticAttributes)
 					{
-						AttributeObject* staticAttr = GC.attributeAlloc->Alloc(&attr.second);
+						AttributeObject* staticAttr = GC.attributeAlloc.Alloc(&attr.second);
 						staticAttr->object = AllocNull();
 						c.staticInstance->attributes[attr.first] = staticAttr;
 					}
@@ -1863,7 +1875,6 @@ namespace MSL
 			else
 			{
 				InvokeError(ERROR::INVALID_BYTECODE | ERROR::FATAL_ERROR, "hash value of dependency object was invalid: " + std::to_string(hashValue), std::to_string(hashValue));
-
 				return false;
 			}
 		}
@@ -1909,7 +1920,7 @@ namespace MSL
 		void VirtualMachine::InitializeAttribute(ClassObject* object, const std::string& attribute, BaseObject* value)
 		{
 			const AttributeType* attrType = &object->type->objectAttributes.at(attribute);
-			AttributeObject* attrObject = GC.attributeAlloc->Alloc(attrType);
+			AttributeObject* attrObject = GC.attributeAlloc.Alloc(attrType);
 			attrObject->object = value;
 			object->attributes[attribute] = attrObject;
 		}
@@ -1974,8 +1985,8 @@ namespace MSL
 				return "InvalidArgument";
 			case ERROR::INVALID_BYTECODE:
 				return "InvalidBytecode";
-			case ERROR::INVALID_OPERATOR:
-				return "InvalidOperator";
+			case ERROR::INVALID_OPERATION:
+				return "InvalidOperation";
 			case ERROR::OBJECTSTACK_EMPTY:
 				return "ObjectStackEmpty";
 			case ERROR::MEMBER_NOT_FOUND:
@@ -2159,7 +2170,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two integers: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two integers: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				break;
 			}
 		}
@@ -2236,7 +2247,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two strings: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two strings: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				break;
 			}
 		}
@@ -2258,7 +2269,7 @@ namespace MSL
 				objectStack.push_back(result);
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with String and Integer: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with String and Integer: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				break;
 			}
 		}
@@ -2268,7 +2279,7 @@ namespace MSL
 			std::string methodName = OpcodeToMethod(op);
 			if(methodName.empty())
 			{
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two class objects: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two class objects: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				
 			}
 			switch (op)
@@ -2318,7 +2329,7 @@ namespace MSL
 					objectStack.push_back(AllocFalse());
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two Booleans: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two Booleans: " + OpcodeToMethod(op), OpcodeToMethod(op));
 				
 				break;
 			}
@@ -2418,7 +2429,7 @@ namespace MSL
 				}
 				break;
 			default:
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two Floats: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two Floats: " + OpcodeToMethod(op), OpcodeToMethod(op));
  				break;
 			}
 		}
@@ -2449,7 +2460,7 @@ namespace MSL
 				break;
 			default:
 				objectStack.push_back(class1);
-				InvokeError(ERROR::INVALID_OPERATOR, "invalid operation with two class types: " + OpcodeToMethod(op), OpcodeToMethod(op));
+				InvokeError(ERROR::INVALID_OPERATION, "invalid operation with two class types: " + OpcodeToMethod(op), OpcodeToMethod(op));
  				break;
 			}
 		}
@@ -2473,11 +2484,11 @@ namespace MSL
 				StartNewStackFrame();
 				objectStack.pop_back();
 			}
-			ClassObject* object = GC.classObjAlloc->Alloc(_class);
+			ClassObject* object = GC.classObjAlloc.Alloc(_class);
 			object->attributes.reserve(_class->objectAttributes.size());
 			for (const auto& attr : _class->objectAttributes)
 			{
-				AttributeObject* objectAttr = GC.attributeAlloc->Alloc(&attr.second);
+				AttributeObject* objectAttr = GC.attributeAlloc.Alloc(&attr.second);
 				objectAttr->object = AllocNull();
 				object->attributes[attr.second.name] = objectAttr;
 			}
@@ -2492,17 +2503,17 @@ namespace MSL
 
 		LocalObject* VirtualMachine::AllocLocal(const std::string& localName, Local& local)
 		{
-			return GC.localObjAlloc->Alloc(local, localName);
+			return GC.localObjAlloc.Alloc(local, localName);
 		}
 
 		Frame* VirtualMachine::AllocFrame()
 		{
-			return GC.frameAlloc->Alloc();
+			return GC.frameAlloc.Alloc();
 		}
 
 		UnknownObject* VirtualMachine::AllocUnknown(const std::string* value)
 		{
-			return GC.unknownObjAlloc->Alloc(value);
+			return GC.unknownObjAlloc.Alloc(value);
 		}
 
 		NullObject* VirtualMachine::AllocNull()
@@ -2529,10 +2540,10 @@ namespace MSL
 					"cannot allocate array with too big size = " + std::to_string(size) + " (" + MSL::utils::formatBytes((uint64_t)size * sizeof(NullObject)) + ')',
 					std::to_string(size)
 				);
-				return GC.arrayAlloc->Alloc(0);
+				return GC.arrayAlloc.Alloc(0);
 			}
 
-			ArrayObject* array = GC.arrayAlloc->Alloc(size);
+			ArrayObject* array = GC.arrayAlloc.Alloc(size);
 			for (size_t i = 0; i < size; i++)
 			{
 				array->array[i].object = AllocNull();
@@ -2543,32 +2554,32 @@ namespace MSL
 
 		StringObject* VirtualMachine::AllocString(const std::string& value)
 		{
-			return GC.stringAlloc->Alloc(value);
+			return GC.stringAlloc.Alloc(value);
 		}
 
 		IntegerObject* VirtualMachine::AllocInteger(const std::string& value)
 		{
-			return GC.integerAlloc->Alloc(value);
+			return GC.integerAlloc.Alloc(value);
 		}
 
 		IntegerObject* VirtualMachine::AllocInteger(int64_t value)
 		{
-			return GC.integerAlloc->Alloc(value);
+			return GC.integerAlloc.Alloc(value);
 		}
 
 		IntegerObject* VirtualMachine::AllocInteger(const IntegerObject::InnerType& value)
 		{
-			return GC.integerAlloc->Alloc(value);
+			return GC.integerAlloc.Alloc(value);
 		}
 
 		FloatObject* VirtualMachine::AllocFloat(const std::string& value)
 		{
-			return GC.floatAlloc->Alloc(std::stod(value));
+			return GC.floatAlloc.Alloc(std::stod(value));
 		}
 
 		FloatObject* VirtualMachine::AllocFloat(FloatObject::InnerType value)
 		{
-			return GC.floatAlloc->Alloc(value);
+			return GC.floatAlloc.Alloc(value);
 		}
 
 		VirtualMachine::VirtualMachine(Configuration config)
@@ -2594,7 +2605,6 @@ namespace MSL
 		void VirtualMachine::Run()
 		{
 			GC.SetLogStream(config.GC.log);
-			GC.SetInitCapacity(config.GC.initCapacity);
 			AddSystemNamespace();
 			InitializeStaticMembers();
 
@@ -2755,8 +2765,8 @@ namespace MSL
 				errorList.push_back(STRING(ERROR::OUT_OF_MEMORY));
 			if (errors & ERROR::INVALID_BYTECODE)
 				errorList.push_back(STRING(ERROR::INVALID_BYTECODE));
-			if (errors & ERROR::INVALID_OPERATOR)
-				errorList.push_back(STRING(ERROR::INVALID_OPERATOR));
+			if (errors & ERROR::INVALID_OPERATION)
+				errorList.push_back(STRING(ERROR::INVALID_OPERATION));
 			if (errors & ERROR::INVALID_ARGUMENT)
 				errorList.push_back(STRING(ERROR::INVALID_ARGUMENT));
 			if (errors & ERROR::INVALID_TYPE)

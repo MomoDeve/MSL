@@ -129,6 +129,7 @@
     <ClInclude Include="baseExpression.h" />
     <ClInclude Include="bigInteger.h" />
     <ClInclude Include="bytecodeReader.h" />
+    <ClInclude Include="Cacher.h" />
     <ClInclude Include="callPath.h" />
     <ClInclude Include="codeGenerator.h" />
     <ClInclude Include="configuration.h" />
@@ -182,6 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />
+    <None Include="system.msl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -100,6 +100,9 @@
     <Filter Include="MSL\VM\exceptionTrace">
       <UniqueIdentifier>{24d15a97-ecb1-4524-b206-ed1ced86e167}</UniqueIdentifier>
     </Filter>
+    <Filter Include="momo\cacher">
+      <UniqueIdentifier>{d5585f1c-e958-47c2-aac3-ae2be71f5067}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -192,6 +195,9 @@
     <ClInclude Include="ExceptionTrace.h">
       <Filter>MSL\VM\exceptionTrace</Filter>
     </ClInclude>
+    <ClInclude Include="Cacher.h">
+      <Filter>momo\cacher</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lexer.cpp">
@@ -273,5 +279,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />
+    <None Include="system.msl" />
   </ItemGroup>
 </Project>

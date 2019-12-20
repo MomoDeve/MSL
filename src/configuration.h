@@ -19,7 +19,6 @@ namespace MSL
 			} streams;
 			struct
 			{
-				uint64_t initCapacity = 1;
 				uint64_t minMemory = 4 * MB;
 				uint64_t maxMemory = 1 * GB;
 				std::ostream* log = nullptr;

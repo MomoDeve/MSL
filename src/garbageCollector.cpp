@@ -1,40 +1,14 @@
 #include "garbageCollector.h"
 #include "stringExtensions.h"
 
-MSL::VM::GarbageCollector::GarbageCollector(std::ostream* log, size_t allocSize)
+MSL::VM::GarbageCollector::GarbageCollector(std::ostream* log)
 {
-	out = log;
-	Init(this->attributeAlloc, allocSize);
-	Init(this->classObjAlloc, allocSize);
-	Init(this->classWrapAlloc, allocSize);
-	Init(this->floatAlloc, allocSize);
-	Init(this->integerAlloc, allocSize);
-	Init(this->localObjAlloc, allocSize);
-	Init(this->nsWrapAlloc, allocSize);
-	Init(this->stringAlloc, allocSize);
-	Init(this->unknownObjAlloc, allocSize);
-	Init(this->arrayAlloc, allocSize);
-	Init(this->frameAlloc, allocSize);
+	SetLogStream(log);
 }
 
 void MSL::VM::GarbageCollector::SetLogStream(std::ostream* log)
 {
 	out = log;
-}
-
-void MSL::VM::GarbageCollector::SetInitCapacity(uint64_t allocSize)
-{
-	Init(this->attributeAlloc, allocSize);
-	Init(this->classObjAlloc, allocSize);
-	Init(this->classWrapAlloc, allocSize);
-	Init(this->floatAlloc, allocSize);
-	Init(this->integerAlloc, allocSize);
-	Init(this->localObjAlloc, allocSize);
-	Init(this->nsWrapAlloc, allocSize);
-	Init(this->stringAlloc, allocSize);
-	Init(this->unknownObjAlloc, allocSize);
-	Init(this->arrayAlloc, allocSize);
-	Init(this->frameAlloc, allocSize);
 }
 
 void MSL::VM::GarbageCollector::Collect(AssemblyType& assembly, std::vector<CallPath>& callStack, std::vector<BaseObject*> objectStack)
@@ -111,17 +85,17 @@ void MSL::VM::GarbageCollector::ReleaseMemory()
 
 void MSL::VM::GarbageCollector::ReleaseFreeMemory()
 {
-	this->arrayAlloc->ReleaseFreeSlabs();
-	this->attributeAlloc->ReleaseFreeSlabs();
-	this->classObjAlloc->ReleaseFreeSlabs();
-	this->classWrapAlloc->ReleaseFreeSlabs();
-	this->floatAlloc->ReleaseFreeSlabs();
-	this->frameAlloc->ReleaseFreeSlabs();
-	this->integerAlloc->ReleaseFreeSlabs();
-	this->localObjAlloc->ReleaseFreeSlabs();
-	this->nsWrapAlloc->ReleaseFreeSlabs();
-	this->stringAlloc->ReleaseFreeSlabs();
-	this->unknownObjAlloc->ReleaseFreeSlabs();
+	this->arrayAlloc.ReleaseFreeSlabs();
+	this->attributeAlloc.ReleaseFreeSlabs();
+	this->classObjAlloc.ReleaseFreeSlabs();
+	this->classWrapAlloc.ReleaseFreeSlabs();
+	this->floatAlloc.ReleaseFreeSlabs();
+	this->frameAlloc.ReleaseFreeSlabs();
+	this->integerAlloc.ReleaseFreeSlabs();
+	this->localObjAlloc.ReleaseFreeSlabs();
+	this->nsWrapAlloc.ReleaseFreeSlabs();
+	this->stringAlloc.ReleaseFreeSlabs();
+	this->unknownObjAlloc.ReleaseFreeSlabs();
 }
 
 std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration() const
@@ -133,7 +107,7 @@ std::chrono::milliseconds MSL::VM::GarbageCollector::GetTimeSinceLastIteration()
 uint64_t MSL::VM::GarbageCollector::GetTotalMemoryAlloc() const
 {
 	uint64_t total = this->managedMemory;
-	#define COUNT(x) total += x->allocCount * x->GetObjectSize() + x->managedMemory;
+	#define COUNT(x) total += x.allocCount * x.GetObjectSize() + x.managedMemory;
 	COUNT(classObjAlloc);
 	COUNT(classWrapAlloc);
 	COUNT(nsWrapAlloc);

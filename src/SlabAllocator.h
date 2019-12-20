@@ -192,7 +192,7 @@ namespace momo
 		/*
 		construct allocator object with [freeAllocCount] slabs in free list
 		*/
-		SlabAllocator(size_t freeAllocCount);
+		SlabAllocator(size_t freeAllocCount = 1);
 		/*
 		allocates object in slab. Object is being constructed using args provided. Returns nullptr on failure
 		*/

@@ -106,7 +106,7 @@ namespace MSL
 				}
 
 				ModifierList modifiers;
-				if (!GetModifiers(modifiers, { Token::Type::CLASS, Token::Type::INTERFACE, Token::Type::USING }))
+				if (!GetModifiers(modifiers, { Token::Type::CLASS, Token::Type::USING }))
 				{
 					THROW("incorrect namespace member declaration"); // unknown modifier or no `class`
 				}

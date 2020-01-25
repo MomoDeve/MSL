@@ -276,9 +276,20 @@
     <ClCompile Include="ExceptionTrace.cpp">
       <Filter>MSL\VM\exceptionTrace</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\spiderTask\spiderTask\Source.cpp">
+      <Filter>MSL\VM\types</Filter>
+    </ClCompile>
+    <ClCompile Include="yylexer.cpp">
+      <Filter>MSL\compiler\lexer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="main.msl" />
     <None Include="system.msl" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="yylexer.l">
+      <Filter>MSL\compiler\lexer</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

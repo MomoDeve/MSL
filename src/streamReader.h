@@ -26,15 +26,6 @@ namespace MSL
 			aliases can be viewed using hash-table 'replacedStrings'
 			*/
 			void ReplaceStrings();
-			/*
-			removes extra spaces and tabs, replacing them by a single space-symbol
-			endline symbols are not removed becaused they are used by lexer in Lexer::GetLineCount() method
-			*/
-			void RemoveExtraSpaces();
-			/*
-			separate file contents into potential tokens: variable names, constants, key words, etc.
-			*/
-			void SeparateTokens();
 		public:
 			/*
 			string prefix for string alias. User should never use such variable name in MSL cource code

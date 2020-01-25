@@ -592,7 +592,7 @@ void ArrayConstructor(PARAMS)
 	if (!AssertType(vm, size, Type::INTEGER)) return;
 
 	auto& value = static_cast<IntegerObject*>(size)->value;
-	if (value < MinSize && value > MaxSize)
+	if (value < MinSize || value > MaxSize)
 	{
 		vm->InvokeError(
 			ERROR::INVALID_ARGUMENT,
@@ -617,7 +617,7 @@ void ArrayGetByIndex(PARAMS)
 	if (!AssertType(vm, index, Type::INTEGER)) return;
 
 	auto& value = static_cast<IntegerObject*>(index)->value;
-	if (value < MinSize && value > MaxSize)
+	if (value < MinSize || value > MaxSize)
 	{
 		vm->InvokeError(
 			ERROR::INVALID_ARGUMENT,
@@ -626,7 +626,7 @@ void ArrayGetByIndex(PARAMS)
 		);
 		return;
 	};
-	size_t idx = std::stoul(value.to_string());
+	size_t idx = (size_t)std::stoull(value.to_string());
 	stack.push_back(vm->AllocLocal("__array", array[idx]));
 }
 

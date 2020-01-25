@@ -1,4 +1,4 @@
-namespace Utils
+/*namespace Utils
 {	
 	public class String
 	{
@@ -232,13 +232,16 @@ namespace MathUtils
         }
 	}
 }
-
-namespace Program {
+*/
+namespace Program
+{
     using namespace System;
 
-    class ProgramClass {
-        public static function Main() {
-            Dll.Call("ExternalFunctions", "HelloWorld");
+    class ProgramClass
+    {
+        public static function Main()
+        { 
+            Console.PrintLine("yay!");
         }
     }
 }

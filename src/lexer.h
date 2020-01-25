@@ -18,10 +18,6 @@ namespace MSL
 			*/
 			std::vector<Token> tokens;
 			/*
-			string with tokens to analyze
-			*/
-			std::string stream;
-			/*
 			error token which is returned then Peek() is called out of array range
 			*/
 			Token EOFtoken;
@@ -37,7 +33,7 @@ namespace MSL
 			/*
 			creates lexer object using source code from StreamReader object
 			*/
-			Lexer(const std::string& stream);
+			Lexer(std::string stream);
 
 			/*
 			returns current token or EOFToken if out of range

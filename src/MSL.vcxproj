@@ -180,8 +180,24 @@
     <ClCompile Include="stringExtensions.cpp" />
     <ClCompile Include="token.cpp" />
     <ClCompile Include="virtualMachine.cpp" />
+    <ClCompile Include="yylexer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="yylexer.l">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">flex -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">flex -o %(Filename).cpp %(Identity)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">flex -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">flex -o %(Filename).cpp %(Identity)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">flex -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">flex -o %(Filename).cpp %(Identity)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">flex -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">flex -o %(Filename).cpp %(Identity)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).cpp</Outputs>
+    </CustomBuild>
     <None Include="main.msl" />
     <None Include="system.msl" />
   </ItemGroup>

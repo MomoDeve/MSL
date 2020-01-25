@@ -2,51 +2,45 @@
 #include <sstream>
 using namespace MSL::utils;
 
+struct yy_buffer_state
+{
+    FILE* yy_input_file;
+    char* yy_ch_buf;
+    char* yy_buf_pos;
+    int yy_buf_size;
+    int yy_n_chars;
+    int yy_is_our_buffer;
+    int yy_is_interactive;
+    int yy_at_bol;
+    int yy_bs_lineno;
+    int yy_bs_column;
+    int yy_fill_buffer;
+    int yy_buffer_status;
+};
+typedef struct yy_buffer_state* YY_BUFFER_STATE;
+YY_BUFFER_STATE yy_scan_bytes(const char* buffer, int size);
+MSL::compiler::Token yy_lex();
+void yy_delete_buffer(YY_BUFFER_STATE);
+MSL::compiler::Token::Type yy_get_last();
+void yy_set_last(MSL::compiler::Token::Type type);
+
 namespace MSL
 {
 	namespace compiler
 	{
-		Lexer::Lexer(const std::string& stream)
-			: stream(stream), iteratorPos(0), lineCount(0), EOFtoken(Token::Type::ERROR, "EOF")
+		Lexer::Lexer(std::string stream)
+			: iteratorPos(0), lineCount(0), EOFtoken(Token::Type::ERROR, "EOF")
 		{
-			for (int i = 0; i < (int)stream.size(); i++)
-			{
-				std::string str = readIf(stream, i, [](char c) { return (c != TOKEN_SEPARATOR); });
-				i++;
-				tokens.emplace_back(Token::GetType(str), str);
-				// calling method from number literal recongnised as pure-formatted float value. check if
-				// user meant calling method and if so, add it as separated token from `DOT` token
-				if (tokens.back().type == Token::Type::ERROR && tokens.back().value.back() == '.')
-				{
-					std::string sliced = tokens.back().value.substr(0, tokens.back().value.size() - 1);
-					if (isInteger(sliced) || isFloat(sliced))
-					{
-						tokens.back() = { Token::GetType(sliced), sliced };
-						tokens.emplace_back(Token::Type::DOT, ".");
-					}
-				}
-			}
-
-			while (!End())
-			{
-				Token& current = Peek();
-				if (current.type == Token::Type::SUB_OP || current.type == Token::Type::SUM_OP)
-				{
-					Prev();
-					Token& prev = Peek();
-					Next();
-					if (prev.type == Token::Type::ROUND_BRACKET_O || prev.type == Token::Type::SQUARE_BRACKET_O ||
-						prev.type == Token::Type::BRACE_BRACKET_O || prev.type == EOFtoken.type ||
-						(prev.type & Token::Type::BINARY_OPERAND) || (prev.type & Token::Type::UNARY_OPERAND) ||
-						prev.type == Token::Type::SEMICOLON || prev.type == Token::Type::COMMA)
-					{
-						if (current.type == Token::Type::SUB_OP) current.type = Token::Type::NEGATIVE_OP;
-						else current.type = Token::Type::POSITIVE_OP;
-					}
-				}
-				Next();
-			}
-			ToBegin();
+            stream += "__EOF__"; // yy_lex will return Token::Type::ENDOFFILE when meet __EOF__
+            auto buffer = yy_scan_bytes(stream.c_str(), stream.size());
+            Token token = yy_lex();
+            while (token.type != Token::Type::ENDOFFILE)
+            {
+                yy_set_last(token.type);
+                tokens.push_back(std::move(token));
+                token = yy_lex();
+            }
+            yy_delete_buffer(buffer);
 		}
 
 		Token& Lexer::Peek()

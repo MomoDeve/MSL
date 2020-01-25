@@ -26,59 +26,6 @@ namespace MSL
 				buffer << (char)c;
 
 			ReplaceStrings();
-			RemoveExtraSpaces();
-			SeparateTokens();
-		}
-
-		void StreamReader::RemoveExtraSpaces()
-		{
-			std::stringstream tempBuffer;
-			const std::string spaces = "\t\r ";
-			bool space = false;
-			std::string str = buffer.str();
-			trim(str, spaces);
-			for (char c : str)
-			{
-				if (!contains(spaces, c))
-				{
-					tempBuffer << c;
-					space = false;
-				}
-				else if (!space)
-				{
-					space = true;
-					tempBuffer << ' ';
-				}
-			}
-			buffer.swap(tempBuffer);
-		}
-
-		void StreamReader::SeparateTokens()
-		{
-			std::stringstream tempBuffer;
-			std::string str = buffer.str();
-			for (int i = 0; i < (int)str.size(); i++)
-			{
-				if (isdigit(str[i]))
-				{
-					tempBuffer << readNum(str, i);
-				}
-				else if (validVariableCharacter(str[i]))
-				{
-					tempBuffer << readWord(str, i);
-				}
-				else if (contains(DOUBLE_OPERATORS, str[i]))
-				{
-					tempBuffer << readOp(str, i);
-				}
-				else if (str[i] != ' ')
-				{
-					tempBuffer << str[i];
-				}
-				else continue;
-				tempBuffer << tokenSeparator;
-			}
-			buffer.swap(tempBuffer);
 		}
 
 		void StreamReader::ReplaceStrings()
@@ -111,6 +58,10 @@ namespace MSL
 						blockComment = false;
 						c = '\0';
 					}
+                    else if (c == '\n')
+                    {
+                        tempBuffer << '\n';
+                    }
 				}
 				else if (prev == '/' && c == '*')
 				{

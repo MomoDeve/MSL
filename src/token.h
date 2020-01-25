@@ -38,6 +38,7 @@ namespace MSL
 				HIGHEST_PRIORITY = 0x01F00000,
 
 				ERROR = 0x00000000,
+				ENDOFFILE,
 				ENDLINE,
 				APOS,
 				COMMA,
@@ -108,7 +109,6 @@ namespace MSL
 				STATIC,
 
 				CLASS = UNIT_DECLARATION + 1,
-				INTERFACE,
 			};
 			/*
 			type of token as 32-bit integer
@@ -124,10 +124,11 @@ namespace MSL
 			*/
 			Token(Type type, const std::string& value);
 
-			/*
-			returns type of token or ERROR if no type matched
-			*/
-			static Type GetType(const std::string& value);
+            /*
+            creates token using its type only (value will be empty)
+            */
+            Token(Type type);
+
 			/*
 			returns string representation of token type in format "TYPE::TOKEN_TYPE"
 			*/

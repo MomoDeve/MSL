@@ -8,73 +8,7 @@ namespace MSL
 	{
 		Token::Token(Token::Type type, const std::string& value) : type(type), value(value) { }
 
-		Token::Type Token::GetType(const std::string& value)
-		{
-			if (value == "\n") return Type::ENDLINE;
-			if (value == ".") return Type::DOT;
-			if (value == "'") return Type::APOS;
-			if (value == ",") return Type::COMMA;
-			if (value == ";") return Type::SEMICOLON;
-			if (value == "(") return Type::ROUND_BRACKET_O;
-			if (value == ")") return Type::ROUND_BRACKET_C;
-			if (value == "[") return Type::SQUARE_BRACKET_O;
-			if (value == "]") return Type::SQUARE_BRACKET_C;
-			if (value == "{") return Type::BRACE_BRACKET_O;
-			if (value == "}") return Type::BRACE_BRACKET_C;
-			if (value == "=") return Type::ASSIGN_OP;
-			if (value == "!") return Type::NEGATION_OP;
-			if (value == "+") return Type::SUM_OP;
-			if (value == "-") return Type::SUB_OP;
-			if (value == "*") return Type::MULT_OP;
-			if (value == "/") return Type::DIV_OP;
-			if (value == "%") return Type::MOD_OP;
-			if (value == "&&") return Type::LOGIC_AND;
-			if (value == "||") return Type::LOGIC_OR;
-			if (value == "==") return Type::LOGIC_EQUALS;
-			if (value == "!=") return Type::LOGIC_NOT_EQUALS;
-			if (value == "<") return Type::LOGIC_LESS;
-			if (value == ">") return Type::LOGIC_GREATER;
-			if (value == "<=") return Type::LOGIC_LESS_EQUALS;
-			if (value == ">=") return Type::LOGIC_GREATER_EQUALS;
-			if (value == "**") return Type::POWER_OP;
-			if (value == "+=") return Type::SUM_ASSIGN_OP;
-			if (value == "-=") return Type::SUB_ASSIGN_OP;
-			if (value == "*=") return Type::MULT_ASSIGN_OP;
-			if (value == "/=") return Type::DIV_ASSIGN_OP;
-			if (value == "%=") return Type::MOD_ASSIGN_OP;
-			if (value == "class") return Type::CLASS;
-			if (value == "for") return Type::FOR;
-			if (value == "if") return Type::IF;
-			if (value == "else") return Type::ELSE;
-			if (value == "elif") return Type::ELIF;
-			if (value == "while") return Type::WHILE;
-			if (value == "static") return Type::STATIC;
-			if (value == "var") return Type::VARIABLE;
-			if (value == "function") return Type::FUNCTION;
-			if (value == "const") return Type::CONST;
-			if (value == "public") return Type::PUBLIC;
-			if (value == "private") return Type::PRIVATE;
-			if (value == "internal") return Type::INTERNAL;
-			if (value == "abstract") return Type::ABSTRACT;
-			if (value == "namespace") return Type::NAMESPACE;
-			if (value == "interface") return Type::INTERFACE;
-			if (value == "return") return Type::RETURN;
-			if (value == "lambda") return Type::LAMBDA;
-			if (value == "this") return Type::THIS;
-			if (value == "in") return Type::IN;
-			if (value == "foreach") return Type::FOREACH;
-			if (value == "true") return Type::TRUE_CONSTANT;
-			if (value == "false") return Type::FALSE_CONSTANT;
-			if (value == "null") return Type::NULLPTR;
-			if (value == "using") return Type::USING;
-			if (value == "try") return Type::TRY;
-			if (value == "catch") return Type::CATCH;
-			if (isInteger(value)) return Type::INTEGER_CONSTANT;
-			if (isFloat(value)) return Type::FLOAT_CONSTANT;
-			if (isString(value)) return Type::STRING_CONSTANT;
-			if (isObject(value)) return Type::OBJECT;
-			return Type::ERROR;
-		}
+        Token::Token(Token::Type type) : type(type) { }
 
 		std::string Token::ToString() const
 		{
@@ -279,9 +213,6 @@ namespace MSL
 				break;
 			case MSL::compiler::Token::CLASS:
 				return STRING(Token::CLASS);
-				break;
-			case MSL::compiler::Token::INTERFACE:
-				return STRING(Token::INTERFACE);
 				break;
 			default:
 				return STRING(Token::ERROR);

@@ -1,221 +1,282 @@
 #pragma once
 
-#include "codeGenerator.h"
 #include "token.h"
-#include "function.h"
 
 namespace MSL
 {
 	namespace compiler
-	{
-		template<typename T>
-		using unique_ptr = std::unique_ptr<T>;
+	{     
+        class Method;
 
-		/*
-		generates bytecode for each of expressionList expressions
-		*/
-		void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function);
+        struct BaseAstNode
+        {
+            virtual void DebugPrint(int offset, const char* delim) const = 0;
+            virtual void Destroy() = 0;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) = 0;
+            virtual ~BaseAstNode() = default;
+        };
 
-		/*
-		binary expression (such as +, -, *, etc)
-		*/
-		struct BinaryExpression : public BaseExpression
-		{
-			Token::Type expressionType;
-			unique_ptr<BaseExpression> left;
-			unique_ptr<BaseExpression> right;
-			void Print(std::ostream& out, int depth = 0) const override;
+        struct ObjectNode : BaseAstNode
+        {
+            std::string value;
+            Token::Type type;
+            inline ObjectNode(const std::string& value, Token::Type type) : 
+                value(value), type(type) { }
 
-			BinaryExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+        struct MemberCallNode : BaseAstNode
+        {
+            BaseAstNode* parent;
+            std::string object;
 
-		/*f
-		unary expression (such as -, +)
-		*/
-		struct UnaryExpression : public BaseExpression
-		{
-			Token::Type expressionType;
-			unique_ptr<BaseExpression> expression;
-			void Print(std::ostream& out, int depth = 0) const override;
+            inline MemberCallNode(BaseAstNode* parent, const std::string& object) :
+                parent(parent), object(object) { }
 
-			UnaryExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+        struct IndexCallNode : BaseAstNode
+        {
+            BaseAstNode* parent;
+            BaseAstNode* index;
+            inline IndexCallNode(BaseAstNode* parent, BaseAstNode* index) :
+                parent(parent), index(index) { }
 
-		/*
-		for expression (with iterator and predicate)
-		*/
-		struct ForExpression : public BaseExpression
-		{
-			ExpressionList body;
-			unique_ptr<BaseExpression> init;
-			unique_ptr<BaseExpression> predicate;
-			unique_ptr<BaseExpression> iteration;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			void Print(std::ostream& out, int depth = 0) const override;
-			bool hasIterationStatement() const;
-			bool hasInitStatement() const;
+        struct AstNodeList : BaseAstNode
+        {
+            std::vector<BaseAstNode*> vec;
 
-			ForExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+        struct StringList : BaseAstNode
+        {
+            std::vector<std::string> vec;
 
-		/*
-		while expression (with predicate)
-		*/
-		struct WhileExpression : public BaseExpression
-		{
-			ExpressionList body;
-			unique_ptr<BaseExpression> predicate;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			void Print(std::ostream& out, int depth = 0) const override;
+        struct MethodCallNode : BaseAstNode
+        {
+            std::string name;
+            BaseAstNode* parent;
+            AstNodeList* args;
+            inline MethodCallNode(const std::string& name, BaseAstNode* parent, AstNodeList* args) :
+                name(name), parent(parent), args(args) { }
 
-			WhileExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator & code, const Function& function) const override;
-		};
+        struct BinaryExprNode : BaseAstNode
+        {
+            BaseAstNode* left;
+            BaseAstNode* right;
+            Token::Type op;
+            inline BinaryExprNode(BaseAstNode* left, BaseAstNode* right, Token::Type op) :
+                left(left), right(right), op(op) { }
 
-		/*
-		if expression (with elif and else statements)
-		*/
-		struct IfExpression : public BaseExpression
-		{
-			ExpressionList ifStatements;
-			std::vector<ExpressionList> bodies;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			bool hasElseBlock() const;
-			void Print(std::ostream& out, int depth = 0) const override;
-			ExpressionList& getElseBlock();
+        struct UnaryExprNode : BaseAstNode
+        {
+            BaseAstNode* expr;
+            Token::Type op;
+            inline UnaryExprNode(BaseAstNode* expr, Token::Type op) :
+                expr(expr), op(op) { }
 
-			IfExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
+        struct ReturnExprNode : BaseAstNode
+        {
+            BaseAstNode* value;
+            inline ReturnExprNode(BaseAstNode* value) : value(value) { }
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-		/*
-		call expression (used for function, 'hasParent' indicates existance of caller)
-		*/
-		struct CallExpression : public BaseExpression
-		{
-			bool hasParent = false;
-			std::string functionName;
-			ExpressionList parameters;
-			void Print(std::ostream& out, int depth = 0) const override;
+        struct VariableDeclNode : BaseAstNode
+        {
+            std::string name;
+            bool isConst;
+            BaseAstNode* value;
+            inline VariableDeclNode(const std::string& name, bool isConst, BaseAstNode* value) :
+                name(name), isConst(isConst), value(value) { }
 
-			CallExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+        struct TryCatchNode : BaseAstNode
+        {
+            std::string excName;
+            BaseAstNode* tryExpr;
+            BaseAstNode* catchExpr;
+            inline TryCatchNode(const std::string& excName, BaseAstNode* tryExpr, BaseAstNode* catchExpr) :
+                excName(excName), tryExpr(tryExpr), catchExpr(catchExpr) { }
 
-		/*
-		try catch expression (used for error handling, supports exception variable (optional)
-		*/
-		struct TryExpression : public BaseExpression
-		{
-			std::string variable;
-			ExpressionList tryBody;
-			ExpressionList catchBody;
-			void Print(std::ostream& out, int depth = 0) const override;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			TryExpression();
+        struct ConditionalNode : BaseAstNode
+        {
+            BaseAstNode* predicate;
+            BaseAstNode* body;
+            inline ConditionalNode(BaseAstNode* predicate, BaseAstNode* body) :
+                predicate(predicate), body(body) { }
 
-			virtual void GenerateBytecode(MSL::compiler::CodeGenerator& code, const MSL::compiler::Function& function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-		/*
-		index expression (operator [] with only one parameter)
-		*/
-		struct IndexExpression : public BaseExpression
-		{
-			unique_ptr<BaseExpression> caller;
-			unique_ptr<BaseExpression> parameter;
-			void Print(std::ostream& out, int depth = 0) const override;
+        struct IfStatementNode : BaseAstNode
+        {
+            ConditionalNode* ifBlock;
+            AstNodeList* elifBlocks;
+            ConditionalNode* elseBlock;
+            inline IfStatementNode(ConditionalNode* ifBlock, AstNodeList* elifBlocks, ConditionalNode* elseBlock) :
+                ifBlock(ifBlock), elifBlocks(elifBlocks), elseBlock(elseBlock) { }
 
-			IndexExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
-		};
+        struct ForExprNode : BaseAstNode
+        {
+            BaseAstNode* init;
+            BaseAstNode* pred;
+            BaseAstNode* iter;
+            BaseAstNode* body;
+            inline ForExprNode(BaseAstNode* init, BaseAstNode* pred, BaseAstNode* iter, BaseAstNode* body) :
+                init(init), pred(pred), iter(iter), body(body) { }
 
-		/*
-		object expression (just its name and type in case of constant)
-		*/
-		struct ObjectExpression : public BaseExpression
-		{
-			Token object = Token(Token::Type::ERROR, "unnamed");
-			void Print(std::ostream& out, int depth = 0) const override;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			ObjectExpression();
+        struct ForeachExprNode : BaseAstNode
+        {
+            std::string iterator;
+            BaseAstNode* container;
+            BaseAstNode* body;
+            inline ForeachExprNode(const std::string& iterator, BaseAstNode* container, BaseAstNode* body) :
+                iterator(iterator), container(container), body(body) { }
 
-			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-		/*
-		object declare (object name and assignment pointer)
-		*/
-		struct ObjectDeclareExpression : public BaseExpression
-		{
-			std::string objectName;
-			unique_ptr<BaseExpression> assignment;
-			bool isConst = false;
+        struct MethodDeclNode : BaseAstNode
+        {
+            std::string name;
+            StringList* args;
+            AstNodeList* body;
+            StringList* modifiers;
+            inline MethodDeclNode(const std::string& name, StringList* args, AstNodeList* body) :
+                name(name), args(args), body(body) { }
 
-			ObjectDeclareExpression();
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			bool hasAssignment() const;
-			void Print(std::ostream& out, int depth = 0) const override;
+        struct AttributeDeclNode : BaseAstNode
+        {
+            std::string name;
+            StringList* modifiers;
+            inline AttributeDeclNode(const std::string& name) :
+                name(name) { }
 
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-		/*
-		Currently unused in compiler code
-		*/
-		struct LambdaExpression : public BaseExpression
-		{
-			std::vector<std::string> params;
-			ExpressionList body;
+        struct ClassDeclNode : BaseAstNode
+        {
+            std::string name;
+            StringList* modifiers;
+            AstNodeList* members;
+            inline ClassDeclNode(const std::string& name) :
+                name(name) { }
 
-			void Print(std::ostream& out, int depth = 0) const override;
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-			LambdaExpression();
+        struct UsingNamespaceNode : BaseAstNode
+        {
+            std::string namespaceName;
+            inline UsingNamespaceNode(const std::string& namespaceName) :
+                namespaceName(namespaceName) { }
 
-			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 
-		/*
-		foreach exptression (with iterator over container)
-		object should have begin(), next() and end() methods
-		*/
-		struct ForeachExpression : public BaseExpression
-		{
-			std::string iterator;
-			std::string iteratorIndex;
-			unique_ptr<BaseExpression> container;
-			ExpressionList body;
+        struct NamespaceDeclNode : BaseAstNode
+        {
+            std::string name;
+            AstNodeList* members;
+            inline NamespaceDeclNode(const std::string& name, AstNodeList* members) :
+                name(name), members(members) { }
 
-			void Print(std::ostream& out, int depth = 0) const override;
-
-			ForeachExpression();
-
-			virtual void GenerateBytecode(CodeGenerator& code, const Function& function) const override;
-		};
-
-		/*
-		return expression (with pointer to return value)
-		*/
-		struct ReturnExpression : public BaseExpression
-		{
-			unique_ptr<BaseExpression> returnValue;
-			void Print(std::ostream& out, int depth = 0) const override;
-			bool Empty() const;
-
-			ReturnExpression();
-
-			virtual void GenerateBytecode(CodeGenerator & code, const Function & function) const override;
-		};
+            // Inherited via BaseAstNode
+            virtual void DebugPrint(int offset, const char* delim) const override;
+            virtual void Destroy() override;
+            virtual void GenerateBytecode(std::ostream& out, Method& function) override;
+        };
 	}
 }

@@ -15,14 +15,6 @@ Type yy_get_last()
     return prev;
 }
 
-bool fits_unary(Type prev)
-{
-    return prev == Type::ROUND_BRACKET_O || prev == Type::SQUARE_BRACKET_O ||
-		   prev == Type::BRACE_BRACKET_O || prev == Type::ENDOFFILE ||
-		   (prev & Type::BINARY_OPERAND) || (prev & Type::UNARY_OPERAND) ||
-		   prev == Type::SEMICOLON       || prev == Type::COMMA || prev == Type::ENDLINE;
-}
-
 #define yyterminate() return Type::ENDOFFILE;
 #define YY_DECL Token yy_lex()
 #define YY_SKIP_YYWRAP
@@ -30,68 +22,65 @@ int yywrap() { return 0; }
 %}
 
 %%
-[ \t\r]   {                                    }
-__EOF__   { return Type::ENDOFFILE;            }
-\n        { return Type::ENDLINE;      	   	   }
-\.        { return Type::DOT;          		   }
-'         { return Type::APOS;				   }
-,         { return Type::COMMA;				   }
-;         { return Type::SEMICOLON;			   }
-\(        { return Type::ROUND_BRACKET_O;	   }
-\)        { return Type::ROUND_BRACKET_C;	   }
-\[        { return Type::SQUARE_BRACKET_O;	   }
-\]        { return Type::SQUARE_BRACKET_C;	   }
-\{        { return Type::BRACE_BRACKET_O;	   }
-\}        { return Type::BRACE_BRACKET_C;	   }
-=         { return Type::ASSIGN_OP;			   }
-!         { return Type::NEGATION_OP;		   }
-\*        { return Type::MULT_OP;			   }
-\/        { return Type::DIV_OP;			   }
-\%        { return Type::MOD_OP;			   }
-&&        { return Type::LOGIC_AND;			   }
-\|\|      { return Type::LOGIC_OR;			   }
-==        { return Type::LOGIC_EQUALS;		   }
-!=        { return Type::LOGIC_NOT_EQUALS;	   }
-\<        { return Type::LOGIC_LESS;		   }
-\>        { return Type::LOGIC_GREATER;		   }
-\<=       { return Type::LOGIC_LESS_EQUALS;    }
-\>=       { return Type::LOGIC_GREATER_EQUALS; }
-\*\*      { return Type::POWER_OP;			   }
-\+=       { return Type::SUM_ASSIGN_OP;		   }
-\-=       { return Type::SUB_ASSIGN_OP;		   }
-\*=       { return Type::MULT_ASSIGN_OP;	   }
-\/=       { return Type::DIV_ASSIGN_OP;		   }
-\%=       { return Type::MOD_ASSIGN_OP;		   }
-class     { return Type::CLASS;				   }
-for       { return Type::FOR;				   }
-if        { return Type::IF;				   }
-else      { return Type::ELSE;				   }
-elif      { return Type::ELIF;				   }
-while     { return Type::WHILE;				   }
-static    { return Type::STATIC;			   }
-var       { return Type::VARIABLE;			   }
-function  { return Type::FUNCTION;			   }
-const     { return Type::CONST;				   }
-public    { return Type::PUBLIC;			   }
-private   { return Type::PRIVATE;			   }
-internal  { return Type::INTERNAL;			   }
-abstract  { return Type::ABSTRACT;			   }
-namespace { return Type::NAMESPACE;			   }
-return    { return Type::RETURN;			   }
-lambda    { return Type::LAMBDA;			   }
-this      { return Type::THIS;				   }
-in        { return Type::IN;				   }
-foreach   { return Type::FOREACH;			   }
-true      { return Type::TRUE_CONSTANT;		   }
-false     { return Type::FALSE_CONSTANT;	   }
-null      { return Type::NULLPTR;			   }
-using     { return Type::USING;				   }
-try       { return Type::TRY;				   }
-catch     { return Type::CATCH;				   }
-
-\+        { return fits_unary(yy_get_last()) ? Type::POSITIVE_OP : Type::SUM_OP; }
-\-        { return fits_unary(yy_get_last()) ? Type::NEGATIVE_OP : Type::SUB_OP; }
-
+[ \t\r]   {                                                }
+__EOF__   { return { Type::ENDOFFILE, "__EOF__" };         }
+\n        { return { Type::ENDLINE, yytext };              }
+\.        { return { Type::DOT, yytext };                  }
+'         { return { Type::APOS, yytext };                 }
+,         { return { Type::COMMA, yytext };                }
+;         { return { Type::SEMICOLON, yytext };            }
+\(        { return { Type::ROUND_BRACKET_O, yytext };      }  
+\)        { return { Type::ROUND_BRACKET_C, yytext };      }
+\[        { return { Type::SQUARE_BRACKET_O, yytext };     }
+\]        { return { Type::SQUARE_BRACKET_C, yytext };     }
+\{        { return { Type::BRACE_BRACKET_O, yytext };      }
+\}        { return { Type::BRACE_BRACKET_C, yytext };      }
+=         { return { Type::ASSIGN_OP, yytext };            }
+!         { return { Type::NEGATION_OP, yytext };          }  
+\+        { return { Type::SUM_OP, yytext };               }
+\-        { return { Type::SUB_OP, yytext };               }
+\*        { return { Type::MULT_OP, yytext };              }  
+\/        { return { Type::DIV_OP, yytext };               }
+\%        { return { Type::MOD_OP, yytext };               }
+&&        { return { Type::LOGIC_AND, yytext };            }
+\|\|      { return { Type::LOGIC_OR, yytext };             }
+==        { return { Type::LOGIC_EQUALS, yytext };         }
+!=        { return { Type::LOGIC_NOT_EQUALS, yytext };     }
+\<        { return { Type::LOGIC_LESS, yytext };           }
+\>        { return { Type::LOGIC_GREATER, yytext };        }
+\<=       { return { Type::LOGIC_LESS_EQUALS, yytext };    }
+\>=       { return { Type::LOGIC_GREATER_EQUALS, yytext }; }
+\*\*      { return { Type::POWER_OP, yytext };             }
+\+=       { return { Type::SUM_ASSIGN_OP, yytext };        }
+\-=       { return { Type::SUB_ASSIGN_OP, yytext };        }
+\*=       { return { Type::MULT_ASSIGN_OP, yytext };       }
+\/=       { return { Type::DIV_ASSIGN_OP, yytext };        }
+\%=       { return { Type::MOD_ASSIGN_OP, yytext };        }
+\*\*=     { return { Type::POWER_ASSIGN_OP, yytext };      }
+class     { return { Type::CLASS, yytext };                }
+for       { return { Type::FOR, yytext };                  }  
+if        { return { Type::IF, yytext };                   }
+else      { return { Type::ELSE, yytext };                 }
+elif      { return { Type::ELIF, yytext };                 }
+while     { return { Type::WHILE, yytext };                }
+static    { return { Type::STATIC, yytext };               }
+var       { return { Type::VARIABLE, yytext };             }
+function  { return { Type::FUNCTION, yytext };             }
+const     { return { Type::CONST, yytext };                }
+public    { return { Type::PUBLIC, yytext };               }
+private   { return { Type::PRIVATE, yytext };              }  
+namespace { return { Type::NAMESPACE, yytext };            }
+return    { return { Type::RETURN, yytext };               }
+lambda    { return { Type::LAMBDA, yytext };               }
+this      { return { Type::THIS, yytext };                 }
+in        { return { Type::IN, yytext };                   }
+foreach   { return { Type::FOREACH, yytext };              }
+true      { return { Type::TRUE_CONSTANT, yytext };        }
+false     { return { Type::FALSE_CONSTANT, yytext };       }
+null      { return { Type::NULLPTR, yytext };              }
+using     { return { Type::USING, yytext };                }
+try       { return { Type::TRY, yytext };                  }
+catch     { return { Type::CATCH, yytext };                }
 [0-9]+                      { return { Type::INTEGER_CONSTANT, yytext }; }
 [0-9]+\.[0-9]+              { return { Type::FLOAT_CONSTANT,   yytext }; }
 __USER_DEFINED_STRING[0-9]+ { return { Type::STRING_CONSTANT,  yytext }; }

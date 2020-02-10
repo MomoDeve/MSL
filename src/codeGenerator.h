@@ -1,6 +1,5 @@
 #pragma once
 
-#include "assembly.h"
 #include "opcode.h"
 #include <sstream>
 
@@ -8,6 +7,12 @@ namespace MSL
 {
 	namespace compiler
 	{
+        class Assembly;
+        class Namespace;
+        class Class;
+        class Method;
+        class Attribute;
+
 		/*
 		CodeGenerator class is used to generate actual bytecode for msl program
 		it uses assembly which can be get from Parser class and calls GenerateBytecode() methods of expressions to generate instructions
@@ -42,7 +47,7 @@ namespace MSL
 			/*
 			generated method parameters and body for a method passed as parameter
 			*/
-			void GenerateMethod(const Function& method);
+			void GenerateMethod(const Method& method);
 		public:
 			/*
 			created CodeGenerator object. Assembly is used for code generation

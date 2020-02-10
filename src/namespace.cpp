@@ -10,17 +10,17 @@ namespace MSL
 		Namespace::Namespace(std::string name)
 			: name(std::move(name)) { }
 
-		std::string Namespace::getName() const
+		const std::string& Namespace::GetName() const
 		{
 			return name;
 		}
 
-		std::string Namespace::toString() const
+		std::string Namespace::ToString() const
 		{
-			return std::string("namespace " + getName());
+			return std::string("namespace " + GetName());
 		}
 
-		const Namespace::ClassArray& Namespace::getMembers() const
+		const Namespace::ClassArray& Namespace::GetMembers() const
 		{
 			return classes;
 		}

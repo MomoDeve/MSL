@@ -93,13 +93,8 @@ namespace MSL
 						break;
 					OPCODE_CASE(SET_ALU_INCR)
 						break;
-					OPCODE_CASE(GET_MEMBER)
-						break;
 					OPCODE_CASE(GET_INDEX)
 						break;
-					OPCODE_CASE(CALL_FUNCTION)
-						out << (size_t)GenericRead<uint8_t>();
-					break;
 					OPCODE_CASE(CMP_EQ)
 						break;
 					OPCODE_CASE(CMP_NEQ)
@@ -120,6 +115,11 @@ namespace MSL
 						break;
 					OPCODE_CASE(POP_CATCH)
 						break;
+                    READ_HASH_CASE(CALL_FUNCTION)
+                        out << ' ' << (size_t)GenericRead<uint8_t>();
+                        break;
+                    READ_HASH_CASE(GET_MEMBER)
+                        break;
 					READ_HASH_CASE(PUSH_STRING)
 						break;
 					READ_HASH_CASE(PUSH_INTEGER)

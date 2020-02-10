@@ -13,7 +13,7 @@ void ReflectionGetType(PARAMS)
 		stack.back() = object;
 		break;
 	case Type::CLASS_OBJECT:
-		stack.back() = static_cast<ClassObject*>(object)->type->wrapper;
+		stack.back() = static_cast<ClassObject*>(object)->typeInstance->wrapper;
 		break;
 	default:
 		stack.back() = vm->GetClassPrimitive(object);
@@ -76,7 +76,7 @@ void ReflectionContainsMember(PARAMS)
 	BaseObject* result = vm->GetMemberObject(callerObject, member);
 	if (result == nullptr ||  // also check if object is private
 		(result->type == Type::ATTRIBUTE && !static_cast<AttributeObject*>(result)->type->isPublic()) ||
-		(result->type == Type::CLASS) && static_cast<ClassWrapper*>(result)->type->isInternal())
+		(result->type == Type::CLASS) && static_cast<ClassWrapper*>(result)->typeInstance->IsPrivate())
 	{
 		stack.push_back(vm->AllocFalse());
 		return;
@@ -104,12 +104,12 @@ void ReflectionContainsMethod(PARAMS)
 	ClassObject* classObject = nullptr;
 	if (classArgument->type == Type::CLASS)
 	{
-		classType = static_cast<ClassWrapper*>(classArgument)->type;
+		classType = static_cast<ClassWrapper*>(classArgument)->typeInstance;
 	}
 	else if (classArgument->type == Type::CLASS_OBJECT)
 	{
 		classObject = static_cast<ClassObject*>(classArgument);
-		classType = classObject->type;
+		classType = classObject->typeInstance;
 	}
 	else
 	{
@@ -202,12 +202,12 @@ void ReflectionInvoke(PARAMS)
 	ClassObject* classObject = nullptr;
 	if (classArgument->type == Type::CLASS)
 	{
-		classType = static_cast<ClassWrapper*>(classArgument)->type;
+		classType = static_cast<ClassWrapper*>(classArgument)->typeInstance;
 	}
 	else
 	{
 		classObject = static_cast<ClassObject*>(classArgument);
-		classType = classObject->type;
+		classType = classObject->typeInstance;
 	}
 
 	if (methodName == VM_COMMAND_CREATE_INSTANCE) // can be added by CreateInstance
@@ -486,7 +486,7 @@ void ConsolePrint(PARAMS)
 	case Type::CLASS:
 	{
 		ClassWrapper* c = static_cast<ClassWrapper*>(object);
-		out << "class " << c->type->namespaceName + '.' + c->type->name;
+		out << "class " << c->typeInstance->namespaceName + '.' + c->typeInstance->name;
 		break;
 	}
 	case Type::ATTRIBUTE:
@@ -499,7 +499,7 @@ void ConsolePrint(PARAMS)
 	case Type::CLASS_OBJECT:
 	{
 		ClassObject* classObject = static_cast<ClassObject*>(object);
-		out << classObject->type->namespaceName + '.' + classObject->type->name << " instance";
+		out << classObject->typeInstance->namespaceName + '.' + classObject->typeInstance->name << " instance";
 		break;
 	}
 	default:

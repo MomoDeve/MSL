@@ -37,7 +37,7 @@ namespace MSL
 			/*
 			checks if the attribute is static
 			*/
-			bool isStatic() const;
+			bool IsStatic() const;
 			/*
 			checks if the attribute is constant
 			*/

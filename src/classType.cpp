@@ -10,26 +10,14 @@ bool MSL::VM::ClassType::isAbstract() const
 	return modifiers & Modifiers::ABSTRACT;
 }
 
-#undef CONST // winapi
-bool MSL::VM::ClassType::isConst() const
+bool MSL::VM::ClassType::IsPrivate() const
 {
-	return modifiers & Modifiers::CONST;
+	return modifiers & Modifiers::PRIVATE;
 }
 
-#undef INTERFACE // winapi
-bool MSL::VM::ClassType::isInterface() const
+bool MSL::VM::ClassType::HasStaticConstructor() const
 {
-	return modifiers & Modifiers::INTERFACE;
-}
-
-bool MSL::VM::ClassType::isInternal() const
-{
-	return modifiers & Modifiers::INTERNAL;
-}
-
-bool MSL::VM::ClassType::hasStaticConstructor() const
-{
-	return modifiers & Modifiers::STATIC_CONSTRUCTOR;
+	return modifiers & Modifiers::HAS_STATIC_CONSTRUCTOR;
 }
 
 bool MSL::VM::ClassType::isSystem() const

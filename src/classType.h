@@ -18,13 +18,11 @@ namespace MSL
 		{
 			enum Modifiers : uint8_t
 			{
-				STATIC = 1,
-				INTERFACE = 2,
-				ABSTRACT = 4,
-				CONST = 8,
-				INTERNAL = 16,
-				STATIC_CONSTRUCTOR = 32,
-				SYSTEM = 128
+                STATIC = 1,
+                ABSTRACT = 2,
+                PRIVATE = 4,
+                HAS_STATIC_CONSTRUCTOR = 8,
+                SYSTEM = 128
 			};
 			using AttributeHashTable = std::unordered_map<std::string, AttributeType>;
 			using MethodHashTable = std::unordered_map<std::string, MethodType>;
@@ -37,11 +35,9 @@ namespace MSL
 			std::string namespaceName;
 
 			bool isStatic() const;
-			bool isInterface() const;
 			bool isAbstract() const;
-			bool isConst() const;
-			bool isInternal() const;
-			bool hasStaticConstructor() const;
+			bool IsPrivate() const;
+			bool HasStaticConstructor() const;
 			bool isSystem() const;
 
 			std::string name;

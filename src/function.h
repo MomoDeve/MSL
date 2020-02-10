@@ -1,7 +1,8 @@
 #pragma once
 
-#include "baseExpression.h"
+#include "expressions.h"
 #include <unordered_map>
+#include <sstream>
 
 namespace MSL
 {
@@ -10,13 +11,14 @@ namespace MSL
 		/*
 		Function class stores its body and signature information for call
 		*/
-		class Function
+		class Method
 		{
 			using LocalScopeTable = std::unordered_map<std::string, size_t>;
 			using VariableArray = std::vector<std::string>;
 			using ParameterArray = std::vector<std::string>;
 			using DependencyTable = std::unordered_map<std::string, size_t>;
-
+            using BytecodeArray = std::stringstream;
+            using ErrorList = std::vector<std::string>;
 			/*
 			string hash-table storing local variable name as key and index in VariableArray as value
 			*/
@@ -30,6 +32,8 @@ namespace MSL
 			*/
 			VariableArray variables;
 		public:
+            ErrorList errors;
+
 			/*
 			bit-masks of function modifiers
 			*/
@@ -48,9 +52,9 @@ namespace MSL
 			*/
 			ParameterArray params;
 			/*
-			pointer to the array of expressions as function body
+			method body as bytecode array
 			*/
-			std::unique_ptr<ExpressionList> body;
+			BytecodeArray bytecode;
 			/*
 			unique name of function. Class must not contain more than one function with the same name and parameter count
 			*/
@@ -67,11 +71,11 @@ namespace MSL
 			/*
 			checks if the function is abstract
 			*/
-			bool isAbstract() const;
+			bool IsAbstract() const;
 			/*
 			checks if the function is static
 			*/
-			bool isStatic() const;
+			bool IsStatic() const;
 			/*
 			checks if the function is public
 			*/
@@ -79,15 +83,11 @@ namespace MSL
 			/*
 			checks if the function is assembly entry-point
 			*/
-			bool isEntryPoint() const;
+			bool IsEntryPoint() const;
 			/*
 			checks if the function is class constructor
 			*/
 			bool isConstructor() const;
-			/*
-			checks if the function has body
-			*/
-			bool hasBody() const;
 
 			/*
 			returns human-read representation of function as string
@@ -96,20 +96,20 @@ namespace MSL
 			/*
 			returns constant reference to all variables in function
 			*/
-			const VariableArray& getVariables() const;
+			const VariableArray& GetVariables() const;
 
 			/*
 			creates function with name provided
 			*/
-			Function(std::string name);
+			Method(std::string name);
 			/*
 			function cannot be copied, consider using move instead
 			*/
-			Function(const Function& function) = delete;
+			Method(const Method& function) = delete;
 			/*
 			moves function contents
 			*/
-			Function(Function&& function) = default;
+			Method(Method&& function) = default;
 
 			/*
 			moves local variable name to VariableArray and adds its name to hash-table
@@ -140,22 +140,18 @@ namespace MSL
 			GetHash() must only be used if the variable already exists in VariableArray
 			*/
 			size_t GetHash(const std::string& variableName) const;
-			/*
-			generates bytecode for function body
-			this method can be safely called if function does not have body
-			*/
-			void GenerateBytecode(CodeGenerator& generator) const;
+            /*
+            returns method body as bytecode array
+            */
+            const BytecodeArray& GetBytecode() const;
 
+
+            void PushError(const std::string& error);
 			/*
 			generates unique name for function to prevent name collisions in hash-table
 			if class already contains overloaded function with the same name
 			*/
 			static std::string GenerateUniqueName(const std::string& name, size_t paramSize);
 		};
-
-		/*
-		generates bytecode for each of expressionList expressions
-		*/
-		void GenerateExpressionListBytecode(const ExpressionList& list, CodeGenerator& code, const Function& function);
 	}
 }

@@ -30,7 +30,7 @@ namespace MSL
 			};
 			using MemberTable = std::unordered_map<std::string, TableIndex>;
 			using AttributeArray = std::vector<Attribute>;
-			using MethodArray = std::vector<Function>;
+			using MethodArray = std::vector<Method>;
 
 			/*
 			string hash-table storing method / attribute name as key and TableIndex structure as value
@@ -52,11 +52,9 @@ namespace MSL
 			enum Modifiers
 			{
 				_STATIC = 1,
-				_INTERFACE = 2,
-				_ABSTRACT = 4,
-				_CONST = 8,
-				_INTERNAL = 16,
-				_STATIC_CONSTRUCTOR = 32,
+				_ABSTRACT = 2,
+				_PRIVATE = 4,
+				_HAS_STATIC_CONSTRUCTOR = 8,
 				_SYSTEM = 128
 			};
 
@@ -70,17 +68,9 @@ namespace MSL
 			uint8_t modifiers;
 
 			/*
-			checks if the class is constant
-			*/
-			bool IsConst() const;
-			/*
 			checks if the class is static
 			*/
 			bool IsStatic() const;
-			/*
-			checks if the class is interface
-			*/
-			bool IsInterface() const;
 			/*
 			checks if the class is abstract
 			*/
@@ -88,7 +78,7 @@ namespace MSL
 			/*
 			checks if the class is internal
 			*/
-			bool IsInternal() const;
+			bool IsPrivate() const;
 
 			/*
 			creates class with name provided
@@ -107,7 +97,7 @@ namespace MSL
 			if method name already existed in table, it will be overwriten in hash-table, but not deleted from ClassArray
 			method name is changed to support overloading, but attributes with the same name till must not be inserted
 			*/
-			void InsertMethod(const std::string& name, Function&& function);
+			void InsertMethod(const std::string& name, Method&& function);
 			/*
 			moves method to AttributeArray and adds its name to hash-table
 			if attribute name already existed in table, it will be overwriten in hash-table, but not deleted from ClassArray
@@ -126,10 +116,6 @@ namespace MSL
 			checks if class already contains member with given name
 			*/
 			bool ContainsMember(const std::string& memberName) const;
-			/*
-			returns human-read representation of class as string
-			*/
-			std::string ToString() const;
 		};
 	}
 }

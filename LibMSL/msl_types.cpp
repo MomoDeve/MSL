@@ -48,7 +48,7 @@ const std::string* MSL::utils::GetObjectName(const MSL::VM::BaseObject* object)
 	case MSL::VM::Type::UNKNOWN:
 		return static_cast<const MSL::VM::UnknownObject*>(object)->ref;
 	case MSL::VM::Type::CLASS:
-		return &static_cast<const MSL::VM::ClassWrapper*>(object)->type->name;
+		return &static_cast<const MSL::VM::ClassWrapper*>(object)->typeInstance->name;
 	case MSL::VM::Type::NAMESPACE:
 		return &static_cast<const MSL::VM::NamespaceWrapper*>(object)->type->name;
 	case MSL::VM::Type::ATTRIBUTE:
@@ -56,7 +56,7 @@ const std::string* MSL::utils::GetObjectName(const MSL::VM::BaseObject* object)
 	case MSL::VM::Type::LOCAL:
 		return &static_cast<const MSL::VM::LocalObject*>(object)->name;
 	case MSL::VM::Type::CLASS_OBJECT:
-		return &static_cast<const MSL::VM::ClassObject*>(object)->type->name;
+		return &static_cast<const MSL::VM::ClassObject*>(object)->typeInstance->name;
 	default:
 		return nullptr;
 	}

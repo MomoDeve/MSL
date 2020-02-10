@@ -126,7 +126,6 @@
     <ClInclude Include="assemblyType.h" />
     <ClInclude Include="attribute.h" />
     <ClInclude Include="attributeType.h" />
-    <ClInclude Include="baseExpression.h" />
     <ClInclude Include="bigInteger.h" />
     <ClInclude Include="bytecodeReader.h" />
     <ClInclude Include="Cacher.h" />
@@ -181,6 +180,7 @@
     <ClCompile Include="token.cpp" />
     <ClCompile Include="virtualMachine.cpp" />
     <ClCompile Include="yylexer.cpp" />
+    <ClCompile Include="yyparser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="yylexer.l">
@@ -200,6 +200,29 @@
     </CustomBuild>
     <None Include="main.msl" />
     <None Include="system.msl" />
+    <CustomBuild Include="yyparser.y">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">set BISON_PKGDATADIR=D:/files/Cygwin/usr/local/share/bison
+set M4=m4
+bison --verbose -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bison -o %(Filename).cpp %(Identity)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">set BISON_PKGDATADIR=D:/files/Cygwin/usr/local/share/bison
+set M4=m4
+bison --verbose -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bison -o %(Filename).cpp %(Identity)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">set BISON_PKGDATADIR=D:/files/Cygwin/usr/local/share/bison
+set M4=m4
+bison -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">bison -o %(Filename).cpp %(Identity)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">set BISON_PKGDATADIR=D:/files/Cygwin/usr/local/share/bison
+set M4=m4
+bison -o %(Filename).cpp %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">bison -o %(Filename).cpp %(Identity)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).cpp %(Filename).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).cpp %(Filename).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).cpp %(Filename).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).cpp %(Filename).h</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

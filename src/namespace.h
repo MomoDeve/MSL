@@ -45,17 +45,17 @@ namespace MSL
 			*/
 			Namespace(Namespace&& other) = default;
 			/*
-			returns namespace name as string copy
+			returns namespace name
 			*/
-			std::string getName() const;
+			const std::string& GetName() const;
 			/*
 			returns human-read representation of namespace as string
 			*/
-			std::string toString() const;
+			std::string ToString() const;
 			/*
 			returns constant reference to all classes in namespace
 			*/
-			const ClassArray& getMembers() const;
+			const ClassArray& GetMembers() const;
 			/*
 			checks if namespace already contains class with given name
 			*/

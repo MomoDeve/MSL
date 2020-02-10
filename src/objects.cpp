@@ -73,11 +73,11 @@ namespace MSL
 		}
 
 		ClassObject::ClassObject(const ClassType* type)
-			: type(type), BaseObject(Type::CLASS_OBJECT) { }
+			: typeInstance(type), BaseObject(Type::CLASS_OBJECT) { }
 
 		std::string ClassObject::ToString() const
 		{
-			return type->namespaceName + '.' + type->name;
+			return typeInstance->namespaceName + '.' + typeInstance->name;
 		}
 
 		std::string ClassObject::GetExtraInfo() const
@@ -193,24 +193,22 @@ namespace MSL
 		}
 
 		ClassWrapper::ClassWrapper(const ClassType* type)
-			: type(type), BaseObject(Type::CLASS) { }
+			: typeInstance(type), BaseObject(Type::CLASS) { }
 
 		std::string ClassWrapper::ToString() const
 		{
-			return type->namespaceName + '.' + type->name;
+			return typeInstance->namespaceName + '.' + typeInstance->name;
 		}
 
 		std::string ClassWrapper::GetExtraInfo() const
 		{
 			std::string info;
-			if (type->isInternal()) info += " internal";
-			if (!type->isInternal()) info += " public";
+			if (typeInstance->IsPrivate()) info += " internal";
+			if (!typeInstance->IsPrivate()) info += " public";
 
-			if (type->isSystem()) info += " system";
-			if (type->isAbstract()) info += " abstract";
-			if (type->isConst()) info += " const";
-			if (type->isInterface()) info += " interface";
-			if (type->isStatic()) info += " static";
+			if (typeInstance->isSystem()) info += " system";
+			if (typeInstance->isAbstract()) info += " abstract";
+			if (typeInstance->isStatic()) info += " static";
 			info += " class";
 			return info;
 		}
@@ -219,7 +217,7 @@ namespace MSL
 		{
 			RET_IF_MARKED;
 			BaseObject::MarkMembers();
-			type->staticInstance->MarkMembers();
+			typeInstance->staticInstance->MarkMembers();
 		}
 
 		size_t ClassWrapper::GetSize() const

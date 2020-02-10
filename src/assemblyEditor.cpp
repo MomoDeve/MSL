@@ -338,7 +338,13 @@ namespace MSL
 					break;
 				case (OPCODE::GET_MEMBER):
 					WRITE_OPCODE(OPCODE::GET_MEMBER);
+                    WRITE_HASH;
 					break;
+                case (OPCODE::CALL_FUNCTION):
+                    WRITE_OPCODE(OPCODE::CALL_FUNCTION);
+                    WRITE_HASH;
+                    WRITE_OPCODE(GenericRead<uint8_t>());
+                    break;
 				case (OPCODE::CMP_EQ):
 					WRITE_OPCODE(OPCODE::CMP_EQ);
 					break;
@@ -368,10 +374,6 @@ namespace MSL
 					break;
 				case (OPCODE::SET_ALU_INCR):
 					WRITE_OPCODE(OPCODE::SET_ALU_INCR);
-					break;
-				case (OPCODE::CALL_FUNCTION):
-					WRITE_OPCODE(OPCODE::CALL_FUNCTION);
-					WRITE_OPCODE(GenericRead<uint8_t>());
 					break;
 				case (OPCODE::RETURN):
 					WRITE_OPCODE(OPCODE::RETURN);

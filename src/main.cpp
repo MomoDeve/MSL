@@ -3,10 +3,11 @@
 #include "parser.h"
 #include "virtualMachine.h"
 #include "bytecodeReader.h"
+#include "codeGenerator.h"
 
 using namespace std;
 
-//#define MSL_VM_DEBUG
+#define MSL_VM_DEBUG
 
 bool createAssembly(string fileName)
 {
@@ -27,19 +28,6 @@ bool createAssembly(string fileName)
 		return false;
 	}
 	MSL::compiler::Assembly assembly = parser.PullAssembly();
-	
-	#ifdef MSL_VM_DEBUG
-	{
-		for (const auto& _namespace : assembly.GetNamespaces())
-		{
-			cout << _namespace.toString() << "\n\n";
-			for (const auto& member : _namespace.getMembers())
-			{
-				cout << member.ToString() << endl;
-			}
-		}
-	}
-	#endif
 
 	MSL::compiler::CodeGenerator generator(assembly);
 	generator.GenerateBytecode();

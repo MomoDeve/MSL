@@ -77,7 +77,7 @@ namespace MSL
 
 		struct ClassWrapper : BaseObject
 		{
-			const ClassType* type;
+			const ClassType* typeInstance;
 
 			ClassWrapper(const ClassType* type);
 
@@ -116,7 +116,7 @@ namespace MSL
 		{
 			using AttributeTable = std::unordered_map<std::string, AttributeObject*>;
 			AttributeTable attributes;
-			const ClassType* type;
+			const ClassType* typeInstance;
 
 			ClassObject(const ClassType* type);
 

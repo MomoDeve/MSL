@@ -1,4 +1,5 @@
 #include "codeGenerator.h"
+#include "assembly.h"
 
 namespace MSL
 {
@@ -25,7 +26,7 @@ namespace MSL
 			Write(namespaces.size());
 			for (const auto& _namespace : namespaces)
 			{
-				WriteString(_namespace.getName());
+				WriteString(_namespace.GetName());
 				Write(OPCODE::FRIEND_POOL_DECL_SIZE);
 				Write(_namespace.friendNamespaces.size());
 				for (const auto& friendNamespace : _namespace.friendNamespaces)
@@ -46,7 +47,7 @@ namespace MSL
 		*/
 		void CodeGenerator::GenerateClassPool(const Namespace& _namespace)
 		{
-			const auto& classes = _namespace.getMembers();
+			const auto& classes = _namespace.GetMembers();
 			Write(OPCODE::CLASS_POOL_DECL_SIZE);
 			Write(classes.size());
 			for (const auto& _class : classes)
@@ -79,7 +80,7 @@ namespace MSL
 			}
 		}
 
-		void CodeGenerator::GenerateMethod(const Function& method)
+		void CodeGenerator::GenerateMethod(const Method& method)
 		{
 			Write(OPCODE::METHOD_PARAMS_DECL_SIZE);
 			Write(method.params.size());
@@ -88,14 +89,17 @@ namespace MSL
 				WriteString(param);
 			}
 			Write(OPCODE::DEPENDENCY_POOL_DECL_SIZE);
-			const auto& variables = method.getVariables();
+			const auto& variables = method.GetVariables();
 			Write(variables.size());
-			for (const auto& variable : method.getVariables())
+			for (const auto& variable : variables)
 			{
 				WriteString(variable);
 			}
 			Write(OPCODE::METHOD_BODY_BEGIN_DECL);
-			method.GenerateBytecode(*this);
+            for (const auto& byte : method.GetBytecode().str())
+            {
+                Write(byte);
+            }
 			Write(OPCODE::METHOD_BODY_END_DECL);
 		}
 

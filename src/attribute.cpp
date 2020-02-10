@@ -4,7 +4,7 @@ namespace MSL
 {
 	namespace compiler
 	{
-		bool Attribute::isStatic() const
+		bool Attribute::IsStatic() const
 		{
 			return modifiers & Modifiers::_STATIC;
 		}

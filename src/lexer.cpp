@@ -17,6 +17,7 @@ struct yy_buffer_state
     int yy_fill_buffer;
     int yy_buffer_status;
 };
+
 typedef struct yy_buffer_state* YY_BUFFER_STATE;
 YY_BUFFER_STATE yy_scan_bytes(const char* buffer, int size);
 MSL::compiler::Token yy_lex();
@@ -29,7 +30,7 @@ namespace MSL
 	namespace compiler
 	{
 		Lexer::Lexer(std::string stream)
-			: iteratorPos(0), lineCount(0), EOFtoken(Token::Type::ERROR, "EOF")
+			: iteratorPos(0), lineCount(0), EOFtoken(Token::Type::ENDOFFILE, "EOF")
 		{
             stream += "__EOF__"; // yy_lex will return Token::Type::ENDOFFILE when meet __EOF__
             auto buffer = yy_scan_bytes(stream.c_str(), stream.size());
@@ -73,7 +74,7 @@ namespace MSL
 		{
 			iteratorPos = 0;
 			lineCount = 0;
-			while (!tokens.empty() && tokens[iteratorPos].type == Token::ENDLINE)
+			while (!tokens.empty() && iteratorPos < tokens.size() && tokens[iteratorPos].type == Token::ENDLINE)
 			{
 				iteratorPos++;
 				lineCount++;

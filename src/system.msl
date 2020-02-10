@@ -8,20 +8,20 @@ namespace System {
             Dll.LoadLibrary(dll);
         }
 
-        public static function GetType(object) {
-            return Dll.Call(dll, "ReflectionGetType", object);
+        public static function GetType(obj) {
+            return Dll.Call(dll, "ReflectionGetType", obj);
         }
 
         public static function CreateInstance(type, args) {
             return Dll.Call(dll, "ReflectionCreateInstance", type, args);
         }
 
-        public static function Invoke(object, method, args) {
-            return Dll.Call(dll, "ReflectionInvoke", object, method, args);
+        public static function Invoke(obj, method, args) {
+            return Dll.Call(dll, "ReflectionInvoke", obj, method, args);
         }
 
-        public static function ContainsMethod(object, method, argCount) {
-            return Dll.Call(dll, "ReflectionContainsMethod", object, method, argCount);
+        public static function ContainsMethod(obj, method, argCount) {
+            return Dll.Call(dll, "ReflectionContainsMethod", obj, method, argCount);
         }
 
         public static function GetNamespace(name) {
@@ -36,8 +36,8 @@ namespace System {
             return Dll.Call(dll, "ReflectionIsNamespaceExists", name);
         }
 
-        public static function ContainsMember(object, member) {
-            return Dll.Call(dll, "ReflectionContainsMember", object, member);
+        public static function ContainsMember(obj, member) {
+            return Dll.Call(dll, "ReflectionContainsMember", obj, member);
         }
     }
 
@@ -86,16 +86,16 @@ namespace System {
             Dll.LoadLibrary(dll);
         }
 
-        public static function Print(object) {
-            if (Reflection.ContainsMethod(object, "ToString", 0))
-                object = object.ToString();
-            return Dll.Call(dll, "ConsolePrint", object);
+        public static function Print(obj) {
+            if (Reflection.ContainsMethod(obj, "ToString", 0))
+                obj = obj.ToString();
+            return Dll.Call(dll, "ConsolePrint", obj);
         }
 
-        public static function PrintLine(object) {
-            if (Reflection.ContainsMethod(object, "ToString", 0))
-                object = object.ToString();
-            return Dll.Call(dll, "ConsolePrintLine", object);
+        public static function PrintLine(obj) {
+            if (Reflection.ContainsMethod(obj, "ToString", 0))
+                obj = obj.ToString();
+            return Dll.Call(dll, "ConsolePrintLine", obj);
         }
 
         public static function Read() {
@@ -136,8 +136,8 @@ namespace System {
             return Dll.Call(dll, "ArrayConstructor", size);
         }
 
-        public function Append(object) {
-            Dll.Call(dll, "ArrayAppend", array, object);
+        public function Append(obj) {
+            Dll.Call(dll, "ArrayAppend", array, obj);
             return this;
         }
 

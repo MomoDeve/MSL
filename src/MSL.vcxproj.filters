@@ -16,15 +16,6 @@
     <Filter Include="MSL\compiler\lexer">
       <UniqueIdentifier>{70db86a8-d164-49e6-81ae-77fe9e602af7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MSL\compiler\expression">
-      <UniqueIdentifier>{6219caf4-e7fd-4d22-bfdf-4402ac15c924}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MSL\compiler\expression\baseExpression">
-      <UniqueIdentifier>{85325bd8-8f6a-4647-a45d-5cf43989f789}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MSL\compiler\expression\expressions">
-      <UniqueIdentifier>{9886b8b7-bc37-41de-99c2-1710dfd058ac}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MSL\compiler\codeGenerator">
       <UniqueIdentifier>{17d856af-e33c-4c7d-8711-38d0968ab745}</UniqueIdentifier>
     </Filter>
@@ -103,6 +94,9 @@
     <Filter Include="momo\cacher">
       <UniqueIdentifier>{d5585f1c-e958-47c2-aac3-ae2be71f5067}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MSL\compiler\expressions">
+      <UniqueIdentifier>{9886b8b7-bc37-41de-99c2-1710dfd058ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lexer.h">
@@ -126,11 +120,8 @@
     <ClInclude Include="token.h">
       <Filter>MSL\compiler\token</Filter>
     </ClInclude>
-    <ClInclude Include="baseExpression.h">
-      <Filter>MSL\compiler\expression\baseExpression</Filter>
-    </ClInclude>
     <ClInclude Include="expressions.h">
-      <Filter>MSL\compiler\expression\expressions</Filter>
+      <Filter>MSL\compiler\expressions</Filter>
     </ClInclude>
     <ClInclude Include="class.h">
       <Filter>MSL\compiler\objectHierarchy\class</Filter>
@@ -222,7 +213,7 @@
       <Filter>MSL\compiler\objectHierarchy\namespace</Filter>
     </ClCompile>
     <ClCompile Include="expressions.cpp">
-      <Filter>MSL\compiler\expression\expressions</Filter>
+      <Filter>MSL\compiler\expressions</Filter>
     </ClCompile>
     <ClCompile Include="class.cpp">
       <Filter>MSL\compiler\objectHierarchy\class</Filter>
@@ -276,11 +267,11 @@
     <ClCompile Include="ExceptionTrace.cpp">
       <Filter>MSL\VM\exceptionTrace</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\spiderTask\spiderTask\Source.cpp">
-      <Filter>MSL\VM\types</Filter>
-    </ClCompile>
     <ClCompile Include="yylexer.cpp">
       <Filter>MSL\compiler\lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="yyparser.cpp">
+      <Filter>MSL\compiler\parser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -290,6 +281,9 @@
   <ItemGroup>
     <CustomBuild Include="yylexer.l">
       <Filter>MSL\compiler\lexer</Filter>
+    </CustomBuild>
+    <CustomBuild Include="yyparser.y">
+      <Filter>MSL\compiler\parser</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

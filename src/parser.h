@@ -63,33 +63,17 @@ namespace MSL
 			*/
 			size_t currentErrorCount = 0;
 
-			/*
-			generates assembly. Returns true on success, false either
-			*/
-			bool GenerateAssembly();
-			/*
-			generates members of namespace. Returns true on success, false either
-			member modifiers parsing and dublicate-checking are carried out by this method
-			returns true on success, false either
-			*/
-			bool GenerateMembers(Namespace& _namespace);
+            std::stringstream CompileMethodBody(Method& method, AstNodeList* body);
+
+            Method CompileMethod(MethodDeclNode* method);
+            
+            Attribute CompileAttribute(AttributeDeclNode* attr);
+
+            Class CompileClass(ClassDeclNode* cl);
+
+            Namespace CompileNamespace(NamespaceDeclNode* ns);
 			
-			/*
-			add 'friend' namespace to using list. Dublicates are allowed and does not cause errors
-			*/
-			bool AddUsingExpression(Namespace& _namespace);
-			/*
-			generate class members and check them for dublicates
-			also perform validation check of class modifiers
-			returns true on success, false either
-			*/
-			bool ProcessClass(Namespace& _namespace, Class& classObject, const ModifierList& modifiers);
-			/*
-			generate interface methods and check them for dublicates
-			also perform validation check of class modifiers and scan for prohibited attributes
-			returns true on success, false either
-			*/
-			bool ProcessInterface(Namespace& _namespace, Class& interfaceObject, const ModifierList& modifiers);
+            void CompileAST(BaseAstNode* AST);
 			/*
 			generate attribute of class
 			also perform validation check of attribute modifiers
@@ -102,95 +86,6 @@ namespace MSL
 			returns true on success, false either
 			*/
 			bool ProcessMethod(Namespace& _namespace, Class& classObject, const ModifierList& modifiers);
-			/*
-			consumes tokens from lexer and puts them into ModifierList
-			stops when meets one of the stopTokens, EOFtoken or token which cannot be modifier (see Token masks)
-			returns true on success, false either
-			*/
-			bool GetModifiers(ModifierList& modifiers, const std::vector<Token::Type>& stopTokens);
-			/*
-			consumes tokens from lexer and puts them into parameters array
-			stops when meets one of the token which cannot be the name of the parameter or when COMMA token is missing
-			returns true on success, false either
-			*/
-			bool ParseFunctionParamsDecl(std::vector<std::string>& parameters);
-			/*
-			parses expressions in brace brackets ("{ [...]; [...]; ... }") and returns ExpressionList
-			if error was found, 'Parsed::success' = false and ExpressionList will be empty
-			*/
-			ExpressionList ParseExpressionBlock(Function& function);
-			/*
-			parses expressions in round brackets in format ( [...], [...], ... ) and returns ExpressionList
-			if error was found, 'Parsed::success' = false and ExpressionList will be empty
-			*/
-			ExpressionList ParseFunctionArguments(Function& function);
-			/*
-			parses expression in square brackest in formar [ [...] ] an returns IndexExpression object
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseIndexArgument(Function& function);
-			/*
-			consumes any type of expression, delegating its parsing to other functions
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseExpression(Function& function);
-			/*
-			parses variable declare expression in format var [object name] = [...]; and returns ObjectDeclareExpression object
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseVariableDecl(Function& function);
-			/*
-			[warning]: lambda expression currently not supported, so calling this function will always produce error while parsing
-			this function always return nullptr and should not be used in code 
-			*/
-			unique_ptr<BaseExpression> ParseLambdaExpression(Function& function);
-			/*
-			parses try-catch expression in format 
-			try {[block expression]} catch ([object declare]) {[block expression]}
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseTryExpression(Function& function);
-			/*
-			parses for expression in format for([object declare]; [...]; [...]) {[block expression]}
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseForExpression(Function& function);
-			/*
-			parses foreach expression in format foreach(var [object name] in [...]) {[block expression]}
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseForeachExpression(Function& function);
-			/*
-			parses while expression in format while([...]) {[block expression]}
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseWhileExpression(Function& function);
-			/*
-			parses if-elif-else expression in format if([...] {[block expression]} elif([...]) ... else ...
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseIfExpression(Function& function);
-			/*
-			parses return expression in format return [...]; or return;
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseReturnExpression(Function& function);
-			/*
-			parses round brackets expression in format ([...])
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseStatementInBrackets(Function& function);
-			/*
-			parses `(`, variable name, function name, constant or unary operator
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseNextVariable(Function& function, bool catchIndex = true);
-			/*
-			parses almost any expression until semicolon token is met. Usually called if any other specific expression parse function does not match
-			leftBranch parameter must be set only inside this function
-			if error was found, 'Parsed::success' = false
-			*/
-			unique_ptr<BaseExpression> ParseRawExpression(Function& function, unique_ptr<BaseExpression> leftBranch = nullptr, uint32_t returnPriority = 0);
 			/*
 			writes message contents to the stream provided to Parser
 			*/

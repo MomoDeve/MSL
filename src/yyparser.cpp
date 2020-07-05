@@ -2232,7 +2232,7 @@ yyreduce:
   case 73:
 #line 559 "yyparser.y"
     {
-        (yyval.expr) = new BinaryExprNode((yyvsp[-2].expr), (yyvsp[0].expr), Type::LOGIC_GREATER);
+        (yyval.expr) = new BinaryExprNode((yyvsp[-2].expr), (yyvsp[0].expr), Type::LOGIC_GREATER_EQUALS);
     }
 #line 2238 "yyparser.cpp"
     break;

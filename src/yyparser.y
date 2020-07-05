@@ -535,37 +535,37 @@ BINARY_STATEMENT:
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_EQUALS);
     }
     |
-	STATEMENT LOGIC_NOT_EQUALS STATEMENT
+    STATEMENT LOGIC_NOT_EQUALS STATEMENT
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_NOT_EQUALS);
     }
     |
-	STATEMENT LOGIC_LESS STATEMENT   
+    STATEMENT LOGIC_LESS STATEMENT   
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_LESS);
     }
     |
-	STATEMENT LOGIC_GREATER STATEMENT  
+    STATEMENT LOGIC_GREATER STATEMENT  
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_GREATER);
     }
     |
-	STATEMENT LOGIC_LESS_EQUALS STATEMENT
+    STATEMENT LOGIC_LESS_EQUALS STATEMENT
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_LESS_EQUALS);
     }
     |
-	STATEMENT LOGIC_GREATER_EQUALS STATEMENT
+    STATEMENT LOGIC_GREATER_EQUALS STATEMENT
     {
-        $$ = new BinaryExprNode($1, $3, Type::LOGIC_GREATER);
+        $$ = new BinaryExprNode($1, $3, Type::LOGIC_GREATER_EQUALS);
     }
     |
-	STATEMENT LOGIC_OR STATEMENT    
+    STATEMENT LOGIC_OR STATEMENT    
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_OR);
     }
     |
-	STATEMENT LOGIC_AND STATEMENT
+    STATEMENT LOGIC_AND STATEMENT
     {
         $$ = new BinaryExprNode($1, $3, Type::LOGIC_AND);
     }
